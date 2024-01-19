@@ -1,0 +1,3 @@
+[submodule "trajectories/trajectory_generation"]
+	path = trajectories/trajectory_generation
+	url = git@github.com:danielbinschmid/trajectory_generation.git
