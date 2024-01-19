@@ -44,8 +44,8 @@ class SquareLinearTrajectory(Trajectory):
             # in-between two points, linear interpolation
             cur_corner = math.floor(time)
             upcomimg_corner = math.ceil(time)
-            diff = upcomimg_corner - cur_corner
-            target_pos = cur_corner + (time - int(time)) * (diff)
+            diff = self.corner_points[upcomimg_corner] - self.corner_points[cur_corner]
+            target_pos = self.corner_points[cur_corner] + (time - int(time)) * (diff)
 
         target_wp = Waypoint(
             coordinate=target_pos,
