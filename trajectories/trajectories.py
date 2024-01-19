@@ -49,7 +49,7 @@ class SquareLinearTrajectory(Trajectory):
 
         target_wp = Waypoint(
             coordinate=target_pos,
-            timestamp=time * self.time_scale
+            timestamp=(time * self.time_scale) / 4
         )
 
         return target_wp
