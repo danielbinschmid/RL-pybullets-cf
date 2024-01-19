@@ -15,16 +15,14 @@ The drones move, at different altitudes, along cicular trajectories
 in the X-Y plane, around point (0, -.3).
 
 """
-import os
+import sys 
+sys.path.append("..")
+
+
 import time
 import argparse
-from datetime import datetime
-import pdb
-import math
-import random
 import numpy as np
-import pybullet as p
-import matplotlib.pyplot as plt
+from trajectories import TrajectoryFactory
 
 from gym_pybullet_drones.utils.enums import DroneModel, Physics
 from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
@@ -66,14 +64,13 @@ def run(
     INIT_RPYS = np.array([[0., 0., 0.]])
 
     #### Initialize a circular trajectory ######################
-    NUM_WP = 4
-    TARGET_POS = np.array([
-        [0,0,1],
-        [1,0,1],
-        [1,1,1],
-        [0,1,1],
-    ], np.float32)
-    wp = 0
+    NUM_STEPS = 4
+    STEP_SIZE = 1 / NUM_STEPS
+    TARGET_TRAJECTORY = TrajectoryFactory.get_linear_square_trajectory(
+        square_scale=1,
+        time_scale=1
+    )
+    current_step = 0
 
 
     #### Create the environment ################################
@@ -115,10 +112,11 @@ def run(
 
         #### Step the simulation ###################################
         obs, reward, terminated, truncated, info = env.step(action)
+        target_position = TARGET_TRAJECTORY.get_waypoint(current_step).coordinate
         #### Compute control for the current way point #############
         action, _, _ = ctrl.computeControlFromState(control_timestep=env.CTRL_TIMESTEP,
             state=obs[0],
-            target_pos=np.hstack([TARGET_POS[wp, 0:3]]),
+            target_pos=np.hstack([target_position]),
             # target_pos=INIT_XYZS[j, :] + TARGET_POS[wp_counters[j], :],
             target_rpy=INIT_RPYS[0]
         )
@@ -127,19 +125,13 @@ def run(
 
         #### Go to the next way point and loop #####################
         position = obs[0][0:3]
-        distance = np.linalg.norm(TARGET_POS[wp, :3] - position)
+        
+        distance = np.linalg.norm(target_position - position)
         velocity = np.linalg.norm(obs[0][10:13])
         if distance < 0.1 and velocity < 0.05:
-            wp = wp + 1 if wp < (NUM_WP-1) else 0
+            current_step = (current_step + STEP_SIZE) % 1
 
-        # #### Log the simulation ####################################
-        # logger.log(
-        #     drone=1,
-        #     timestamp=i/env.CTRL_FREQ,
-        #     state=obs[0],
-        #     control=np.hstack([TARGET_POS[wp, 0:2], INIT_XYZS[0][2], INIT_RPYS[0], np.zeros(6)])
-        #     # control=np.hstack([INIT_XYZS[j, :]+TARGET_POS[wp_counters[j], :], INIT_RPYS[j, :], np.zeros(6)])
-        # )
+        ##### Log the simulation ####################################
 
         #### Printout
         env.render()

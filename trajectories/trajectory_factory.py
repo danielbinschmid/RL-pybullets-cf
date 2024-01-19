@@ -1,33 +1,14 @@
-from time import thread_time
-import numpy as np
-
-class Waypoint:
-    """
-    3D coordinate with a timestamp.
-    """
-    
-    coordinate: np.ndarray
-    """R^3 coordinate"""
-    timestamp: float
-    """Time as float"""
-
-    def __init__(self, coordinate: np.ndarray, timestamp: float) -> None:
-        self.coordinate = coordinate
-        self.timestamp = timestamp
-
+from .trajectories import Trajectory, SquareLinearTrajectory
 
 class TrajectoryFactory:
     """
-    Generates waypoints
+    Wrapper class for instantiating target trajectories.
     """
-    
-    def __init__(self) -> None:
-        pass
 
-    def get_waypoint(self) -> Waypoint:
-        waypoint = Waypoint(
-            coordinate=np.asarray([0,0,0]),
-            timestamp=0
+    @classmethod
+    def get_linear_square_trajectory(cls, square_scale: float, time_scale: float) -> Trajectory:
+        return SquareLinearTrajectory(
+            square_scale, time_scale
         )
-        return waypoint
+
 
