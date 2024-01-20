@@ -6,6 +6,7 @@ import pybullet as p
 from gymnasium import spaces
 
 from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
+from trajectories import TrajectoryFactory
 
 class FollowerAviary(BaseRLAviary):
     """Single agent RL problem: hover at position."""
@@ -53,10 +54,19 @@ class FollowerAviary(BaseRLAviary):
 
         """
         self.TARGET_POS = np.array([0,0,1])
-        self.EPISODE_LEN_SEC = 8
+        self.EPISODE_LEN_SEC = 16
         self.NUM_DRONES = 1
         self.WAYPOINT_BUFFER_SIZE = 3 # how many steps into future to interpolate
-        self.waypoint_buffer = np.zeros((self.WAYPOINT_BUFFER_SIZE,3)).reshape(1, -1)
+        self.trajectory = TrajectoryFactory.get_linear_square_traj_discretized()
+        self.n_waypoints = len(self.trajectory)
+        self.current_waypoint_idx = 0
+
+        self.waypoint_buffer = np.array(
+            [self.trajectory[i].coordinate for i in range(self.WAYPOINT_BUFFER_SIZE)]
+        )
+        print('WAYPOINT_BUFFER')
+        print(self.waypoint_buffer)
+
         super().__init__(
             drone_model=drone_model,
             num_drones=1,
@@ -83,7 +93,8 @@ class FollowerAviary(BaseRLAviary):
 
         """
         state = self._getDroneStateVector(0)
-        ret = max(0, 2 - np.linalg.norm(self.TARGET_POS-state[0:3])**4)
+        waypoint = self.waypoint_buffer[self.current_waypoint_idx]
+        ret = max(0, 2 - np.linalg.norm(waypoint-state[0:3])**4)
         return ret
 
     ################################################################################
@@ -183,6 +194,17 @@ class FollowerAviary(BaseRLAviary):
     
     ################################################################################
 
+    def update_waypoints(self):
+        drone_position = self._getDroneStateVector(0)[0:3]
+        current_waypoint = self.waypoint_buffer[self.current_waypoint_idx]
+        if np.linalg.norm(drone_position - current_waypoint) < .1:
+            # replace reached waypoint with the waypoint that follows after all waypoints in the buffer
+            next_waypoint = self.trajectory.get_waypoint((self.current_waypoint_idx + len(self.waypoint_buffer)) % len(self.trajectory))
+            self.waypoint_buffer[self.current_waypoint_idx] = next_waypoint
+            # set next waypoint
+            self.current_waypoint_idx = (self.current_waypoint_idx + 1) % self.WAYPOINT_BUFFER_SIZE
+
+
     def _computeObs(self):
         """Returns the current observation of the environment.
 
@@ -218,7 +240,10 @@ class FollowerAviary(BaseRLAviary):
             #### Add action buffer to observation #######################
             for i in range(self.ACTION_BUFFER_SIZE):
                 ret = np.hstack([ret, np.array(self.action_buffer[i])])
-            ret = np.hstack([ret, self.waypoint_buffer])
+            
+            #### Add future waypoints to observation
+            self.update_waypoints()
+            ret = np.hstack([ret, self.waypoint_buffer.reshape(1, -1)])
             return ret
         else:
             print("[ERROR] in BaseRLAviary._computeObs()")

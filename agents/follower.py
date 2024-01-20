@@ -51,7 +51,7 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER, gui=DEFAULT_GUI, plot=True, record_
     train_env = make_vec_env(
         FollowerAviary,
         env_kwargs=dict(obs=DEFAULT_OBS, act=DEFAULT_ACT),
-        n_envs=1,
+        n_envs=20,
         seed=0
     )
     eval_env = FollowerAviary(obs=DEFAULT_OBS, act=DEFAULT_ACT)
@@ -69,7 +69,7 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER, gui=DEFAULT_GUI, plot=True, record_
     )
 
     #### Target cumulative rewards (problem-dependent) ##########
-    target_reward = 474.15
+    target_reward = 1e3
     callback_on_best = StopTrainingOnRewardThreshold(
         reward_threshold=target_reward,
         verbose=1
@@ -82,10 +82,10 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER, gui=DEFAULT_GUI, plot=True, record_
         log_path=filename+'/',
         eval_freq=int(1000),
         deterministic=True,
-        render=False
+        render=True
     )
     model.learn(
-        total_timesteps=int(1e7) if local else int(1e2), # shorter training in GitHub Actions pytest
+        total_timesteps=int(5e5) if local else int(1e2), # shorter training in GitHub Actions pytest
         callback=eval_callback,
         log_interval=100
     )
@@ -117,13 +117,13 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER, gui=DEFAULT_GUI, plot=True, record_
     model = PPO.load(path)
 
     #### Show (and record a video of) the model's performance ##
-    test_env = HoverAviary(
+    test_env = FollowerAviary(
         gui=gui,
         obs=DEFAULT_OBS,
         act=DEFAULT_ACT,
         record=record_video
     )
-    test_env_nogui = HoverAviary(obs=DEFAULT_OBS, act=DEFAULT_ACT)
+    test_env_nogui = FollowerAviary(obs=DEFAULT_OBS, act=DEFAULT_ACT)
     logger = Logger(logging_freq_hz=int(test_env.CTRL_FREQ),
         num_drones=1,
         output_folder=output_folder,
