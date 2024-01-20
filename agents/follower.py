@@ -39,8 +39,8 @@ DEFAULT_RECORD_VIDEO = False
 DEFAULT_OUTPUT_FOLDER = 'results'
 
 DEFAULT_OBS = ObservationType('kin') # 'kin' or 'rgb'
-DEFAULT_ACT = ActionType('one_d_rpm') # 'rpm' or 'pid' or 'vel' or 'one_d_rpm' or 'one_d_pid'
-DEFAULT_AGENTS = 2
+DEFAULT_ACT = ActionType('vel') # 'rpm' or 'pid' or 'vel' or 'one_d_rpm' or 'one_d_pid'
+DEFAULT_AGENTS = 1
 
 def run(output_folder=DEFAULT_OUTPUT_FOLDER, gui=DEFAULT_GUI, plot=True, record_video=DEFAULT_RECORD_VIDEO, local=True):
 
@@ -51,7 +51,7 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER, gui=DEFAULT_GUI, plot=True, record_
     train_env = make_vec_env(
         FollowerAviary,
         env_kwargs=dict(obs=DEFAULT_OBS, act=DEFAULT_ACT),
-        n_envs=20,
+        n_envs=1,
         seed=0
     )
     eval_env = FollowerAviary(obs=DEFAULT_OBS, act=DEFAULT_ACT)

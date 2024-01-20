@@ -1,7 +1,11 @@
-import numpy as np
-
 from gym_pybullet_drones.envs.BaseRLAviary import BaseRLAviary
 from gym_pybullet_drones.utils.enums import DroneModel, Physics, ActionType, ObservationType
+
+import numpy as np
+import pybullet as p
+from gymnasium import spaces
+
+from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
 
 class FollowerAviary(BaseRLAviary):
     """Single agent RL problem: hover at position."""
@@ -50,20 +54,24 @@ class FollowerAviary(BaseRLAviary):
         """
         self.TARGET_POS = np.array([0,0,1])
         self.EPISODE_LEN_SEC = 8
-        super().__init__(drone_model=drone_model,
-                         num_drones=1,
-                         initial_xyzs=initial_xyzs,
-                         initial_rpys=initial_rpys,
-                         physics=physics,
-                         pyb_freq=pyb_freq,
-                         ctrl_freq=ctrl_freq,
-                         gui=gui,
-                         record=record,
-                         obs=obs,
-                         act=act
-                         )
+        self.NUM_DRONES = 1
+        self.WAYPOINT_BUFFER_SIZE = 3 # how many steps into future to interpolate
+        self.waypoint_buffer = np.zeros((self.WAYPOINT_BUFFER_SIZE,3)).reshape(1, -1)
+        super().__init__(
+            drone_model=drone_model,
+            num_drones=1,
+            initial_xyzs=initial_xyzs,
+            initial_rpys=initial_rpys,
+            physics=physics,
+            pyb_freq=pyb_freq,
+            ctrl_freq=ctrl_freq,
+            gui=gui,
+            record=record,
+            obs=obs,
+            act=act
+        )
 
-    ################################################################################
+
     
     def _computeReward(self):
         """Computes the current reward value.
@@ -130,3 +138,87 @@ class FollowerAviary(BaseRLAviary):
 
         """
         return {"answer": 42} #### Calculated by the Deep Thought supercomputer in 7.5M years
+
+    def _observationSpace(self):
+        """Returns the observation space of the environment.
+
+        Returns
+        -------
+        ndarray
+            A Box() of shape (NUM_DRONES,H,W,4) or (NUM_DRONES,12) depending on the observation type.
+
+        """
+        if self.OBS_TYPE == ObservationType.RGB:
+            return spaces.Box(low=0,
+                              high=255,
+                              shape=(self.NUM_DRONES, self.IMG_RES[1], self.IMG_RES[0], 4), dtype=np.uint8)
+        elif self.OBS_TYPE == ObservationType.KIN:
+            # OBS SPACE OF SIZE 12
+            # Observation vector - X Y Z Q1 Q2 Q3 Q4 R P Y VX VY VZ WX WY WZ
+            lo = -np.inf
+            hi = np.inf
+            obs_lower_bound = np.array([[lo,lo,0, lo,lo,lo,lo,lo,lo,lo,lo,lo]])
+            obs_upper_bound = np.array([[hi,hi,hi,hi,hi,hi,hi,hi,hi,hi,hi,hi]])
+            #Add action buffer to observation space
+            act_lo = -1
+            act_hi = +1
+            for i in range(self.ACTION_BUFFER_SIZE):
+                if self.ACT_TYPE in [ActionType.RPM, ActionType.VEL]:
+                    obs_lower_bound = np.hstack([obs_lower_bound, np.array([[act_lo,act_lo,act_lo,act_lo]])])
+                    obs_upper_bound = np.hstack([obs_upper_bound, np.array([[act_hi,act_hi,act_hi,act_hi]])])
+                elif self.ACT_TYPE==ActionType.PID:
+                    obs_lower_bound = np.hstack([obs_lower_bound, np.array([[act_lo,act_lo,act_lo]])])
+                    obs_upper_bound = np.hstack([obs_upper_bound, np.array([[act_hi,act_hi,act_hi]])])
+                elif self.ACT_TYPE in [ActionType.ONE_D_RPM, ActionType.ONE_D_PID]:
+                    obs_lower_bound = np.hstack([obs_lower_bound, np.array([[act_lo]])])
+                    obs_upper_bound = np.hstack([obs_upper_bound, np.array([[act_hi]])])
+
+            # Add future waypoints to observation space
+            obs_lower_bound = np.hstack([obs_lower_bound, np.array([[lo,lo,lo] for i in range(self.WAYPOINT_BUFFER_SIZE)]).reshape(1, -1)])
+            obs_upper_bound = np.hstack([obs_upper_bound, np.array([[hi,hi,hi] for i in range(self.WAYPOINT_BUFFER_SIZE)]).reshape(1, -1)])
+
+            return spaces.Box(low=obs_lower_bound, high=obs_upper_bound, dtype=np.float32)
+        else:
+            print("[ERROR] in BaseRLAviary._observationSpace()")
+    
+    ################################################################################
+
+    def _computeObs(self):
+        """Returns the current observation of the environment.
+
+        Returns
+        -------
+        ndarray
+            A Box() of shape (NUM_DRONES,H,W,4) or (NUM_DRONES,12) depending on the observation type.
+
+        """
+        if self.OBS_TYPE == ObservationType.RGB:
+            if self.step_counter%self.IMG_CAPTURE_FREQ == 0:
+                for i in range(self.NUM_DRONES):
+                    self.rgb[i], self.dep[i], self.seg[i] = self._getDroneImages(i,
+                                                                                 segmentation=False
+                                                                                 )
+                    #### Printing observation to PNG frames example ############
+                    if self.RECORD:
+                        self._exportImage(img_type=ImageType.RGB,
+                                          img_input=self.rgb[i],
+                                          path=self.ONBOARD_IMG_PATH+"drone_"+str(i),
+                                          frame_num=int(self.step_counter/self.IMG_CAPTURE_FREQ)
+                                          )
+            return np.array([self.rgb[i] for i in range(self.NUM_DRONES)]).astype('float32')
+        elif self.OBS_TYPE == ObservationType.KIN:
+            ############################################################
+            #### OBS SPACE OF SIZE 12
+            obs_12 = np.zeros((self.NUM_DRONES,12))
+            for i in range(self.NUM_DRONES):
+                #obs = self._clipAndNormalizeState(self._getDroneStateVector(i))
+                obs = self._getDroneStateVector(i)
+                obs_12[i, :] = np.hstack([obs[0:3], obs[7:10], obs[10:13], obs[13:16]]).reshape(12,)
+            ret = np.array([obs_12[i, :]]).astype('float32')
+            #### Add action buffer to observation #######################
+            for i in range(self.ACTION_BUFFER_SIZE):
+                ret = np.hstack([ret, np.array(self.action_buffer[i])])
+            ret = np.hstack([ret, self.waypoint_buffer])
+            return ret
+        else:
+            print("[ERROR] in BaseRLAviary._computeObs()")
