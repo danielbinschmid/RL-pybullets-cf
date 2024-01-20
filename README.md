@@ -124,3 +124,4 @@ pytest tests/
 
 - Repository must be pulled recursively. After `git clone`, run `git submodule --init --recursive`
 - This repository runs a local pip package in folder [trajectories/trajectory_generation](./trajectories/trajectory_generation). This pip package must be kept up to date with `pip install ./trajectories/trajectory_generation` after every change in the folder [trajectories/trajectory_generation](./trajectories/trajectory_generation).
+- Git pull must be executed for submodules as well. Run `git pull --recurse-submodules` instead of standard 'git pull'. You can also configure your Git settings to always update submodules upon pulling: `git config --global submodule.recurse true`
