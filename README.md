@@ -118,3 +118,9 @@ pytest tests/
 
 -----
 > University of Toronto's [Dynamic Systems Lab](https://github.com/utiasDSL) / [Vector Institute](https://github.com/VectorInstitute) / University of Cambridge's [Prorok Lab](https://github.com/proroklab)
+
+
+## Dev 
+
+- Repository must be pulled recursively. After `git clone`, run `git submodule --init --recursive`
+- This repository runs a local pip package in folder [trajectories/trajectory_generation](./trajectories/trajectory_generation). This pip package must be kept up to date with `pip install ./trajectories/trajectory_generation` after every change in the folder [trajectories/trajectory_generation](./trajectories/trajectory_generation).
