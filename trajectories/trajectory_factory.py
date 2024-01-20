@@ -4,6 +4,7 @@ from .polynomial_discretized_trajectory import PolynomialDiscretizedTrajectory
 from .waypoint import Waypoint
 from typing import List
 import numpy as np 
+from .discretized_trajectory import DiscretizedTrajectory, DiscreteTrajectoryFromContinuous
 from typing import Optional
 
 class WAYPOINT_BOOTH:
@@ -57,6 +58,14 @@ class TrajectoryFactory:
         return SquareLinearTrajectory(
             square_scale, time_scale
         )
+
+    @classmethod 
+    def get_linear_square_traj_discretized(cls, n_discretization_level: int=100, square_scale: float=1, time_scale: float=1) -> DiscretizedTrajectory:
+          sq_traj = SquareLinearTrajectory(
+              square_scale, time_scale
+          )
+          discr_traj = DiscreteTrajectoryFromContinuous(sq_traj, n_discretization_level) 
+          return discr_traj
 
     @classmethod
     def get_pol_discretized_trajectory(cls, t_waypoints: Optional[List[Waypoint]]=None, n_points_discretization_level: Optional[int] = None) -> PolynomialDiscretizedTrajectory:

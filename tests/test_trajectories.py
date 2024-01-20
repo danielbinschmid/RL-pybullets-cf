@@ -21,6 +21,10 @@ def test_square_trajectory():
     # assert interpolation
     assert(trajectory.get_waypoint(0.1).coordinate == np.asarray([0.4, 0., 1.], dtype=np.float32)).all()
 
+def test_discretized():
+    from trajectories import TrajectoryFactory 
+    trajectory = TrajectoryFactory.get_linear_square_traj_discretized()
+
 def test_pol_trajectory():
     from trajectories import TrajectoryFactory, Waypoint
     import numpy as np
