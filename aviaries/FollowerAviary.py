@@ -6,24 +6,26 @@ import pybullet as p
 from gymnasium import spaces
 
 from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
+from trajectories.square_linear_trajectory import SquareLinearTrajectory
 
 class FollowerAviary(BaseRLAviary):
     """Single agent RL problem: hover at position."""
 
     ################################################################################
     
-    def __init__(self,
-                 drone_model: DroneModel=DroneModel.CF2X,
-                 initial_xyzs=None,
-                 initial_rpys=None,
-                 physics: Physics=Physics.PYB,
-                 pyb_freq: int = 240,
-                 ctrl_freq: int = 30,
-                 gui=False,
-                 record=False,
-                 obs: ObservationType=ObservationType.KIN,
-                 act: ActionType=ActionType.RPM
-                 ):
+    def __init__(
+        self,
+        drone_model: DroneModel=DroneModel.CF2X,
+        initial_xyzs=None,
+        initial_rpys=None,
+        physics: Physics=Physics.PYB,
+        pyb_freq: int = 240,
+        ctrl_freq: int = 30,
+        gui=False,
+        record=False,
+        obs: ObservationType=ObservationType.KIN,
+        act: ActionType=ActionType.RPM
+    ):
         """Initialization of a single agent RL environment.
 
         Using the generic single agent RL superclass.
@@ -57,6 +59,8 @@ class FollowerAviary(BaseRLAviary):
         self.NUM_DRONES = 1
         self.WAYPOINT_BUFFER_SIZE = 3 # how many steps into future to interpolate
         self.waypoint_buffer = np.zeros((self.WAYPOINT_BUFFER_SIZE,3)).reshape(1, -1)
+        self.trajectory = SquareLinearTrajectory()
+
         super().__init__(
             drone_model=drone_model,
             num_drones=1,
