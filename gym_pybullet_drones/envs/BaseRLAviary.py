@@ -278,7 +278,7 @@ class BaseRLAviary(BaseAviary):
             ############################################################
         else:
             print("[ERROR] in BaseRLAviary._observationSpace()")
-    
+
     ################################################################################
 
     def _computeObs(self):
