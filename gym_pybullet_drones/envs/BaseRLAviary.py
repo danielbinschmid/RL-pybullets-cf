@@ -70,7 +70,7 @@ class BaseRLAviary(BaseAviary):
         self.OBS_TYPE = obs
         self.ACT_TYPE = act
         #### Create integrated controllers #########################
-        if act in [ActionType.PID, ActionType.VEL, ActionType.ONE_D_PID]:
+        if act in [ActionType.PID, ActionType.VEL, ActionType.ONE_D_PID, ActionType.ATTITUDE_PID]:
             os.environ['KMP_DUPLICATE_LIB_OK']='True'
             if drone_model in [DroneModel.CF2X, DroneModel.CF2P]:
                 self.ctrl = [DSLPIDControl(drone_model=DroneModel.CF2X) for i in range(num_drones)]
@@ -138,7 +138,7 @@ class BaseRLAviary(BaseAviary):
             A Box of size NUM_DRONES x 4, 3, or 1, depending on the action type.
 
         """
-        if self.ACT_TYPE in [ActionType.RPM, ActionType.VEL]:
+        if self.ACT_TYPE in [ActionType.RPM, ActionType.VEL, ActionType.ATTITUDE_PID]:
             size = 4
         elif self.ACT_TYPE==ActionType.PID:
             size = 3
@@ -233,6 +233,22 @@ class BaseRLAviary(BaseAviary):
                                                         target_pos=state[0:3]+0.1*np.array([0,0,target[0]])
                                                         )
                 rpm[k,:] = res
+            elif self.ACT_TYPE == ActionType.ATTITUDE_PID:
+                state = self._getDroneStateVector(k)
+                target_thrust = float(target[0])
+                target_thrust = np.array(self.HOVER_RPM * (1+0.05*target_thrust))
+                target_rpy_rates = target[1:4]
+                res, _, _ = self.ctrl[k].computeControl(
+                    control_timestep=self.CTRL_TIMESTEP,
+                    cur_pos=state[0:3],
+                    cur_quat=state[3:7],
+                    cur_vel=state[10:13],
+                    cur_ang_vel=state[13:16],
+                    target_pos=state[0:3],
+                    target_rpy_rates=target_rpy_rates,
+                    target_thrust=target_thrust
+                )
+                rpm[k,:] = res
             else:
                 print("[ERROR] in BaseRLAviary._preprocessAction()")
                 exit()
@@ -265,7 +281,7 @@ class BaseRLAviary(BaseAviary):
             act_lo = -1
             act_hi = +1
             for i in range(self.ACTION_BUFFER_SIZE):
-                if self.ACT_TYPE in [ActionType.RPM, ActionType.VEL]:
+                if self.ACT_TYPE in [ActionType.RPM, ActionType.VEL, ActionType.ATTITUDE_PID]:
                     obs_lower_bound = np.hstack([obs_lower_bound, np.array([[act_lo,act_lo,act_lo,act_lo] for i in range(self.NUM_DRONES)])])
                     obs_upper_bound = np.hstack([obs_upper_bound, np.array([[act_hi,act_hi,act_hi,act_hi] for i in range(self.NUM_DRONES)])])
                 elif self.ACT_TYPE==ActionType.PID:
@@ -274,6 +290,9 @@ class BaseRLAviary(BaseAviary):
                 elif self.ACT_TYPE in [ActionType.ONE_D_RPM, ActionType.ONE_D_PID]:
                     obs_lower_bound = np.hstack([obs_lower_bound, np.array([[act_lo] for i in range(self.NUM_DRONES)])])
                     obs_upper_bound = np.hstack([obs_upper_bound, np.array([[act_hi] for i in range(self.NUM_DRONES)])])
+                else:
+                    print("[ERROR] in BaseRLAviary._observationSpace()")
+                    exit()
             return spaces.Box(low=obs_lower_bound, high=obs_upper_bound, dtype=np.float32)
             ############################################################
         else:

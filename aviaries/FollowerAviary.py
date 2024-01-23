@@ -175,7 +175,7 @@ class FollowerAviary(BaseRLAviary):
             act_lo = -1
             act_hi = +1
             for i in range(self.ACTION_BUFFER_SIZE):
-                if self.ACT_TYPE in [ActionType.RPM, ActionType.VEL]:
+                if self.ACT_TYPE in [ActionType.RPM, ActionType.VEL, ActionType.ATTITUDE_PID]:
                     obs_lower_bound = np.hstack([obs_lower_bound, np.array([[act_lo,act_lo,act_lo,act_lo]])])
                     obs_upper_bound = np.hstack([obs_upper_bound, np.array([[act_hi,act_hi,act_hi,act_hi]])])
                 elif self.ACT_TYPE==ActionType.PID:

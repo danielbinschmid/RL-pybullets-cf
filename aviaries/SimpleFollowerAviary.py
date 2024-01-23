@@ -3,6 +3,8 @@ import numpy as np
 from gym_pybullet_drones.envs.BaseRLAviary import BaseRLAviary
 from gym_pybullet_drones.utils.enums import DroneModel, Physics, ActionType, ObservationType
 from trajectories import DiscretizedTrajectory
+from typing import Dict, Any
+import pybullet as p
 
 class SimpleFollowerAviary(BaseRLAviary):
     """Single agent RL problem: hover at position."""
@@ -51,7 +53,7 @@ class SimpleFollowerAviary(BaseRLAviary):
 
         """
         self.INIT_XYZS = initial_xyzs
-        self.TARGET_POS = np.array([0,0.5,0.5])
+        self.TARGET_POS = target_trajectory[0].coordinate # np.array([0,0.5,0.5])
         self.EPISODE_LEN_SEC = 8
         super().__init__(drone_model=drone_model,
                          num_drones=1,
@@ -121,15 +123,55 @@ class SimpleFollowerAviary(BaseRLAviary):
 
     ################################################################################
     
-    def _computeInfo(self):
-        """Computes the current info dict(s).
+    def _computeInfo(self) -> Dict[str, Any]:
+        """
+        Any additional computation in simulation loop. 
+        Returns interesting information to the user as a dictionary.
+        """
+        self._vis()
 
-        Unused.
+        return {"answer": 42} #### Calculated by the Deep Thought supercomputer in 7.5M years
+
+    def _vis(self):
+        """
+        Additional visualization in target environmnet.
+        """
+        # target waypoint visualization
+        sphere_visual = p.createVisualShape(shapeType=p.GEOM_SPHERE,
+                                                radius=0.03,
+                                                rgbaColor=[0, 1, 0, 1],
+                                                physicsClientId=self.CLIENT)
+        target = p.createMultiBody(baseMass=0.0,
+                                    baseCollisionShapeIndex=-1,
+                                    baseVisualShapeIndex=sphere_visual,
+                                    basePosition=self.TARGET_POS,
+                                    useMaximalCoordinates=False,
+                                    physicsClientId=self.CLIENT)
+        p.changeVisualShape(target,
+                            -1,
+                            rgbaColor=[0.9, 0.3, 0.3, 1],
+                            physicsClientId=self.CLIENT)
+
+    def _computeObs(self):
+        """Returns the current observation of the environment.
 
         Returns
         -------
-        dict[str, int]
-            Dummy value.
+        ndarray
+            A Box() of shape (NUM_DRONES,H,W,4) or (NUM_DRONES,12) depending on the observation type.
 
         """
-        return {"answer": 42} #### Calculated by the Deep Thought supercomputer in 7.5M years
+
+        # position, velocity and acceleration observation
+        obs_12 = np.zeros((self.NUM_DRONES,12))
+        for i in range(self.NUM_DRONES):
+            obs = self._getDroneStateVector(i)
+            obs_12[i, :] = np.hstack([obs[0:3], obs[7:10], obs[10:13], obs[13:16]]).reshape(12,)
+        ret = np.array([obs_12[i, :] for i in range(self.NUM_DRONES)]).astype('float32')
+
+        # action buffer
+        for i in range(self.ACTION_BUFFER_SIZE):
+            ret = np.hstack([ret, np.array([self.action_buffer[i][j, :] for j in range(self.NUM_DRONES)])])
+
+        return ret
+
