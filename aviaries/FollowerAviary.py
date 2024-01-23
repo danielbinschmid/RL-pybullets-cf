@@ -54,8 +54,8 @@ class FollowerAviary(BaseRLAviary):
             The type of action space (1 or 3D; RPMS, thurst and torques, or waypoint with PID control)
 
         """
+        self.EPISODE_LEN_SEC = 8
         
-        self.EPISODE_LEN_SEC = 16
         self.NUM_DRONES = 1
         self.WAYPOINT_BUFFER_SIZE = 3 # how many steps into future to interpolate
 
