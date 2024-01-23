@@ -39,6 +39,7 @@ class ActionType(Enum):
     VEL = "vel"                 # Velocity input (using PID control)
     ONE_D_RPM = "one_d_rpm"     # 1D (identical input to all motors) with RPMs
     ONE_D_PID = "one_d_pid"     # 1D (identical input to all motors) with PID control
+    ATTITUDE_PID = "attitude-pid" # attitude-pid control (only using attitude PID control). Action values is a four-dimensional vector: (thrust, roll rate, pitch rate, yaw rate).
 
 ################################################################################
 
