@@ -33,11 +33,11 @@ from gym_pybullet_drones.envs.MultiHoverAviary import MultiHoverAviary
 from aviaries.FollowerAviary import FollowerAviary
 from gym_pybullet_drones.utils.utils import sync, str2bool
 from gym_pybullet_drones.utils.enums import ObservationType, ActionType
+from trajectories import Waypoint, TrajectoryFactory
 
 DEFAULT_GUI = True
 DEFAULT_RECORD_VIDEO = False
 DEFAULT_OUTPUT_FOLDER = 'results'
-
 DEFAULT_OBS = ObservationType('kin') # 'kin' or 'rgb'
 DEFAULT_ACT = ActionType('vel') # 'rpm' or 'pid' or 'vel' or 'one_d_rpm' or 'one_d_pid'
 DEFAULT_AGENTS = 1
@@ -52,10 +52,21 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER, timesteps=DEFAULT_TIMESTEPS, gui=DE
     train_env = make_vec_env(
         FollowerAviary,
         env_kwargs=dict(obs=DEFAULT_OBS, act=DEFAULT_ACT),
-        n_envs=20,
+        n_envs=1,
         seed=0
     )
-    eval_env = FollowerAviary(obs=DEFAULT_OBS, act=DEFAULT_ACT)
+    initial_xyzs = np.array([[0.,     0.,     0.5]])
+
+    # example trajectory
+    t_wps = TrajectoryFactory.waypoints_from_numpy(
+        np.asarray([
+            [0, 0, 0.5],
+            [0, 0.5, 0.5],
+            [0.5, 0.5, 0.5]
+        ])
+    )
+    t_traj = TrajectoryFactory.get_discr_from_wps(t_wps)
+    eval_env = FollowerAviary(target_trajectory=t_traj, obs=DEFAULT_OBS, act=DEFAULT_ACT, initial_xyzs=initial_xyzs)
 
     #### Check the environment's spaces ########################
     print('[INFO] Action space:', train_env.action_space)
@@ -165,5 +176,6 @@ if __name__ == '__main__':
     parser.add_argument('--output_folder',      default=DEFAULT_OUTPUT_FOLDER, type=str,           help='Folder where to save logs (default: "results")', metavar='')
     parser.add_argument('--timesteps',          default=DEFAULT_TIMESTEPS,     type=int,      help='number of train timesteps before stopping', metavar='')
     ARGS = parser.parse_args()
-    print(ARGS)
+    os.makedirs(DEFAULT_OUTPUT_FOLDER, exist_ok=True)
+
     run(**vars(ARGS))

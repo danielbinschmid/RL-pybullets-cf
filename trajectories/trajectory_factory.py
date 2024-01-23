@@ -4,47 +4,49 @@ from .polynomial_discretized_trajectory import PolynomialDiscretizedTrajectory
 from .waypoint import Waypoint
 from typing import List
 import numpy as np 
-from .discretized_trajectory import DiscretizedTrajectory, DiscreteTrajectoryFromContinuous
+from .discretized_trajectory import DiscretizedTrajectory, DiscreteTrajectoryFromContinuous, DiscretizedTrajectoryFromWaypoints
 from typing import Optional
 
 class WAYPOINT_BOOTH:
     T_WAYPOINTS_POLY = [
          Waypoint(
+              coordinate=np.asarray([0, 0, 0.25]),
+              timestamp=1
+         ),
+         Waypoint(
+              coordinate=np.asarray([0, 0, 0.25]),
+              timestamp=2
+         ),
+         Waypoint(
+              coordinate=np.asarray([0, 0, 0.5]),
+              timestamp=3
+         ),
+         Waypoint(
+              coordinate=np.asarray([0, 0, 0.25]),
+              timestamp=4
+         ),
+         Waypoint(
+              coordinate=np.asarray([0, 0, 0]),
+              timestamp=5
+         )
+    ]
+    T_WAYPOINTS_POLY_ALL = [
+         Waypoint(
               coordinate=np.asarray([0, 0, 0]),
               timestamp=0
          ),
          Waypoint(
-              coordinate=np.asarray([0, 1, 0.25]),
+              coordinate=np.asarray([0, 0.5, 0.15]),
+              timestamp=1
+         ),
+         Waypoint(
+              coordinate=np.asarray([0.25, 0.25, 0.075]),
               timestamp=2
          ),
          Waypoint(
-              coordinate=np.asarray([1, 1, 0.5]),
-              timestamp=4
-         ),
-         Waypoint(
-              coordinate=np.asarray([1, 0, 0.75]),
-              timestamp=8
-         ),
-         Waypoint(
-              coordinate=np.asarray([0, 0, 1]),
-              timestamp=10
-         ), 
-         Waypoint(
-              coordinate=np.asarray([1,1,1]),
-              timestamp=12
-         ),
-         Waypoint(
-              coordinate=np.asarray([1, 0, 0.75]),
-              timestamp=14
-         ),
-         Waypoint(
-              coordinate=np.asarray([1, 1, 0.5]),
-              timestamp=16
-         ),
-         Waypoint(
               coordinate=np.asarray([0, 0, 0]),
-              timestamp=18
-         ),
+              timestamp=3
+         )
     ]
 
 
@@ -71,7 +73,7 @@ class TrajectoryFactory:
     def get_pol_discretized_trajectory(cls, t_waypoints: Optional[List[Waypoint]]=None, n_points_discretization_level: Optional[int] = None) -> PolynomialDiscretizedTrajectory:
         
         if t_waypoints is None:
-            t_waypoints = WAYPOINT_BOOTH.T_WAYPOINTS_POLY
+            t_waypoints = WAYPOINT_BOOTH.T_WAYPOINTS_POLY_ALL
         if n_points_discretization_level is None: 
             n_points_discretization_level = 100
         
@@ -79,4 +81,32 @@ class TrajectoryFactory:
             t_waypoints,
             n_points_discretization_level
         )
-
+    
+    @classmethod
+    def get_simple_smooth_trajectory(cls, starting_waypoint: Waypoint, t_waypoints: Optional[List[Waypoint]]=None, n_points_discretization_level: Optional[int] = None) -> DiscretizedTrajectory:
+        if t_waypoints is None:
+            t_waypoints = [starting_waypoint] + WAYPOINT_BOOTH.T_WAYPOINTS_POLY
+        if n_points_discretization_level is None: 
+            n_points_discretization_level = 100
+        
+        return PolynomialDiscretizedTrajectory(
+            t_waypoints,
+            n_points_discretization_level
+        ) 
+    
+    @classmethod
+    def get_discr_from_wps(cls, t_waypoints: List[Waypoint]) -> DiscretizedTrajectory:
+        traj = DiscretizedTrajectoryFromWaypoints(t_waypoints)        
+        return traj
+    
+    @classmethod
+    def waypoints_from_numpy(cls, t_waypoints: np.ndarray) -> List[Waypoint]:
+        res = [
+            Waypoint(
+                t_waypoints[idx],
+                timestamp=idx
+            )
+            for idx 
+            in range(len(t_waypoints))
+        ]
+        return res

@@ -6,7 +6,7 @@ import pybullet as p
 from gymnasium import spaces
 
 from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
-from trajectories import TrajectoryFactory
+from trajectories import TrajectoryFactory, DiscretizedTrajectory, Waypoint
 
 class FollowerAviary(BaseRLAviary):
     """Single agent RL problem: hover at position."""
@@ -14,8 +14,9 @@ class FollowerAviary(BaseRLAviary):
     ################################################################################
     
     def __init__(self,
+                 target_trajectory: DiscretizedTrajectory,
                  drone_model: DroneModel=DroneModel.CF2X,
-                 initial_xyzs=None,
+                 initial_xyzs: np.ndarray = np.array([[0.,     0.,     0.1125]]),
                  initial_rpys=None,
                  physics: Physics=Physics.PYB,
                  pyb_freq: int = 240,
@@ -33,7 +34,7 @@ class FollowerAviary(BaseRLAviary):
         ----------
         drone_model : DroneModel, optional
             The desired drone type (detailed in an .urdf file in folder `assets`).
-        initial_xyzs: ndarray | None, optional
+        initial_xyzs: ndarray
             (NUM_DRONES, 3)-shaped array containing the initial XYZ position of the drones.
         initial_rpys: ndarray | None, optional
             (NUM_DRONES, 3)-shaped array containing the initial orientations of the drones (in radians).
@@ -53,11 +54,15 @@ class FollowerAviary(BaseRLAviary):
             The type of action space (1 or 3D; RPMS, thurst and torques, or waypoint with PID control)
 
         """
-        self.TARGET_POS = np.array([0,0,1])
-        self.EPISODE_LEN_SEC = 16
+        self.EPISODE_LEN_SEC = 8
+        
         self.NUM_DRONES = 1
         self.WAYPOINT_BUFFER_SIZE = 3 # how many steps into future to interpolate
-        self.trajectory = TrajectoryFactory.get_linear_square_traj_discretized()
+
+        self.INIT_XYZS = initial_xyzs
+        self.trajectory = target_trajectory
+        self.TARGET_POS = self.trajectory[len(self.trajectory) - 1]
+
         self.n_waypoints = len(self.trajectory)
         self.current_waypoint_idx = 0
 
@@ -90,10 +95,15 @@ class FollowerAviary(BaseRLAviary):
             The reward.
 
         """
+        alpha = .5
+        beta = 0.0025
+
         state = self._getDroneStateVector(0)
         waypoint = self.waypoint_buffer[self.current_waypoint_idx]
-        ret = max(0, 2 - np.linalg.norm(waypoint-state[0:3])**4)
-        return ret
+        reached_pos_reward = 1 if np.linalg.norm(waypoint-state[0:3]) < 0.001 else 0
+        distance_reward = max(0, 2 - np.linalg.norm(waypoint-state[0:3])**4)
+        distance_reward = alpha * distance_reward
+        return alpha * reached_pos_reward + beta * distance_reward
 
     ################################################################################
 
@@ -107,7 +117,7 @@ class FollowerAviary(BaseRLAviary):
 
         """
         state = self._getDroneStateVector(0)
-        if np.linalg.norm(self.TARGET_POS-state[0:3]) < .0001:
+        if np.linalg.norm(self.TARGET_POS.coordinate-state[0:3]) < .0001:
             return True
         else:
             return False
@@ -199,9 +209,10 @@ class FollowerAviary(BaseRLAviary):
     def update_waypoints(self):
         drone_position = self._getDroneStateVector(0)[0:3]
         current_waypoint = self.waypoint_buffer[self.current_waypoint_idx]
-        if np.linalg.norm(drone_position - current_waypoint) < .1:
+        if np.linalg.norm(drone_position - current_waypoint) < .001:
             # replace reached waypoint with the waypoint that follows after all waypoints in the buffer
-            next_waypoint = self.trajectory.get_waypoint((self.current_waypoint_idx + len(self.waypoint_buffer)) % len(self.trajectory))
+            next_waypoint_idx = int(self.current_waypoint_idx + len(self.waypoint_buffer)) % len(self.trajectory)
+            next_waypoint = self.trajectory[next_waypoint_idx].coordinate
             self.waypoint_buffer[self.current_waypoint_idx] = next_waypoint
             # set next waypoint
             self.current_waypoint_idx = (self.current_waypoint_idx + 1) % self.WAYPOINT_BUFFER_SIZE
