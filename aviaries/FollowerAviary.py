@@ -86,8 +86,6 @@ class FollowerAviary(BaseRLAviary):
             act=act
         )
 
-
-    
     def _computeReward(self):
         """Computes the current reward value.
 
@@ -108,7 +106,7 @@ class FollowerAviary(BaseRLAviary):
         return alpha * reached_pos_reward + beta * distance_reward
 
     ################################################################################
-    
+
     def _computeTerminated(self):
         """Computes the current done value.
 
@@ -204,6 +202,10 @@ class FollowerAviary(BaseRLAviary):
     
     ################################################################################
 
+    def step(self,action):
+       
+        return super().step(action)
+
     def update_waypoints(self):
         drone_position = self._getDroneStateVector(0)[0:3]
         current_waypoint = self.waypoint_buffer[self.current_waypoint_idx]
@@ -214,6 +216,23 @@ class FollowerAviary(BaseRLAviary):
             self.waypoint_buffer[self.current_waypoint_idx] = next_waypoint
             # set next waypoint
             self.current_waypoint_idx = (self.current_waypoint_idx + 1) % self.WAYPOINT_BUFFER_SIZE
+        
+        if self.GUI:
+            print('current waypoint:', current_waypoint)
+            sphere_visual = p.createVisualShape(shapeType=p.GEOM_SPHERE,
+                                                radius=0.03,
+                                                rgbaColor=[0, 1, 0, 1],
+                                                physicsClientId=self.CLIENT)
+            target = p.createMultiBody(baseMass=0.0,
+                                        baseCollisionShapeIndex=-1,
+                                        baseVisualShapeIndex=sphere_visual,
+                                        basePosition=current_waypoint,
+                                        useMaximalCoordinates=False,
+                                        physicsClientId=self.CLIENT)
+            p.changeVisualShape(target,
+                                -1,
+                                rgbaColor=[0.9, 0.3, 0.3, 1],
+                                physicsClientId=self.CLIENT)
 
 
     def _computeObs(self):

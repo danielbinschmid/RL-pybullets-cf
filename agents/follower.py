@@ -41,8 +41,9 @@ DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_OBS = ObservationType('kin') # 'kin' or 'rgb'
 DEFAULT_ACT = ActionType('vel') # 'rpm' or 'pid' or 'vel' or 'one_d_rpm' or 'one_d_pid'
 DEFAULT_AGENTS = 1
+DEFAULT_TIMESTEPS = 20000
 
-def run(output_folder=DEFAULT_OUTPUT_FOLDER, gui=DEFAULT_GUI, plot=True, record_video=DEFAULT_RECORD_VIDEO, local=True):
+def run(output_folder=DEFAULT_OUTPUT_FOLDER, timesteps=DEFAULT_TIMESTEPS, gui=DEFAULT_GUI, plot=True, record_video=DEFAULT_RECORD_VIDEO, local=True):
 
     filename = os.path.join(output_folder, 'save-'+datetime.now().strftime("%m.%d.%Y_%H.%M.%S"))
     if not os.path.exists(filename):
@@ -70,6 +71,7 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER, gui=DEFAULT_GUI, plot=True, record_
     #### Check the environment's spaces ########################
     print('[INFO] Action space:', train_env.action_space)
     print('[INFO] Observation space:', train_env.observation_space)
+    print('[INFO] Number of timesteps:', timesteps)
 
     #### Train the model #######################################
     model = PPO(
@@ -93,10 +95,10 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER, gui=DEFAULT_GUI, plot=True, record_
         log_path=filename+'/',
         eval_freq=int(1000),
         deterministic=True,
-        render=True
+        render=False
     )
     model.learn(
-        total_timesteps=int(1e4) if local else int(1e2), # shorter training in GitHub Actions pytest
+        total_timesteps=timesteps,
         callback=eval_callback,
         log_interval=100
     )
@@ -155,23 +157,8 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER, gui=DEFAULT_GUI, plot=True, record_
                                         deterministic=True
                                         )
         obs, reward, terminated, truncated, info = test_env.step(action)
-        obs2 = obs.squeeze()
-        act2 = action.squeeze()
-        print("Obs:", obs, "\tAction", action, "\tReward:", reward, "\tTerminated:", terminated, "\tTruncated:", truncated)
-        if DEFAULT_OBS == ObservationType.KIN:
-            logger.log(drone=0,
-                timestamp=i/test_env.CTRL_FREQ,
-                state=np.hstack(
-                    [obs2[0:3],
-                    np.zeros(4),
-                    obs2[3:15],
-                    act2
-                    ]
-                ),
-                control=np.zeros(12)
-            )
-        test_env.render()
-        print(terminated)
+
+        # test_env.render()
         sync(i, start, test_env.CTRL_TIMESTEP)
         if terminated:
             obs = test_env.reset(seed=42, options={})
@@ -180,12 +167,15 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER, gui=DEFAULT_GUI, plot=True, record_
     if plot and DEFAULT_OBS == ObservationType.KIN:
         logger.plot()
 
+
 if __name__ == '__main__':
     #### Define and parse (optional) arguments for the script ##
     parser = argparse.ArgumentParser(description='Single agent reinforcement learning example script')
     parser.add_argument('--gui',                default=DEFAULT_GUI,           type=str2bool,      help='Whether to use PyBullet GUI (default: True)', metavar='')
     parser.add_argument('--record_video',       default=DEFAULT_RECORD_VIDEO,  type=str2bool,      help='Whether to record a video (default: False)', metavar='')
     parser.add_argument('--output_folder',      default=DEFAULT_OUTPUT_FOLDER, type=str,           help='Folder where to save logs (default: "results")', metavar='')
+    parser.add_argument('--timesteps',          default=DEFAULT_TIMESTEPS,     type=int,      help='number of train timesteps before stopping', metavar='')
     ARGS = parser.parse_args()
     os.makedirs(DEFAULT_OUTPUT_FOLDER, exist_ok=True)
+
     run(**vars(ARGS))

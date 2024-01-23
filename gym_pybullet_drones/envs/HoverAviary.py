@@ -79,7 +79,7 @@ class HoverAviary(BaseRLAviary):
         return ret
 
     ################################################################################
-    
+
     def _computeTerminated(self):
         """Computes the current done value.
 
