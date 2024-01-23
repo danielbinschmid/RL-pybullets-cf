@@ -55,22 +55,19 @@ class FollowerAviary(BaseRLAviary):
 
         """
         self.EPISODE_LEN_SEC = 8
-        
         self.NUM_DRONES = 1
-        self.WAYPOINT_BUFFER_SIZE = 3 # how many steps into future to interpolate
 
         self.INIT_XYZS = initial_xyzs
         self.trajectory = target_trajectory
-        self.TARGET_POS = self.trajectory[len(self.trajectory) - 1]
 
         self.n_waypoints = len(self.trajectory)
+        self.WAYPOINT_BUFFER_SIZE = 3 # how many steps into future to interpolate
         self.current_waypoint_idx = 0
+        assert self.WAYPOINT_BUFFER_SIZE < self.n_waypoints, "Buffer size should be smaller than the number of waypoints"
 
         self.waypoint_buffer = np.array(
             [self.trajectory[i].coordinate for i in range(self.WAYPOINT_BUFFER_SIZE)]
         )
-        print('WAYPOINT_BUFFER')
-        print(self.waypoint_buffer)
 
         super().__init__(
             drone_model=drone_model,
@@ -95,15 +92,11 @@ class FollowerAviary(BaseRLAviary):
             The reward.
 
         """
-        alpha = .5
-        beta = 0.0025
 
         state = self._getDroneStateVector(0)
-        waypoint = self.waypoint_buffer[self.current_waypoint_idx]
-        reached_pos_reward = 1 if np.linalg.norm(waypoint-state[0:3]) < 0.001 else 0
-        distance_reward = max(0, 2 - np.linalg.norm(waypoint-state[0:3])**4)
-        distance_reward = alpha * distance_reward
-        return alpha * reached_pos_reward + beta * distance_reward
+        waypoint = self.trajectory[self.current_waypoint_idx]
+        distance_reward = max(0, 2 - np.linalg.norm(waypoint-state[0:3]))
+        return distance_reward
 
     ################################################################################
 
@@ -117,7 +110,7 @@ class FollowerAviary(BaseRLAviary):
 
         """
         state = self._getDroneStateVector(0)
-        if np.linalg.norm(self.TARGET_POS.coordinate-state[0:3]) < .0001:
+        if np.linalg.norm(self.trajectory[-1] - state[0:3]) < .0001:
             return True
         else:
             return False
