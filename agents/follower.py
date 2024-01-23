@@ -33,6 +33,7 @@ from gym_pybullet_drones.envs.MultiHoverAviary import MultiHoverAviary
 from aviaries.FollowerAviary import FollowerAviary
 from gym_pybullet_drones.utils.utils import sync, str2bool
 from gym_pybullet_drones.utils.enums import ObservationType, ActionType
+from trajectories import Waypoint, TrajectoryFactory
 
 DEFAULT_GUI = True
 DEFAULT_RECORD_VIDEO = False
@@ -53,8 +54,18 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER, gui=DEFAULT_GUI, plot=True, record_
         n_envs=1,
         seed=0
     )
-    initial_xyzs = np.array([[0.,     0.,     0.1125]])
-    eval_env = FollowerAviary(obs=DEFAULT_OBS, act=DEFAULT_ACT, initial_xyzs=initial_xyzs)
+    initial_xyzs = np.array([[0.,     0.,     0.5]])
+
+    # example trajectory
+    t_wps = TrajectoryFactory.waypoints_from_numpy(
+        np.asarray([
+            [0, 0, 0.5],
+            [0, 0.5, 0.5],
+            [0.5, 0.5, 0.5]
+        ])
+    )
+    t_traj = TrajectoryFactory.get_discr_from_wps(t_wps)
+    eval_env = FollowerAviary(target_trajectory=t_traj, obs=DEFAULT_OBS, act=DEFAULT_ACT, initial_xyzs=initial_xyzs)
 
     #### Check the environment's spaces ########################
     print('[INFO] Action space:', train_env.action_space)

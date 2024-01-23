@@ -60,17 +60,22 @@ def run(
         colab=DEFAULT_COLAB
         ):
     #### Initialize the simulation #############################
-    INIT_XYZS = np.array([[0., 0., 0.1125]])
+    INIT_XYZS = np.array([[0., 0., 0.5]])
     INIT_RPYS = np.array([[0., 0., 0.]])
 
     #### Initialize a polynomial trajectory ####################
-    starting_waypoint = INIT_XYZS[0].copy()
-    starting_waypoint[2] = starting_waypoint[2] + 0.1
-    starting_waypoint = Waypoint(
-        coordinate=starting_waypoint,
-        timestamp=0.0
+    # initial_xyzs = np.array([[0.,     0.,     0.5]])
+
+    # example trajectory
+    t_wps = TrajectoryFactory.waypoints_from_numpy(
+        np.asarray([
+            [0, 0, 0.5],
+            [0, 0.5, 0.5],
+            [0.5, 0.5, 0.5]
+        ])
     )
-    target_trajectory = TrajectoryFactory.get_simple_smooth_trajectory(starting_waypoint)
+    target_trajectory = TrajectoryFactory.get_discr_from_wps(t_wps)
+
     for wp in range(len(target_trajectory)):
         print(target_trajectory[wp].coordinate)
     n_waypoints = len(target_trajectory)

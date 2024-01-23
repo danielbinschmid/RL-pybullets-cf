@@ -6,8 +6,7 @@ import pybullet as p
 from gymnasium import spaces
 
 from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
-from trajectories import TrajectoryFactory
-from trajectories import Waypoint
+from trajectories import TrajectoryFactory, DiscretizedTrajectory, Waypoint
 
 class FollowerAviary(BaseRLAviary):
     """Single agent RL problem: hover at position."""
@@ -15,6 +14,7 @@ class FollowerAviary(BaseRLAviary):
     ################################################################################
     
     def __init__(self,
+                 target_trajectory: DiscretizedTrajectory,
                  drone_model: DroneModel=DroneModel.CF2X,
                  initial_xyzs: np.ndarray = np.array([[0.,     0.,     0.1125]]),
                  initial_rpys=None,
@@ -60,13 +60,7 @@ class FollowerAviary(BaseRLAviary):
         self.WAYPOINT_BUFFER_SIZE = 3 # how many steps into future to interpolate
 
         self.INIT_XYZS = initial_xyzs
-        starting_waypoint = self.INIT_XYZS[0].copy()
-        starting_waypoint[2] = starting_waypoint[2] + 0.1
-        starting_waypoint = Waypoint(
-            coordinate=starting_waypoint,
-            timestamp=0.0
-        )
-        self.trajectory = TrajectoryFactory.get_simple_smooth_trajectory(starting_waypoint, n_points_discretization_level=4)
+        self.trajectory = target_trajectory
         self.TARGET_POS = self.trajectory[len(self.trajectory) - 1]
 
         self.n_waypoints = len(self.trajectory)

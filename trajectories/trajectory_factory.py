@@ -4,7 +4,7 @@ from .polynomial_discretized_trajectory import PolynomialDiscretizedTrajectory
 from .waypoint import Waypoint
 from typing import List
 import numpy as np 
-from .discretized_trajectory import DiscretizedTrajectory, DiscreteTrajectoryFromContinuous
+from .discretized_trajectory import DiscretizedTrajectory, DiscreteTrajectoryFromContinuous, DiscretizedTrajectoryFromWaypoints
 from typing import Optional
 
 class WAYPOINT_BOOTH:
@@ -93,4 +93,20 @@ class TrajectoryFactory:
             t_waypoints,
             n_points_discretization_level
         ) 
-
+    
+    @classmethod
+    def get_discr_from_wps(cls, t_waypoints: List[Waypoint]) -> DiscretizedTrajectory:
+        traj = DiscretizedTrajectoryFromWaypoints(t_waypoints)        
+        return traj
+    
+    @classmethod
+    def waypoints_from_numpy(cls, t_waypoints: np.ndarray) -> List[Waypoint]:
+        res = [
+            Waypoint(
+                t_waypoints[idx],
+                timestamp=idx
+            )
+            for idx 
+            in range(len(t_waypoints))
+        ]
+        return res
