@@ -26,156 +26,171 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
 from stable_baselines3.common.evaluation import evaluate_policy
-
+from aviaries.SimpleFollowerAviary import SimpleFollowerAviary
+from aviaries.FollowerAviary import FollowerAviary
 from gym_pybullet_drones.utils.Logger import Logger
 from gym_pybullet_drones.envs.HoverAviary import HoverAviary
 from gym_pybullet_drones.envs.MultiHoverAviary import MultiHoverAviary
-from aviaries.FollowerAviary import FollowerAviary
 from gym_pybullet_drones.utils.utils import sync, str2bool
 from gym_pybullet_drones.utils.enums import ObservationType, ActionType
-from trajectories import Waypoint, TrajectoryFactory
+from trajectories import TrajectoryFactory, Waypoint, DiscretizedTrajectory
+from agents.test_simple_follower import test_simple_follower
 
 DEFAULT_GUI = True
-DEFAULT_RECORD_VIDEO = False
+DEFAULT_RECORD_VIDEO = True
 DEFAULT_OUTPUT_FOLDER = 'results'
+DEFAULT_COLAB = False
+
 DEFAULT_OBS = ObservationType('kin') # 'kin' or 'rgb'
-DEFAULT_ACT = ActionType('vel') # 'rpm' or 'pid' or 'vel' or 'one_d_rpm' or 'one_d_pid'
-DEFAULT_AGENTS = 1
+DEFAULT_ACT = ActionType('one_d_rpm') # 'rpm' or 'pid' or 'vel' or 'one_d_rpm' or 'one_d_pid'
+DEFAULT_AGENTS = 2
+DEFAULT_MA = False
 DEFAULT_TIMESTEPS = 20000
 
-def run(output_folder=DEFAULT_OUTPUT_FOLDER, timesteps=DEFAULT_TIMESTEPS, gui=DEFAULT_GUI, plot=True, record_video=DEFAULT_RECORD_VIDEO, local=True):
+def run(multiagent=DEFAULT_MA, output_folder=DEFAULT_OUTPUT_FOLDER,
+        gui=DEFAULT_GUI, plot=True, colab=DEFAULT_COLAB,
+        record_video=DEFAULT_RECORD_VIDEO, local=True,
+        timesteps=DEFAULT_TIMESTEPS):
 
+    # CONFIG ##################################################
+
+    # hyperparams
+    total_timesteps = 1e7
+
+    # target trajectory
+    t_wps = TrajectoryFactory.waypoints_from_numpy(
+        np.asarray([
+            [0, 1, 1],
+            [1, 1, 1],
+            [1, 1, 1],
+            [1, 1, 1],
+        ])
+    )
+    initial_xyzs = np.array([[0.,     0.,     0.1]])
+    t_traj = TrajectoryFactory.get_discr_from_wps(t_wps)
+
+    # output path location
     filename = os.path.join(output_folder, 'save-'+datetime.now().strftime("%m.%d.%Y_%H.%M.%S"))
     if not os.path.exists(filename):
         os.makedirs(filename+'/')
 
+    # target reward 
+    if DEFAULT_ACT == ActionType.ONE_D_RPM:
+        target_reward = 474.15 if not multiagent else 949.5
+    else:
+        target_reward = 467. if not multiagent else 920.
+
+    # #########################################################
+    
+    # ENVS ####################################################
+        
+    if multiagent:
+        raise NotImplementedError("not implemented")
+    
     train_env = make_vec_env(
         FollowerAviary,
-        env_kwargs=dict(obs=DEFAULT_OBS, act=DEFAULT_ACT),
-        n_envs=1,
+        env_kwargs=dict(
+            target_trajectory=t_traj,
+            initial_xyzs=initial_xyzs,
+            obs=DEFAULT_OBS, 
+            act=DEFAULT_ACT
+        ),
+        n_envs=20,
         seed=0
     )
-    initial_xyzs = np.array([[0.,     0.,     0.5]])
-
-    # example trajectory
-    t_wps = TrajectoryFactory.waypoints_from_numpy(
-        np.asarray([
-            [0, 0, 0.5],
-            [0, 0.5, 0.5],
-            [0.5, 0.5, 0.5]
-        ])
+    eval_env = FollowerAviary(
+        target_trajectory=t_traj,
+        initial_xyzs=initial_xyzs,
+        obs=DEFAULT_OBS, 
+        act=DEFAULT_ACT
     )
-    t_traj = TrajectoryFactory.get_discr_from_wps(t_wps)
-    eval_env = FollowerAviary(target_trajectory=t_traj, obs=DEFAULT_OBS, act=DEFAULT_ACT, initial_xyzs=initial_xyzs)
-
-    #### Check the environment's spaces ########################
-    print('[INFO] Action space:', train_env.action_space)
-    print('[INFO] Observation space:', train_env.observation_space)
-    print('[INFO] Number of timesteps:', timesteps)
-
-    #### Train the model #######################################
-    model = PPO(
-        'MlpPolicy',
-        train_env,
-        # tensorboard_log=filename+'/tb/',
-        verbose=1
-    )
-
-    #### Target cumulative rewards (problem-dependent) ##########
-    target_reward = 1e3
-    callback_on_best = StopTrainingOnRewardThreshold(
-        reward_threshold=target_reward,
-        verbose=1
-    )
-    eval_callback = EvalCallback(
-        eval_env,
-        callback_on_new_best=callback_on_best,
-        verbose=1,
-        best_model_save_path=filename+'/',
-        log_path=filename+'/',
-        eval_freq=int(1000),
-        deterministic=True,
-        render=False
-    )
-    model.learn(
-        total_timesteps=timesteps,
-        callback=eval_callback,
-        log_interval=100
-    )
-
-    #### Save the model ########################################
-    model.save(filename+'/final_model.zip')
-    print(filename)
-
-    #### Print training progression ############################
-    with np.load(filename+'/evaluations.npz') as data:
-        for j in range(data['timesteps'].shape[0]):
-            print(str(data['timesteps'][j])+","+str(data['results'][j][0]))
-
-    ############################################################
-    ############################################################
-    ############################################################
-    ############################################################
-    ############################################################
-
-    if local:
-        input("Press Enter to continue...")
-
-    # if os.path.isfile(filename+'/final_model.zip'):
-    #     path = filename+'/final_model.zip'
-    if os.path.isfile(filename+'/best_model.zip'):
-        path = filename+'/best_model.zip'
-    else:
-        print("[ERROR]: no model under the specified path", filename)
-    model = PPO.load(path)
-
-    #### Show (and record a video of) the model's performance ##
     test_env = FollowerAviary(
+        target_trajectory=t_traj,
+        initial_xyzs=initial_xyzs,
         gui=gui,
         obs=DEFAULT_OBS,
         act=DEFAULT_ACT,
         record=record_video
     )
-    test_env_nogui = FollowerAviary(obs=DEFAULT_OBS, act=DEFAULT_ACT)
-    logger = Logger(logging_freq_hz=int(test_env.CTRL_FREQ),
-        num_drones=1,
-        output_folder=output_folder,
-        colab=False
+    test_env_nogui = FollowerAviary(
+        target_trajectory=t_traj,
+        initial_xyzs=initial_xyzs,
+        obs=DEFAULT_OBS, 
+        act=DEFAULT_ACT
     )
 
-    mean_reward, std_reward = evaluate_policy(
-        model,
-        test_env_nogui,
-        n_eval_episodes=10
+    # #########################################################
+
+    # SETUP ###################################################
+
+    # model
+    model = PPO('MlpPolicy',
+                train_env,
+                # tensorboard_log=filename+'/tb/',
+                verbose=1)
+
+    # callbacks
+    callback_on_best = StopTrainingOnRewardThreshold(
+        reward_threshold=target_reward,
+        verbose=1
     )
-    print("\n\n\nMean reward ", mean_reward, " +- ", std_reward, "\n\n")
+    eval_callback = EvalCallback(eval_env,
+                                 callback_on_new_best=callback_on_best,
+                                 verbose=1,
+                                 best_model_save_path=filename+'/',
+                                 log_path=filename+'/',
+                                 eval_freq=int(1000),
+                                 deterministic=True,
+                                 render=False)
+    
+    # ##########################################################
 
-    obs, info = test_env.reset(seed=42, options={})
-    start = time.time()
-    for i in range((test_env.EPISODE_LEN_SEC+2)*test_env.CTRL_FREQ):
-        action, _states = model.predict(obs,
-                                        deterministic=True
-                                        )
-        obs, reward, terminated, truncated, info = test_env.step(action)
+    print('[INFO] Action space:', train_env.action_space)
+    print('[INFO] Observation space:', train_env.observation_space)
+    print('[INFO] Number of timesteps:', timesteps)
 
-        # test_env.render()
-        sync(i, start, test_env.CTRL_TIMESTEP)
-        if terminated:
-            obs = test_env.reset(seed=42, options={})
-    test_env.close()
+    # TRAIN ####################################################
 
-    if plot and DEFAULT_OBS == ObservationType.KIN:
-        logger.plot()
+    # fit
+    model.learn(total_timesteps=timesteps,
+                callback=eval_callback,
+                log_interval=100)
+    
+    # save model
+    model.save(filename+'/final_model.zip')
+    print(filename)
 
+    # print training progression 
+    with np.load(filename+'/evaluations.npz') as data:
+        for j in range(data['timesteps'].shape[0]):
+            print(str(data['timesteps'][j])+","+str(data['results'][j][0]))
+    
+    # ##########################################################
+
+    # TEST #####################################################
+
+    test_simple_follower(
+        local=local,
+        filename=filename,
+        test_env_nogui=test_env_nogui,
+        test_env=test_env,
+        output_folder=output_folder
+    )
+
+    # ##########################################################
+
+
+    
 
 if __name__ == '__main__':
     #### Define and parse (optional) arguments for the script ##
     parser = argparse.ArgumentParser(description='Single agent reinforcement learning example script')
+    parser.add_argument('--multiagent',         default=DEFAULT_MA,            type=str2bool,      help='Whether to use example LeaderFollower instead of Hover (default: False)', metavar='')
     parser.add_argument('--gui',                default=DEFAULT_GUI,           type=str2bool,      help='Whether to use PyBullet GUI (default: True)', metavar='')
     parser.add_argument('--record_video',       default=DEFAULT_RECORD_VIDEO,  type=str2bool,      help='Whether to record a video (default: False)', metavar='')
     parser.add_argument('--output_folder',      default=DEFAULT_OUTPUT_FOLDER, type=str,           help='Folder where to save logs (default: "results")', metavar='')
-    parser.add_argument('--timesteps',          default=DEFAULT_TIMESTEPS,     type=int,      help='number of train timesteps before stopping', metavar='')
+    parser.add_argument('--colab',              default=DEFAULT_COLAB,         type=bool,          help='Whether example is being run by a notebook (default: "False")', metavar='')
+    parser.add_argument('--timesteps',          default=DEFAULT_TIMESTEPS,     type=int,           help='number of train timesteps before stopping', metavar='')
     ARGS = parser.parse_args()
-    os.makedirs(DEFAULT_OUTPUT_FOLDER, exist_ok=True)
 
     run(**vars(ARGS))
