@@ -45,7 +45,7 @@ DEFAULT_OBS = ObservationType('kin') # 'kin' or 'rgb'
 DEFAULT_ACT = ActionType('rpm') # 'rpm' or 'pid' or 'vel' or 'one_d_rpm' or 'one_d_pid'
 DEFAULT_AGENTS = 1
 DEFAULT_MA = False
-DEFAULT_TIMESTEPS = 8e5
+DEFAULT_TIMESTEPS = 1.3e6
 
 def run(multiagent=DEFAULT_MA, output_folder=DEFAULT_OUTPUT_FOLDER,
         gui=DEFAULT_GUI, plot=True, colab=DEFAULT_COLAB,

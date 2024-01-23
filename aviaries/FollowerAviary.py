@@ -58,7 +58,7 @@ class FollowerAviary(BaseRLAviary):
         self.NUM_DRONES = 1
 
         self.INIT_XYZS = initial_xyzs
-        self.trajectory = target_trajectory
+        self.trajectory = [x.coordinate for x in target_trajectory]
 
         self.n_waypoints = len(self.trajectory)
         self.WAYPOINT_BUFFER_SIZE = 3 # how many steps into future to interpolate
@@ -66,7 +66,7 @@ class FollowerAviary(BaseRLAviary):
         assert self.WAYPOINT_BUFFER_SIZE < self.n_waypoints, "Buffer size should be smaller than the number of waypoints"
 
         self.waypoint_buffer = np.array(
-            [self.trajectory[i].coordinate for i in range(self.WAYPOINT_BUFFER_SIZE)]
+            [self.trajectory[i] for i in range(self.WAYPOINT_BUFFER_SIZE)]
         )
 
         super().__init__(
@@ -205,7 +205,7 @@ class FollowerAviary(BaseRLAviary):
         if np.linalg.norm(drone_position - current_waypoint) < .001:
             # replace reached waypoint with the waypoint that follows after all waypoints in the buffer
             next_waypoint_idx = int(self.current_waypoint_idx + len(self.waypoint_buffer)) % len(self.trajectory)
-            next_waypoint = self.trajectory[next_waypoint_idx].coordinate
+            next_waypoint = self.trajectory[next_waypoint_idx]
             self.waypoint_buffer[self.current_waypoint_idx] = next_waypoint
             # set next waypoint
             self.current_waypoint_idx = (self.current_waypoint_idx + 1) % self.WAYPOINT_BUFFER_SIZE
