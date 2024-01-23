@@ -22,7 +22,7 @@ sys.path.append("..")
 import time
 import argparse
 import numpy as np
-from trajectories import TrajectoryFactory
+from trajectories import TrajectoryFactory, Waypoint
 
 from gym_pybullet_drones.utils.enums import DroneModel, Physics
 from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
@@ -60,11 +60,19 @@ def run(
         colab=DEFAULT_COLAB
         ):
     #### Initialize the simulation #############################
-    INIT_XYZS = np.array([[0., 0., 0.5]])
+    INIT_XYZS = np.array([[0., 0., 0.1125]])
     INIT_RPYS = np.array([[0., 0., 0.]])
 
     #### Initialize a polynomial trajectory ####################
-    target_trajectory = TrajectoryFactory.get_pol_discretized_trajectory()
+    starting_waypoint = INIT_XYZS[0].copy()
+    starting_waypoint[2] = starting_waypoint[2] + 0.1
+    starting_waypoint = Waypoint(
+        coordinate=starting_waypoint,
+        timestamp=0.0
+    )
+    target_trajectory = TrajectoryFactory.get_simple_smooth_trajectory(starting_waypoint)
+    for wp in range(len(target_trajectory)):
+        print(target_trajectory[wp].coordinate)
     n_waypoints = len(target_trajectory)
     cur_waypoint_idx = 0
 
@@ -98,6 +106,11 @@ def run(
     #### Run the simulation
     action = np.zeros((num_drones,4))
     START = time.time()
+
+    final_coordinate = target_trajectory[len(target_trajectory) - 1].coordinate
+
+    done = False
+    # print(final_coordinate)
     for i in range(int(1e5)):
 
         #### Step the simulation ###################################
@@ -115,12 +128,19 @@ def run(
 
         #### Go to the next way point and loop #####################
         position = obs[0][0:3]
-        
+        distance2final = np.linalg.norm(final_coordinate - position)
         distance = np.linalg.norm(target_position - position)
         velocity = np.linalg.norm(obs[0][10:13])
-        if distance < 0.1:
+        
+        if distance2final < 0.1 and cur_waypoint_idx >= len(target_trajectory) - 5:
+            done = True
+            
+        if distance < 0.1 and not done:
             cur_waypoint_idx = (cur_waypoint_idx + 1) % n_waypoints
 
+        
+        # if distance2final < 0.1:
+        #     break
         ##### Log the simulation ####################################
 
         #### Printout

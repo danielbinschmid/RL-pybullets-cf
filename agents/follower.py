@@ -37,7 +37,6 @@ from gym_pybullet_drones.utils.enums import ObservationType, ActionType
 DEFAULT_GUI = True
 DEFAULT_RECORD_VIDEO = False
 DEFAULT_OUTPUT_FOLDER = 'results'
-
 DEFAULT_OBS = ObservationType('kin') # 'kin' or 'rgb'
 DEFAULT_ACT = ActionType('vel') # 'rpm' or 'pid' or 'vel' or 'one_d_rpm' or 'one_d_pid'
 DEFAULT_AGENTS = 1
@@ -51,10 +50,11 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER, gui=DEFAULT_GUI, plot=True, record_
     train_env = make_vec_env(
         FollowerAviary,
         env_kwargs=dict(obs=DEFAULT_OBS, act=DEFAULT_ACT),
-        n_envs=20,
+        n_envs=1,
         seed=0
     )
-    eval_env = FollowerAviary(obs=DEFAULT_OBS, act=DEFAULT_ACT)
+    initial_xyzs = np.array([[0.,     0.,     0.1125]])
+    eval_env = FollowerAviary(obs=DEFAULT_OBS, act=DEFAULT_ACT, initial_xyzs=initial_xyzs)
 
     #### Check the environment's spaces ########################
     print('[INFO] Action space:', train_env.action_space)
@@ -85,7 +85,7 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER, gui=DEFAULT_GUI, plot=True, record_
         render=True
     )
     model.learn(
-        total_timesteps=int(5e5) if local else int(1e2), # shorter training in GitHub Actions pytest
+        total_timesteps=int(1e4) if local else int(1e2), # shorter training in GitHub Actions pytest
         callback=eval_callback,
         log_interval=100
     )
@@ -176,5 +176,5 @@ if __name__ == '__main__':
     parser.add_argument('--record_video',       default=DEFAULT_RECORD_VIDEO,  type=str2bool,      help='Whether to record a video (default: False)', metavar='')
     parser.add_argument('--output_folder',      default=DEFAULT_OUTPUT_FOLDER, type=str,           help='Folder where to save logs (default: "results")', metavar='')
     ARGS = parser.parse_args()
-
+    os.makedirs(DEFAULT_OUTPUT_FOLDER, exist_ok=True)
     run(**vars(ARGS))
