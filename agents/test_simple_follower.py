@@ -10,8 +10,6 @@ import numpy as np
 from gym_pybullet_drones.utils.utils import sync
 
 def test_simple_follower(local: bool, filename: str, test_env_nogui: SimpleFollowerAviary, test_env: SimpleFollowerAviary, output_folder: str):
-    if local:
-        input("Press Enter to continue...")
 
     # load model    
     if os.path.isfile(filename+'/best_model.zip'):

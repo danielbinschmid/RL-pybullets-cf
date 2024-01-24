@@ -374,4 +374,4 @@ class Logger(object):
                             wspace=0.15,
                             hspace=0.0
                             )
-        plt.savefig(os.path.join('results', 'output_figure.pdf'))
+        plt.savefig(os.path.join(self.OUTPUT_FOLDER, 'output_figure.pdf'))

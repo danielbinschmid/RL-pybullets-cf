@@ -166,6 +166,9 @@ def run(multiagent=DEFAULT_MA, output_folder=DEFAULT_OUTPUT_FOLDER,
 
     # TEST #####################################################
 
+    if local and gui:
+        input("Press Enter to continue...")
+        
     test_simple_follower(
         local=local,
         filename=filename,

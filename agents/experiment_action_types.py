@@ -21,7 +21,7 @@ DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_COLAB = False
 
 DEFAULT_OBS = ObservationType('kin') # 'kin' or 'rgb'
-DEFAULT_ACT = ActionType.ATTITUDE_PID # 'rpm' or 'pid' or 'vel' or 'one_d_rpm' or 'one_d_pid'
+DEFAULT_ACT = ActionType.ONE_D_RPM # 'rpm' or 'pid' or 'vel' or 'one_d_rpm' or 'one_d_pid'
 DEFAULT_AGENTS = 2
 DEFAULT_MA = False
 DEFAULT_TIMESTEPS = 3e5
@@ -29,14 +29,23 @@ DEFAULT_TIMESTEPS = 3e5
 def run(multiagent=DEFAULT_MA, output_folder=DEFAULT_OUTPUT_FOLDER,
         gui=DEFAULT_GUI, plot=True, colab=DEFAULT_COLAB,
         record_video=DEFAULT_RECORD_VIDEO, local=True,
-        timesteps=DEFAULT_TIMESTEPS):
+        timesteps=DEFAULT_TIMESTEPS,
+        action_type: str='rpm'):
 
     # CONFIG ##################################################
-
+    if action_type == 'rpm':
+        action_type = ActionType.RPM
+    elif action_type == 'one_d_rpm':
+        action_type = ActionType.ONE_D_RPM
+    elif action_type == 'attitude':
+        action_type = ActionType.ATTITUDE_PID
+    else:
+        raise ValueError(f'Specified not implemented action type {action_type}.')
+    
     # target trajectory
     t_wps = TrajectoryFactory.waypoints_from_numpy(
         np.asarray([
-            [0, 0.5, 0.5],
+            [0, 0, 1],
         ])
     )
     initial_xyzs = np.array([[0.,     0.,     0.1]])
@@ -48,7 +57,7 @@ def run(multiagent=DEFAULT_MA, output_folder=DEFAULT_OUTPUT_FOLDER,
         os.makedirs(filename+'/')
 
     # target reward 
-    if DEFAULT_ACT == ActionType.ONE_D_RPM:
+    if action_type == ActionType.ONE_D_RPM:
         target_reward = 474.15 if not multiagent else 949.5
     else:
         target_reward = 467. if not multiagent else 920.
@@ -66,7 +75,7 @@ def run(multiagent=DEFAULT_MA, output_folder=DEFAULT_OUTPUT_FOLDER,
             target_trajectory=t_traj,
             initial_xyzs=initial_xyzs,
             obs=DEFAULT_OBS, 
-            act=DEFAULT_ACT
+            act=action_type
         ),
         n_envs=20,
         seed=0
@@ -75,7 +84,7 @@ def run(multiagent=DEFAULT_MA, output_folder=DEFAULT_OUTPUT_FOLDER,
         target_trajectory=t_traj,
         initial_xyzs=initial_xyzs,
         obs=DEFAULT_OBS, 
-        act=DEFAULT_ACT
+        act=action_type
     )
 
     # #########################################################
@@ -133,15 +142,18 @@ def run(multiagent=DEFAULT_MA, output_folder=DEFAULT_OUTPUT_FOLDER,
         initial_xyzs=initial_xyzs,
         gui=gui,
         obs=DEFAULT_OBS,
-        act=DEFAULT_ACT,
+        act=action_type,
         record=record_video
     )
     test_env_nogui = SimpleFollowerAviary(
         target_trajectory=t_traj,
         initial_xyzs=initial_xyzs,
         obs=DEFAULT_OBS, 
-        act=DEFAULT_ACT
+        act=action_type
     )
+
+    if local and gui:
+        input("Press Enter to continue...")
 
     test_simple_follower(
         local=local,
@@ -165,6 +177,7 @@ if __name__ == '__main__':
     parser.add_argument('--output_folder',      default=DEFAULT_OUTPUT_FOLDER, type=str,           help='Folder where to save logs (default: "results")', metavar='')
     parser.add_argument('--colab',              default=DEFAULT_COLAB,         type=bool,          help='Whether example is being run by a notebook (default: "False")', metavar='')
     parser.add_argument('--timesteps',          default=DEFAULT_TIMESTEPS,     type=int,           help='number of train timesteps before stopping', metavar='')
+    parser.add_argument('--action_type',          default=DEFAULT_TIMESTEPS,     type=str,           help='Either "one_d_rpm", "rpm" or "attitude"', metavar='')
     ARGS = parser.parse_args()
 
     run(**vars(ARGS))
