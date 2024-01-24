@@ -14,7 +14,7 @@ mean_reward_progression_1 = rpm_task_up
 mean_reward_progression_2 = one_d_rpm_task_up
 
 # Case 3
-mean_reward_progression_3 = attitude_task_up # [110, 130, 150, 160, 170, 200, 220, 240, 260, 280, 290, 300, 310, 320, 330, 340]
+mean_reward_progression_3 = attitude_task_up 
 
 # Create the plot
 fig, ax1 = plt.subplots(figsize=(10, 6))

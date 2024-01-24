@@ -45,7 +45,7 @@ def run(multiagent=DEFAULT_MA, output_folder=DEFAULT_OUTPUT_FOLDER,
     # target trajectory
     t_wps = TrajectoryFactory.waypoints_from_numpy(
         np.asarray([
-            [0, 0, 1],
+            [0, 0.5, 0.5],
         ])
     )
     initial_xyzs = np.array([[0.,     0.,     0.1]])
