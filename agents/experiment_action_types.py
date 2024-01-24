@@ -58,7 +58,7 @@ def run(multiagent=DEFAULT_MA, output_folder=DEFAULT_OUTPUT_FOLDER,
 
     # target reward 
     if action_type == ActionType.ONE_D_RPM:
-        target_reward = 474.15 if not multiagent else 949.5
+        target_reward = 473.5 if not multiagent else 949.5
     else:
         target_reward = 467. if not multiagent else 920.
 
@@ -92,7 +92,7 @@ def run(multiagent=DEFAULT_MA, output_folder=DEFAULT_OUTPUT_FOLDER,
     # SETUP ###################################################
 
     # model
-    model = PPO('MlpPolicy',
+    model = PPO('MlpPolicy',    
                 train_env,
                 # tensorboard_log=filename+'/tb/',
                 verbose=1)
