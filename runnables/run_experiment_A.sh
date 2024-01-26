@@ -9,7 +9,7 @@ gui="False"
 test="False"
 train="True"
 base_output_folder="exp-A"
-total_runs=1
+total_runs=4
 
 declare -a action_types=("attitude" "rpm")
 declare -a modes=("UP" "DOWN" "SIDEWAYS" "DIAGONAL_UP" "DIAGONAL_DOWN")
