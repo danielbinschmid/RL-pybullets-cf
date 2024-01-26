@@ -5,6 +5,7 @@ from gym_pybullet_drones.utils.enums import DroneModel, Physics, ActionType, Obs
 from trajectories import DiscretizedTrajectory
 from typing import Dict, Any
 import pybullet as p
+from gymnasium import spaces
 
 class SimpleFollowerAviary(BaseRLAviary):
     """Single agent RL problem: hover at position."""
@@ -152,6 +153,50 @@ class SimpleFollowerAviary(BaseRLAviary):
                             rgbaColor=[0.9, 0.3, 0.3, 1],
                             physicsClientId=self.CLIENT)
 
+    def _observationSpace(self):
+        """Returns the observation space of the environment.
+
+        Returns
+        -------
+        ndarray
+            A Box() of shape (NUM_DRONES,H,W,4) or (NUM_DRONES,12) depending on the observation type.
+
+        """
+        if self.OBS_TYPE == ObservationType.RGB:
+            return spaces.Box(low=0,
+                              high=255,
+                              shape=(self.NUM_DRONES, self.IMG_RES[1], self.IMG_RES[0], 4), dtype=np.uint8)
+        elif self.OBS_TYPE == ObservationType.KIN:
+            ############################################################
+            #### OBS SPACE OF SIZE 15
+            #### Observation vector ### X        Y        Z       Q1   Q2   Q3   Q4   R       P       Y       VX       VY       VZ       WX       WY       WZ, TX, TY, TZ
+            lo = -np.inf
+            hi = np.inf
+            obs_lower_bound = np.array([[lo,lo,0, lo,lo,lo,lo,lo,lo,lo,lo,lo, lo, lo, lo] for i in range(self.NUM_DRONES)])
+            obs_upper_bound = np.array([[hi,hi,hi,hi,hi,hi,hi,hi,hi,hi,hi,hi, hi, hi, hi] for i in range(self.NUM_DRONES)])
+            #### Add action buffer to observation space ################
+            act_lo = -1
+            act_hi = +1
+            for i in range(self.ACTION_BUFFER_SIZE):
+                if self.ACT_TYPE in [ActionType.RPM, ActionType.VEL, ActionType.ATTITUDE_PID]:
+                    obs_lower_bound = np.hstack([obs_lower_bound, np.array([[act_lo,act_lo,act_lo,act_lo] for i in range(self.NUM_DRONES)])])
+                    obs_upper_bound = np.hstack([obs_upper_bound, np.array([[act_hi,act_hi,act_hi,act_hi] for i in range(self.NUM_DRONES)])])
+                elif self.ACT_TYPE==ActionType.PID:
+                    obs_lower_bound = np.hstack([obs_lower_bound, np.array([[act_lo,act_lo,act_lo] for i in range(self.NUM_DRONES)])])
+                    obs_upper_bound = np.hstack([obs_upper_bound, np.array([[act_hi,act_hi,act_hi] for i in range(self.NUM_DRONES)])])
+                elif self.ACT_TYPE in [ActionType.ONE_D_RPM, ActionType.ONE_D_PID]:
+                    obs_lower_bound = np.hstack([obs_lower_bound, np.array([[act_lo] for i in range(self.NUM_DRONES)])])
+                    obs_upper_bound = np.hstack([obs_upper_bound, np.array([[act_hi] for i in range(self.NUM_DRONES)])])
+                else:
+                    print("[ERROR] in BaseRLAviary._observationSpace()")
+                    exit()
+            return spaces.Box(low=obs_lower_bound, high=obs_upper_bound, dtype=np.float32)
+            ############################################################
+        else:
+            print("[ERROR] in BaseRLAviary._observationSpace()")
+
+    ################################################################################
+
     def _computeObs(self):
         """Returns the current observation of the environment.
 
@@ -162,11 +207,13 @@ class SimpleFollowerAviary(BaseRLAviary):
 
         """
 
-        # position, velocity and acceleration observation
-        obs_12 = np.zeros((self.NUM_DRONES,12))
+        # position, velocity and acceleration observation, plus target waypoint observation
+        obs_12 = np.zeros((self.NUM_DRONES,15))
         for i in range(self.NUM_DRONES):
             obs = self._getDroneStateVector(i)
-            obs_12[i, :] = np.hstack([obs[0:3], obs[7:10], obs[10:13], obs[13:16]]).reshape(12,)
+            obs_12[i, :12] = np.hstack([obs[0:3], obs[7:10], obs[10:13], obs[13:16]]).reshape(12,)
+            obs_12[i, 12:15] = self.TARGET_POS
+
         ret = np.array([obs_12[i, :] for i in range(self.NUM_DRONES)]).astype('float32')
 
         # action buffer
