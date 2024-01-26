@@ -65,10 +65,7 @@ class FollowerAviary(BaseRLAviary):
         self.current_waypoint_idx = 0
         assert self.WAYPOINT_BUFFER_SIZE < self.n_waypoints, "Buffer size should be smaller than the number of waypoints"
 
-        self.waypoint_buffer = np.array(
-            [self.trajectory[i] for i in range(self.WAYPOINT_BUFFER_SIZE)]
-        )
-
+        self.waypoint_buffer = self.reset_waypoint_buffer()
         super().__init__(
             drone_model=drone_model,
             num_drones=1,
@@ -82,6 +79,12 @@ class FollowerAviary(BaseRLAviary):
             obs=obs,
             act=act
         )
+    
+    def reset_waypoint_buffer(self):
+        return np.array(
+            [self.trajectory[i] for i in range(self.WAYPOINT_BUFFER_SIZE)]
+        )
+
 
     def compute_projection(self, v):
         # get p1, p2
@@ -94,9 +97,8 @@ class FollowerAviary(BaseRLAviary):
 
         # compute projection
         coef = np.dot(v, p2) / np.dot(p2, p2)
-        projected_vector = coef * p2
-        displacement_vector = v - projected_vector
-        return coef, projected_vector, displacement_vector
+        return coef, p2
+
 
     def _computeReward(self):
         """Computes the current reward value.
@@ -116,9 +118,12 @@ class FollowerAviary(BaseRLAviary):
         ):
             return -50
 
-        position_coef, position_projection, position_displacement = self.compute_projection(position[0:3])
-        velocity_coef, velocity_projection, velocity_displacement = self.compute_projection(velocity)
+        position_coef, position_destination, = self.compute_projection(position[0:3])
+        velocity_coef, velocity_destination, = self.compute_projection(velocity)
         k1, k2 = 1, 1
+
+        # clip projection between two waypoints
+        position_displacement = (np.clip(position_coef, 0, 1) * position_destination) - position[0:3]
 
         return max(0, 2-k1*np.linalg.norm(position_displacement)) + k2*velocity_coef
 
@@ -135,6 +140,7 @@ class FollowerAviary(BaseRLAviary):
         """
         state = self._getDroneStateVector(0)
         if np.linalg.norm(self.trajectory[-1] - state[0:3]) < .0001:
+            self.waypoint_buffer = self.reset_waypoint_buffer()
             return True
         else:
             return False
@@ -154,8 +160,10 @@ class FollowerAviary(BaseRLAviary):
         if (abs(state[0]) > 1.5 or abs(state[1]) > 1.5 or state[2] > 2.0 # Truncate when the drone is too far away
              or abs(state[7]) > .4 or abs(state[8]) > .4 # Truncate when the drone is too tilted
         ):
+            self.waypoint_buffer = self.reset_waypoint_buffer()
             return True
         if self.step_counter/self.PYB_FREQ > self.EPISODE_LEN_SEC:
+            self.waypoint_buffer = self.reset_waypoint_buffer()
             return True
         else:
             return False
