@@ -36,7 +36,7 @@ from gym_pybullet_drones.utils.enums import ObservationType, ActionType
 from trajectories import TrajectoryFactory, Waypoint, DiscretizedTrajectory
 from agents.test_simple_follower import test_simple_follower
 
-DEFAULT_GUI = True
+DEFAULT_GUI = False
 DEFAULT_RECORD_VIDEO = False
 DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_COLAB = False
@@ -54,12 +54,10 @@ def run(multiagent=DEFAULT_MA, output_folder=DEFAULT_OUTPUT_FOLDER,
 
     # CONFIG ##################################################
 
-    # hyperparams
-    total_timesteps = 1e7
-
     # target trajectory
     t_wps = TrajectoryFactory.waypoints_from_numpy(
         np.asarray([
+            [0, 0, 0],
             [0, 1, 1],
             [1, 1, 1],
             [1, 1, 1],
