@@ -1,3 +1,5 @@
+from agents.utils.create_env import EnvFactorySimpleFollowerAviary
+from agents.utils.parse_configuration import Configuration
 import os
 from stable_baselines3.common.evaluation import evaluate_policy
 from aviaries.SimpleFollowerAviary import SimpleFollowerAviary
@@ -8,6 +10,7 @@ import time
 from gym_pybullet_drones.utils.enums import ObservationType
 import numpy as np 
 from gym_pybullet_drones.utils.utils import sync
+
 
 def test_simple_follower(local: bool, filename: str, test_env_nogui: SimpleFollowerAviary, test_env: SimpleFollowerAviary, output_folder: str):
 
@@ -60,3 +63,20 @@ def test_simple_follower(local: bool, filename: str, test_env_nogui: SimpleFollo
     test_env.close()
 
     logger.plot()
+
+
+def run_test(config: Configuration, env_factory: EnvFactorySimpleFollowerAviary):
+
+
+    test_env = env_factory.get_test_env_gui()
+    test_env_nogui = env_factory.get_test_env_no_gui()
+
+    test_simple_follower(
+        local=config.local,
+        filename=config.output_path_location,
+        test_env_nogui=test_env_nogui,
+        test_env=test_env,
+        output_folder=config.output_path_location
+    )
+
+
