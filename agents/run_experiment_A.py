@@ -106,7 +106,7 @@ if __name__ == '__main__':
     parser.add_argument('--action_type',          default=DEFAULT_TIMESTEPS,     type=str,           help='Either "one_d_rpm", "rpm" or "attitude"', metavar='')
     parser.add_argument('--train',          default=DEFAULT_TRAIN,     type=str2bool,           help='Whether to train (default: True)', metavar='')
     parser.add_argument('--test',          default=DEFAULT_TEST,     type=str2bool,           help='Whether to test (default: True)', metavar='')
-    parser.add_argument('--mode',          default=DEFAULT_MODE,     type=str2bool,           help='Experiment mode (default "UP")', metavar='')
+    parser.add_argument('--mode',          default=DEFAULT_MODE,     type=str,           help='Experiment mode (default "UP")', metavar='')
     ARGS = parser.parse_args()
 
     run(**vars(ARGS))
