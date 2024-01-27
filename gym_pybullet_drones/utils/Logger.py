@@ -101,7 +101,8 @@ class Logger(object):
 
         """
         if drone < 0 or drone >= self.NUM_DRONES or timestamp < 0 or len(state) != 20 or len(control) != 12:
-            print("[ERROR] in Logger.log(), invalid data")
+            print(f'[ERROR] in Logger.log(), invalid data. len(state)={len(state)}!=20 or len(control){len(control)}!=12.')
+
         current_counter = int(self.counters[drone])
         #### Add rows to the matrices if a counter exceeds their size
         if current_counter >= self.timestamps.shape[1]:
@@ -373,4 +374,4 @@ class Logger(object):
                             wspace=0.15,
                             hspace=0.0
                             )
-        plt.savefig(os.path.join('results', 'output_figure.pdf'))
+        plt.savefig(os.path.join(self.OUTPUT_FOLDER, 'output_figure.pdf'))

@@ -67,8 +67,8 @@ class FollowerAviary(BaseRLAviary):
         self.current_waypoint_idx = self.WAYPOINT_BUFFER_SIZE - 1
         assert self.WAYPOINT_BUFFER_SIZE < self.n_waypoints, "Buffer size should be smaller than the number of waypoints"
 
-        self.waypoint_buffer = self.reset_waypoint_buffer()
-        print(self.waypoint_buffer)
+        self.reset_waypoint_buffer()
+
         super().__init__(
             drone_model=drone_model,
             num_drones=1,
@@ -221,7 +221,7 @@ class FollowerAviary(BaseRLAviary):
             act_lo = -1
             act_hi = +1
             for i in range(self.ACTION_BUFFER_SIZE):
-                if self.ACT_TYPE in [ActionType.RPM, ActionType.VEL]:
+                if self.ACT_TYPE in [ActionType.RPM, ActionType.VEL, ActionType.ATTITUDE_PID]:
                     obs_lower_bound = np.hstack([obs_lower_bound, np.array([[act_lo,act_lo,act_lo,act_lo]])])
                     obs_upper_bound = np.hstack([obs_upper_bound, np.array([[act_hi,act_hi,act_hi,act_hi]])])
                 elif self.ACT_TYPE==ActionType.PID:
@@ -247,13 +247,14 @@ class FollowerAviary(BaseRLAviary):
 
     def update_waypoints(self):
         drone_position = self._getDroneStateVector(0)[0:3]
-        if np.linalg.norm(drone_position - self.waypoint_buffer[1]) < .001:
-            # shift all waypoints to the left and add new waypoint
-            self.current_waypoint_idx += 1
-            new_waypoint = self.trajectory[max(self.current_waypoint_idx, len(self.trajectory) - 1)]
-            print(new_waypoint)
-            self.waypoint_buffer = self.waypoint_buffer[1:] + [new_waypoint]
-            print('whoop')
+        current_waypoint = self.waypoint_buffer[self.current_waypoint_idx]
+        if np.linalg.norm(drone_position - current_waypoint) < .001:
+            # replace reached waypoint with the waypoint that follows after all waypoints in the buffer
+            next_waypoint_idx = int(self.current_waypoint_idx + len(self.waypoint_buffer)) % len(self.trajectory)
+            next_waypoint = self.trajectory[next_waypoint_idx].coordinate
+            self.waypoint_buffer[self.current_waypoint_idx] = next_waypoint
+            # set next waypoint
+            self.current_waypoint_idx = (self.current_waypoint_idx + 1) % self.WAYPOINT_BUFFER_SIZE
         
         if self.GUI:
             print('current waypoint:', self.waypoint_buffer[1])

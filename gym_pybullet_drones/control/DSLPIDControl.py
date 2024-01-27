@@ -88,7 +88,8 @@ class DSLPIDControl(BaseControl):
                        target_pos,
                        target_rpy=np.zeros(3),
                        target_vel=np.zeros(3),
-                       target_rpy_rates=np.zeros(3)
+                       target_rpy_rates=np.zeros(3),
+                       target_thrust: float=None,
                        ):
         """Computes the PID control action (as RPMs) for a single drone.
 
@@ -135,13 +136,25 @@ class DSLPIDControl(BaseControl):
                                                                          target_rpy,
                                                                          target_vel
                                                                          )
-        rpm = self._dslPIDAttitudeControl(control_timestep,
-                                          thrust,
-                                          cur_quat,
-                                          computed_target_rpy,
-                                          target_rpy_rates
-                                          )
         cur_rpy = p.getEulerFromQuaternion(cur_quat)
+        if target_thrust is None:
+            rpm = self._dslPIDAttitudeControl(control_timestep,
+                                            thrust,
+                                            cur_quat,
+                                            computed_target_rpy,
+                                            target_rpy_rates
+                                            )
+        else: 
+            # attitude control
+            target_thrust = (target_thrust - self.PWM2RPM_CONST) / self.PWM2RPM_SCALE
+            rpm = self._dslPIDAttitudeControl(
+                control_timestep=control_timestep,
+                thrust=target_thrust,
+                cur_quat=cur_quat,
+                target_euler=np.array(cur_rpy),
+                target_rpy_rates=target_rpy_rates
+            )
+        
         return rpm, pos_e, computed_target_rpy[2] - cur_rpy[2]
     
     ################################################################################
