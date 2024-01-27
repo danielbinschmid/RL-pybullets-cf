@@ -81,6 +81,7 @@ class UZHAviary(BaseRLAviary):
         self.distances = np.linalg.norm(self.p1 - self.p2, axis=1)
         self.reached_distance = 0
         
+        self.current_projection = np.array([0,0,0])
 
         super().__init__(
             drone_model=drone_model,
@@ -96,6 +97,8 @@ class UZHAviary(BaseRLAviary):
             act=act
         )
         self.visualised = False
+        drone = self._getDroneStateVector(0)[:3]
+        self.projection_id = p.addUserDebugLine(drone, drone, [1,0,0], physicsClientId=self.CLIENT)
 
     
     def reset_vars(self):
@@ -127,9 +130,11 @@ class UZHAviary(BaseRLAviary):
         displacement_size = np.linalg.norm(projections - shifted_position, axis=1)
         closest_point = np.argmin(displacement_size)
 
+        self.current_projection = projections[closest_point]
+
         return np.sum(self.distances[:closest_point]) + np.linalg.norm(projections[closest_point])
     
-    def closes_waypoint_distance(self):
+    def closest_waypoint_distance(self):
         position = self._getDroneStateVector(0)[0:3]
         distances = np.linalg.norm(self.trajectory - position, axis=1)
         return np.min(distances)
@@ -147,7 +152,7 @@ class UZHAviary(BaseRLAviary):
         position = self._getDroneStateVector(0)
 
         reached_distance = self.get_travelled_distance()
-        closest_waypoint_distance = self.closes_waypoint_distance()
+        closest_waypoint_distance = self.closest_waypoint_distance()
 
         r_t = -10 if (abs(position[0]) > 1.5 or abs(position[1]) > 1.5 or position[2] > 2.0 # when the drone is too far away
             or abs(position[7]) > .4 or abs(position[8]) > .4 # when the drone is too tilted
@@ -276,6 +281,8 @@ class UZHAviary(BaseRLAviary):
     def step(self,action):
         # # visualise trajectory - this is cheating, but it works
         if self.GUI and not self.visualised:
+            drone = self._getDroneStateVector(0)[:3]
+            self.projection_id = p.addUserDebugLine(drone, drone, [1,0,0], physicsClientId=self.CLIENT)
             self.visualised = True
             for point in self.trajectory:
                 sphere_visual = p.createVisualShape(
@@ -298,6 +305,9 @@ class UZHAviary(BaseRLAviary):
                     rgbaColor=[0.9, 0.3, 0.3, 1],
                     physicsClientId=self.CLIENT
                 )
+        else:
+            self.projection_id = p.addUserDebugLine(self._getDroneStateVector(0)[0:3], self.current_projection, [1,0,0], physicsClientId=self.CLIENT, replaceItemUniqueId=self.projection_id)
+
         return super().step(action)
 
     def update_waypoints(self):
@@ -310,44 +320,26 @@ class UZHAviary(BaseRLAviary):
 
     def _computeObs(self):
         """Returns the current observation of the environment.
-
         Returns
         -------
         ndarray
             A Box() of shape (NUM_DRONES,H,W,4) or (NUM_DRONES,12) depending on the observation type.
-
         """
 
-        if self.OBS_TYPE == ObservationType.RGB:
-            if self.step_counter%self.IMG_CAPTURE_FREQ == 0:
-                for i in range(self.NUM_DRONES):
-                    self.rgb[i], self.dep[i], self.seg[i] = self._getDroneImages(i,
-                                                                                 segmentation=False
-                                                                                 )
-                    #### Printing observation to PNG frames example ############
-                    if self.RECORD:
-                        self._exportImage(img_type=ImageType.RGB,
-                                          img_input=self.rgb[i],
-                                          path=self.ONBOARD_IMG_PATH+"drone_"+str(i),
-                                          frame_num=int(self.step_counter/self.IMG_CAPTURE_FREQ)
-                                          )
-            return np.array([self.rgb[i] for i in range(self.NUM_DRONES)]).astype('float32')
-        elif self.OBS_TYPE == ObservationType.KIN:
-            ############################################################
-            #### OBS SPACE OF SIZE 12
-            obs_12 = np.zeros((self.NUM_DRONES,12))
-            for i in range(self.NUM_DRONES):
-                #obs = self._clipAndNormalizeState(self._getDroneStateVector(i))
-                obs = self._getDroneStateVector(i)
-                obs_12[i, :] = np.hstack([obs[0:3], obs[7:10], obs[10:13], obs[13:16]]).reshape(12,)
-            ret = np.array([obs_12[i, :]]).astype('float32')
-            #### Add action buffer to observation #######################
-            for i in range(self.ACTION_BUFFER_SIZE):
-                ret = np.hstack([ret, np.array(self.action_buffer[i])])
-            
-            #### Add future waypoints to observation
-            self.update_waypoints()
-            ret = np.hstack([ret, self.trajectory[self.current_waypoint_idx:self.current_waypoint_idx+self.WAYPOINT_BUFFER_SIZE].reshape(1,-1)])
-            return ret
-        else:
-            print("[ERROR] in BaseRLAviary._computeObs()")
+        if self.GUI:
+            self.get_travelled_distance()
+
+        obs_12 = np.zeros((self.NUM_DRONES,12))
+        for i in range(self.NUM_DRONES):
+            #obs = self._clipAndNormalizeState(self._getDroneStateVector(i))
+            obs = self._getDroneStateVector(i)
+            obs_12[i, :] = np.hstack([obs[0:3], obs[7:10], obs[10:13], obs[13:16]]).reshape(12,)
+        ret = np.array([obs_12[i, :]]).astype('float32')
+        #### Add action buffer to observation #######################
+        for i in range(self.ACTION_BUFFER_SIZE):
+            ret = np.hstack([ret, np.array(self.action_buffer[i])])
+        
+        #### Add future waypoints to observation
+        self.update_waypoints()
+        ret = np.hstack([ret, self.trajectory[self.current_waypoint_idx:self.current_waypoint_idx+self.WAYPOINT_BUFFER_SIZE].reshape(1,-1)])
+        return ret

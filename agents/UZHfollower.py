@@ -42,10 +42,11 @@ DEFAULT_OBS = ObservationType('kin') # 'kin' or 'rgb'
 DEFAULT_ACT = ActionType('rpm') # 'rpm' or 'pid' or 'vel' or 'one_d_rpm' or 'one_d_pid'
 DEFAULT_AGENTS = 1
 DEFAULT_MA = False
-DEFAULT_TIMESTEPS = 2e4
+DEFAULT_TIMESTEPS = 3e5
+DEFAULT_N_ENVS = 8
 
 def run(multiagent=DEFAULT_MA, output_folder=DEFAULT_OUTPUT_FOLDER,
-        gui=DEFAULT_GUI, plot=True, colab=DEFAULT_COLAB,
+        gui=DEFAULT_GUI, plot=True, colab=DEFAULT_COLAB, n_envs = DEFAULT_N_ENVS,
         record_video=DEFAULT_RECORD_VIDEO, local=True,
         timesteps=DEFAULT_TIMESTEPS):
 
@@ -60,16 +61,16 @@ def run(multiagent=DEFAULT_MA, output_folder=DEFAULT_OUTPUT_FOLDER,
             [0, 0, 0.6],
             [0, 0, 0.8],
             [0, 0, 1],
-            [0, 0.2, 1],
-            [0, 0.4, 1],
-            [0, 0.6, 1],
-            [0, 0.8, 1],
-            [0, 1, 1],
-            [0.2, 1, 1],
-            [0.4, 1, 1],
-            [0.6, 1, 1],
-            [0.8, 1, 1],
-            [1, 1, 1],
+            # [0, 0.2, 1],
+            # [0, 0.4, 1],
+            # [0, 0.6, 1],
+            # [0, 0.8, 1],
+            # [0, 1, 1],
+            # [0.2, 1, 1],
+            # [0.4, 1, 1],
+            # [0.6, 1, 1],
+            # [0.8, 1, 1],
+            # [1, 1, 1],
         ])
     )
     initial_xyzs = np.array([[0.,     0.,     0.]])
@@ -98,7 +99,7 @@ def run(multiagent=DEFAULT_MA, output_folder=DEFAULT_OUTPUT_FOLDER,
             obs=DEFAULT_OBS, 
             act=DEFAULT_ACT
         ),
-        n_envs=20,
+        n_envs=n_envs,
         seed=0
     )
     eval_env = UZHAviary(
@@ -194,6 +195,7 @@ if __name__ == '__main__':
     parser.add_argument('--output_folder',      default=DEFAULT_OUTPUT_FOLDER, type=str,           help='Folder where to save logs (default: "results")', metavar='')
     parser.add_argument('--colab',              default=DEFAULT_COLAB,         type=bool,          help='Whether example is being run by a notebook (default: "False")', metavar='')
     parser.add_argument('--timesteps',          default=DEFAULT_TIMESTEPS,     type=int,           help='number of train timesteps before stopping', metavar='')
+    parser.add_argument('--n_envs',             default=DEFAULT_N_ENVS,        type=int,           help='number of parallel environments', metavar='')
     ARGS = parser.parse_args()
 
     run(**vars(ARGS))
