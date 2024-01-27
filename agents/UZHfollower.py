@@ -24,7 +24,7 @@ import numpy as np
 import torch
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
+from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold, CallbackList
 from stable_baselines3.common.evaluation import evaluate_policy
 from aviaries.UZHAviary import UZHAviary
 from gym_pybullet_drones.utils.Logger import Logger
@@ -33,7 +33,7 @@ from gym_pybullet_drones.utils.enums import ObservationType, ActionType
 from trajectories import TrajectoryFactory, Waypoint, DiscretizedTrajectory
 from agents.test_policy import test_simple_follower
 
-DEFAULT_GUI = False
+DEFAULT_GUI = True
 DEFAULT_RECORD_VIDEO = False
 DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_COLAB = False
@@ -42,7 +42,7 @@ DEFAULT_OBS = ObservationType('kin') # 'kin' or 'rgb'
 DEFAULT_ACT = ActionType('rpm') # 'rpm' or 'pid' or 'vel' or 'one_d_rpm' or 'one_d_pid'
 DEFAULT_AGENTS = 1
 DEFAULT_MA = False
-DEFAULT_TIMESTEPS = 8e5
+DEFAULT_TIMESTEPS = 2e4
 
 def run(multiagent=DEFAULT_MA, output_folder=DEFAULT_OUTPUT_FOLDER,
         gui=DEFAULT_GUI, plot=True, colab=DEFAULT_COLAB,
@@ -55,13 +55,24 @@ def run(multiagent=DEFAULT_MA, output_folder=DEFAULT_OUTPUT_FOLDER,
     t_wps = TrajectoryFactory.waypoints_from_numpy(
         np.asarray([
             [0, 0, 0],
+            [0, 0, 0.2],
+            [0, 0, 0.4],
+            [0, 0, 0.6],
+            [0, 0, 0.8],
+            [0, 0, 1],
+            [0, 0.2, 1],
+            [0, 0.4, 1],
+            [0, 0.6, 1],
+            [0, 0.8, 1],
             [0, 1, 1],
-            [1, 1, 1],
-            [1, 1, 1],
+            [0.2, 1, 1],
+            [0.4, 1, 1],
+            [0.6, 1, 1],
+            [0.8, 1, 1],
             [1, 1, 1],
         ])
     )
-    initial_xyzs = np.array([[0.,     0.,     0.1]])
+    initial_xyzs = np.array([[0.,     0.,     0.]])
     t_traj = TrajectoryFactory.get_discr_from_wps(t_wps)
 
     # output path location
@@ -91,20 +102,6 @@ def run(multiagent=DEFAULT_MA, output_folder=DEFAULT_OUTPUT_FOLDER,
         seed=0
     )
     eval_env = UZHAviary(
-        target_trajectory=t_traj,
-        initial_xyzs=initial_xyzs,
-        obs=DEFAULT_OBS, 
-        act=DEFAULT_ACT
-    )
-    test_env = UZHAviary(
-        target_trajectory=t_traj,
-        initial_xyzs=initial_xyzs,
-        gui=gui,
-        obs=DEFAULT_OBS,
-        act=DEFAULT_ACT,
-        record=record_video
-    )
-    test_env_nogui = UZHAviary(
         target_trajectory=t_traj,
         initial_xyzs=initial_xyzs,
         obs=DEFAULT_OBS, 
@@ -161,6 +158,20 @@ def run(multiagent=DEFAULT_MA, output_folder=DEFAULT_OUTPUT_FOLDER,
 
     # TEST #####################################################
 
+    test_env = UZHAviary(
+        target_trajectory=t_traj,
+        initial_xyzs=initial_xyzs,
+        gui=gui,
+        obs=DEFAULT_OBS,
+        act=DEFAULT_ACT,
+        record=record_video
+    )
+    test_env_nogui = UZHAviary(
+        target_trajectory=t_traj,
+        initial_xyzs=initial_xyzs,
+        obs=DEFAULT_OBS, 
+        act=DEFAULT_ACT
+    )
     test_simple_follower(
         local=local,
         filename=filename,

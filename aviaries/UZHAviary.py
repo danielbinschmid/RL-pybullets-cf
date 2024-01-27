@@ -60,7 +60,7 @@ class UZHAviary(BaseRLAviary):
 
         self.INIT_XYZS = initial_xyzs
         self.trajectory = np.array([x.coordinate for x in target_trajectory])
-        self.dist_tol = 0.001
+        self.dist_tol = 0.08
 
         self.WAYPOINT_BUFFER_SIZE = 2 # how many steps into future to interpolate
         self.current_waypoint_idx = 0
@@ -80,6 +80,7 @@ class UZHAviary(BaseRLAviary):
         # waypoint distances
         self.distances = np.linalg.norm(self.p1 - self.p2, axis=1)
         self.reached_distance = 0
+        
 
         super().__init__(
             drone_model=drone_model,
@@ -94,6 +95,8 @@ class UZHAviary(BaseRLAviary):
             obs=obs,
             act=act
         )
+        self.visualised = False
+
     
     def reset_vars(self):
         self.current_waypoint_idx = 0
@@ -157,8 +160,9 @@ class UZHAviary(BaseRLAviary):
         k_p = 5
         k_wp = 5 
         k_s = 0.5
-
+        # print(np.round(r_p, 2), np.round(r_wp, 2), np.round(r_s, 2))
         r = r_t + k_p * r_p + k_wp * r_wp + k_s * r_s
+        self.reached_distance = reached_distance
         return r
 
 
@@ -218,7 +222,7 @@ class UZHAviary(BaseRLAviary):
             Dummy value.
 
         """
-        return {"answer": 42} #### Calculated by the Deep Thought supercomputer in 7.5M years
+        return {"distance": self.reached_distance}
 
     def _observationSpace(self):
         """Returns the observation space of the environment.
@@ -270,29 +274,38 @@ class UZHAviary(BaseRLAviary):
     ################################################################################
 
     def step(self,action):
+        # # visualise trajectory - this is cheating, but it works
+        if self.GUI and not self.visualised:
+            self.visualised = True
+            for point in self.trajectory:
+                sphere_visual = p.createVisualShape(
+                    shapeType=p.GEOM_SPHERE,
+                    radius=0.03,
+                    rgbaColor=[0, 1, 0, 1],
+                    physicsClientId=self.CLIENT
+                )
+                target = p.createMultiBody(
+                    baseMass=0.0,
+                    baseCollisionShapeIndex=-1,
+                    baseVisualShapeIndex=sphere_visual,
+                    basePosition=point,
+                    useMaximalCoordinates=False,
+                    physicsClientId=self.CLIENT
+                )
+                p.changeVisualShape(
+                    target,
+                    -1,
+                    rgbaColor=[0.9, 0.3, 0.3, 1],
+                    physicsClientId=self.CLIENT
+                )
         return super().step(action)
 
     def update_waypoints(self):
         drone_position = self._getDroneStateVector(0)[0:3]
         current_waypoint = self.trajectory[self.current_waypoint_idx]
-        if np.linalg.norm(drone_position - current_waypoint) < self.dist_tol:
+        if np.linalg.norm(drone_position - current_waypoint) < 0.1:
             self.current_waypoint_idx += 1
         
-        if self.GUI:
-            sphere_visual = p.createVisualShape(shapeType=p.GEOM_SPHERE,
-                                                radius=0.03,
-                                                rgbaColor=[0, 1, 0, 1],
-                                                physicsClientId=self.CLIENT)
-            target = p.createMultiBody(baseMass=0.0,
-                                        baseCollisionShapeIndex=-1,
-                                        baseVisualShapeIndex=sphere_visual,
-                                        basePosition=self.trajectory[self.current_waypoint_idx],
-                                        useMaximalCoordinates=False,
-                                        physicsClientId=self.CLIENT)
-            p.changeVisualShape(target,
-                                -1,
-                                rgbaColor=[0.9, 0.3, 0.3, 1],
-                                physicsClientId=self.CLIENT)
 
 
     def _computeObs(self):
@@ -304,6 +317,7 @@ class UZHAviary(BaseRLAviary):
             A Box() of shape (NUM_DRONES,H,W,4) or (NUM_DRONES,12) depending on the observation type.
 
         """
+
         if self.OBS_TYPE == ObservationType.RGB:
             if self.step_counter%self.IMG_CAPTURE_FREQ == 0:
                 for i in range(self.NUM_DRONES):
