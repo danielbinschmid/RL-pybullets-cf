@@ -2,6 +2,7 @@ from gym_pybullet_drones.envs.BaseRLAviary import BaseRLAviary
 from gym_pybullet_drones.utils.enums import DroneModel, Physics, ActionType, ObservationType
 
 import numpy as np
+import copy
 import pybullet as p
 from gymnasium import spaces
 
@@ -61,13 +62,12 @@ class FollowerAviary(BaseRLAviary):
         self.trajectory = [x.coordinate for x in target_trajectory]
 
         self.n_waypoints = len(self.trajectory)
-        self.WAYPOINT_BUFFER_SIZE = 3 # how many steps into future to interpolate
-        self.current_waypoint_idx = 0
+        self.t = 0
+        self.WAYPOINT_BUFFER_SIZE = 4 # how many steps into future to interpolate
+        self.current_waypoint_idx = self.WAYPOINT_BUFFER_SIZE - 1
         assert self.WAYPOINT_BUFFER_SIZE < self.n_waypoints, "Buffer size should be smaller than the number of waypoints"
 
-        self.waypoint_buffer = np.array(
-            [self.trajectory[i] for i in range(self.WAYPOINT_BUFFER_SIZE)]
-        )
+        self.reset_waypoint_buffer()
 
         super().__init__(
             drone_model=drone_model,
@@ -82,6 +82,27 @@ class FollowerAviary(BaseRLAviary):
             obs=obs,
             act=act
         )
+    
+    def reset_waypoint_buffer(self):
+        self.current_waypoint_idx = self.WAYPOINT_BUFFER_SIZE - 1
+        self.t = 0
+        return np.array(
+            [self.trajectory[i] for i in range(self.WAYPOINT_BUFFER_SIZE)]
+        )
+
+
+    def compute_projection(self, v):
+        # get p1, p2 (deepcopy)
+        p1 = copy.deepcopy(self.waypoint_buffer[0])
+        p2 = copy.deepcopy(self.waypoint_buffer[1])
+
+        p2 -= p1
+        v -= p1
+
+        # compute projection
+        coef = np.dot(v, p2) / np.dot(p2, p2)
+        return coef, p2
+
 
     def _computeReward(self):
         """Computes the current reward value.
@@ -92,11 +113,28 @@ class FollowerAviary(BaseRLAviary):
             The reward.
 
         """
+        position = self._getDroneStateVector(0)
+        velocity = self._getDroneStateVector(0)[10:13]
 
-        state = self._getDroneStateVector(0)
-        waypoint = self.trajectory[self.current_waypoint_idx]
-        distance_reward = max(0, 2 - np.linalg.norm(waypoint-state[0:3]))
-        return distance_reward
+        # Punish for crashing
+        if (abs(position[0]) > 1.5 or abs(position[1]) > 1.5 or position[2] > 2.0 # when the drone is too far away
+             or abs(position[7]) > .4 or abs(position[8]) > .4 # when the drone is too tilted
+        ):
+            return -50
+
+        if np.linalg.norm(self.trajectory[1] - position[0:3]) < .05:
+            return 2200
+
+        position_coef, position_destination, = self.compute_projection(position[0:3])
+        velocity_coef, velocity_destination, = self.compute_projection(velocity)
+        k1, k2 = 1, 8
+
+        position_displacement = (np.clip(position_coef, 0, 1) * position_destination) - position[0:3]
+
+        displacement_reward = -k1*np.linalg.norm(position_displacement)
+        #print(np.round(displacement_reward, 2), np.round(k2*velocity_coef, 2))
+        velocity_reward = k2*velocity_coef
+        return displacement_reward + velocity_reward
 
     ################################################################################
 
@@ -110,7 +148,8 @@ class FollowerAviary(BaseRLAviary):
 
         """
         state = self._getDroneStateVector(0)
-        if np.linalg.norm(self.trajectory[-1] - state[0:3]) < .0001:
+        if np.linalg.norm(self.trajectory[-1] - state[0:3]) < .05:
+            self.waypoint_buffer = self.rese_waypoint_buffer()
             return True
         else:
             return False
@@ -130,8 +169,10 @@ class FollowerAviary(BaseRLAviary):
         if (abs(state[0]) > 1.5 or abs(state[1]) > 1.5 or state[2] > 2.0 # Truncate when the drone is too far away
              or abs(state[7]) > .4 or abs(state[8]) > .4 # Truncate when the drone is too tilted
         ):
+            self.waypoint_buffer = self.reset_waypoint_buffer()
             return True
         if self.step_counter/self.PYB_FREQ > self.EPISODE_LEN_SEC:
+            self.waypoint_buffer = self.reset_waypoint_buffer()
             return True
         else:
             return False
@@ -167,6 +208,11 @@ class FollowerAviary(BaseRLAviary):
         elif self.OBS_TYPE == ObservationType.KIN:
             # OBS SPACE OF SIZE 12
             # Observation vector - X Y Z Q1 Q2 Q3 Q4 R P Y VX VY VZ WX WY WZ
+            # Position [0:3]
+            # Orientation [3:7]
+            # Roll, Pitch, Yaw [7:10]
+            # Linear Velocity [10:13]
+            # Angular Velocity [13:16]
             lo = -np.inf
             hi = np.inf
             obs_lower_bound = np.array([[lo,lo,0, lo,lo,lo,lo,lo,lo,lo,lo,lo]])
@@ -196,7 +242,7 @@ class FollowerAviary(BaseRLAviary):
     ################################################################################
 
     def step(self,action):
-       
+        self.t += 1
         return super().step(action)
 
     def update_waypoints(self):
@@ -205,13 +251,13 @@ class FollowerAviary(BaseRLAviary):
         if np.linalg.norm(drone_position - current_waypoint) < .001:
             # replace reached waypoint with the waypoint that follows after all waypoints in the buffer
             next_waypoint_idx = int(self.current_waypoint_idx + len(self.waypoint_buffer)) % len(self.trajectory)
-            next_waypoint = self.trajectory[next_waypoint_idx]
+            next_waypoint = self.trajectory[next_waypoint_idx].coordinate
             self.waypoint_buffer[self.current_waypoint_idx] = next_waypoint
             # set next waypoint
             self.current_waypoint_idx = (self.current_waypoint_idx + 1) % self.WAYPOINT_BUFFER_SIZE
         
         if self.GUI:
-            print('current waypoint:', current_waypoint)
+            print('current waypoint:', self.waypoint_buffer[1])
             sphere_visual = p.createVisualShape(shapeType=p.GEOM_SPHERE,
                                                 radius=0.03,
                                                 rgbaColor=[0, 1, 0, 1],
@@ -219,7 +265,7 @@ class FollowerAviary(BaseRLAviary):
             target = p.createMultiBody(baseMass=0.0,
                                         baseCollisionShapeIndex=-1,
                                         baseVisualShapeIndex=sphere_visual,
-                                        basePosition=current_waypoint,
+                                        basePosition=self.waypoint_buffer[1],
                                         useMaximalCoordinates=False,
                                         physicsClientId=self.CLIENT)
             p.changeVisualShape(target,
