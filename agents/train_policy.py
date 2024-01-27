@@ -5,7 +5,7 @@ from agents.utils.create_env import EnvFactorySimpleFollowerAviary
 from agents.utils.parse_configuration import Configuration
 
 
-def run_train(config: Configuration, env_factory: EnvFactorySimpleFollowerAviary):
+def run_train(config: Configuration, env_factory):
 
     # CONFIG ##################################################
 

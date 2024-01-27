@@ -17,7 +17,7 @@ class Configuration:
     n_timesteps: int
     local: bool 
 
-    def __init__(self, action_type: ActionType, initial_xyzs: np.ndarray, t_traj: DiscretizedTrajectory, output_path_location: str, n_timesteps: int, local: bool) -> None:
+    def __init__(self, action_type: ActionType, initial_xyzs: np.ndarray, output_path_location: str, n_timesteps: int, local: bool,  t_traj=None) -> None:
         self.action_type = action_type
         self.initial_xyzs = initial_xyzs
         self.t_traj = t_traj

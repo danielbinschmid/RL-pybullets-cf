@@ -24,7 +24,7 @@ from utils.parse_configuration import parse_config
 # defaults for command line arguments
 DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_GUI = True
-DEFAULT_TIMESTEPS = 3e5
+DEFAULT_TIMESTEPS = 1e6
 DEFAULT_ACTION_TYPE = 'rpm' # 'rpm', 'one_d_rpm', 'attitude'
 DEFAULT_TRAIN = True 
 DEFAULT_TEST = True
@@ -32,6 +32,7 @@ DEFAULT_MODE = "UP" # DOWN, UP, SIDEWAYS, DIAGONAL_UP, DIAGONAL_DOWN
 
 # more configurations
 DEFAULT_OBS = ObservationType('kin') # 'kin' or 'rgb'
+
 
 def parse_mode(mode:str):
     init_wp = None 
@@ -58,7 +59,6 @@ def parse_mode(mode:str):
     return t_wp, init_wp
 
 
-
 def run(output_folder=DEFAULT_OUTPUT_FOLDER,
         gui=DEFAULT_GUI,
         timesteps=DEFAULT_TIMESTEPS,
@@ -69,11 +69,11 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER,
     ):
 
     t_wp, init_wp = parse_mode(mode)
-    
+
     config: Configuration = parse_config(
         t_waypoint=t_wp,
         initial_waypoint=init_wp,
-        action_type=action_type,
+        action_type="rpm",
         output_folder=output_folder,
         n_timesteps=timesteps,
         local=False
@@ -87,7 +87,7 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER,
         n_env_training=20,
         seed=0,
     )
-    
+
     if train:
         run_train(config=config,
                   env_factory=env_factory)
@@ -95,7 +95,7 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER,
     if test:
         run_test(config=config,
                  env_factory=env_factory)
-    
+
 
 if __name__ == '__main__':
     #### Define and parse (optional) arguments for the script ##
