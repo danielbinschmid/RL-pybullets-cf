@@ -15,23 +15,11 @@ This is a minimal working example integrating `gym-pybullet-drones` with
 reinforcement learning library `stable-baselines3`.
 
 """
-import os
-import time
-from datetime import datetime
 import argparse
-import gymnasium as gym
 import numpy as np
-import torch
-from stable_baselines3 import PPO
-from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold, CallbackList
-from stable_baselines3.common.evaluation import evaluate_policy
-from aviaries.UZHAviary import UZHAviary
-from gym_pybullet_drones.utils.Logger import Logger
-from gym_pybullet_drones.utils.utils import sync, str2bool
+from gym_pybullet_drones.utils.utils import str2bool
 from gym_pybullet_drones.utils.enums import ObservationType, ActionType
-from trajectories import TrajectoryFactory, Waypoint, DiscretizedTrajectory
-from agents.test_policy import test_simple_follower
+from trajectories import TrajectoryFactory
 from agents.utils.configuration import Configuration
 from factories.uzh_trajectory_follower_factory import TrajectoryFollowerAviaryFactory
 
@@ -44,7 +32,7 @@ DEFAULT_OBS = ObservationType('kin') # 'kin' or 'rgb'
 DEFAULT_ACT = ActionType.ATTITUDE_PID
 DEFAULT_AGENTS = 1
 DEFAULT_MA = False
-DEFAULT_TIMESTEPS = 1e5
+DEFAULT_TIMESTEPS = 3e5
 DEFAULT_N_ENVS = 5
 DEFAULT_TRAIN = False
 DEFAULT_TEST = True
