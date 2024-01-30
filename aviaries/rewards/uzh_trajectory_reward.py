@@ -60,7 +60,8 @@ class Rewards:
         current_projection = projections[closest_point_idx]
         current_projection_idx = min(closest_point_idx + 1, len(self.trajectory) - 1)
 
-        overall_distance_travelled = np.sum(self.distances[:closest_point_idx]) + np.linalg.norm(projections[closest_point_idx])
+        overall_distance_travelled = np.sum(self.distances[:closest_point_idx]) \
+            + np.linalg.norm(projections[closest_point_idx] - self.p1[closest_point_idx])
 
         return current_projection, current_projection_idx, overall_distance_travelled
     
