@@ -8,7 +8,7 @@ timesteps="10000000"
 gui="True"
 test="True"
 train="False"
-base_output_folder="exp-A"
+base_output_folder="experiment_results/exp-A"
 total_runs=1
 
 declare -a action_types=("attitude" "rpm")
