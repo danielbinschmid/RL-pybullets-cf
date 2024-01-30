@@ -69,7 +69,7 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER,
     ):
 
     t_wp, init_wp = parse_mode(mode)
-    
+    print("output folder ", output_folder)
     config: Configuration = parse_config(
         t_waypoint=t_wp,
         initial_waypoint=init_wp,
