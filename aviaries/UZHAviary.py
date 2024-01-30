@@ -52,7 +52,7 @@ class UZHAviary(BaseRLAviary):
         self.NUM_DRONES = 1
         self.INIT_XYZS = initial_xyzs
         self.trajectory = np.array([x.coordinate for x in target_trajectory])
-        self.WAYPOINT_BUFFER_SIZE = 2 # how many steps into future to interpolate
+        self.WAYPOINT_BUFFER_SIZE = 3 # how many steps into future to interpolate
         
         assert self.WAYPOINT_BUFFER_SIZE < len(self.trajectory), "Buffer size should be smaller than the number of waypoints"
         # ------------------------
@@ -197,6 +197,7 @@ class UZHAviary(BaseRLAviary):
         obs = self._getDroneStateVector(0)
         ret = np.hstack([obs[0:3], obs[7:10], obs[10:13], obs[13:16]]).reshape(1, -1).astype('float32')
 
-        #### Add future waypoints to observation
-        ret = np.hstack([ret, self.trajectory[self.current_projection_idx: self.current_projection_idx+2].reshape(1, -1)])
+        #### Add relative positions of future waypoints to observation
+        future_waypoints_relative = self.trajectory[self.current_projection_idx: self.current_projection_idx+self.WAYPOINT_BUFFER_SIZE] - self.trajectory[self.current_projection_idx]
+        ret = np.hstack([ret, future_waypoints_relative.reshape(1, -1).astype('float32')])
         return ret

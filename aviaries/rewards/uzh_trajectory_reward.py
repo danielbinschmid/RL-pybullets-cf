@@ -40,6 +40,9 @@ class Rewards:
         self.k_p = k_p
         self.k_wp = k_wp
         self.k_s = k_s 
+
+        self.wp_rewards = np.zeros(len(self.trajectory))
+        self.max_reward_distance = 0.13
         
         self.dist_tol = 0.08
         self.cur_reward = RewardDict()
@@ -76,12 +79,12 @@ class Rewards:
 
         return current_projection, current_projection_idx, overall_distance_travelled
     
-    def closest_waypoint_distance(self, position: np.ndarray):
+    def get_closest_waypoint(self, position: np.ndarray):
         """
         Find the closest waypoint to the drone (for waypoint reward)
         """
         distances = np.linalg.norm(self.trajectory - position, axis=1)
-        return np.min(distances)
+        return np.min(distances), np.argmin(distances)
 
     def weight_rewards(self, r_t, r_p, r_wp, r_s):
         self.cur_reward = RewardDict(
@@ -102,7 +105,7 @@ class Rewards:
         TODO high body rates punishment
         """
         position = drone_state[:3]
-        closest_waypoint_distance = self.closest_waypoint_distance(position)
+        closest_waypoint_distance, closest_waypoint = self.get_closest_waypoint(position)
         projection_distance = np.linalg.norm(self.current_projection - position)
 
         r_t = -10 if (abs(position[0]) > 1.5 or abs(position[1]) > 1.5 or position[2] > 2.0 # when the drone is too far away
@@ -110,13 +113,19 @@ class Rewards:
         ) else 0
         r_p = reached_distance - self.reached_distance
         r_s = reached_distance
-        r_wp = np.exp(-closest_waypoint_distance/self.dist_tol) if closest_waypoint_distance <= self.dist_tol else 0
+
+        # If we are passing waypoint for the first time, give reward for passing it and remember it
+        if closest_waypoint_distance <= self.dist_tol and not self.wp_rewards[closest_waypoint]:
+            self.wp_rewards[closest_waypoint] = 1
+            r_wp = np.exp(-closest_waypoint_distance/self.dist_tol)
+        else:
+            r_wp = 0
 
 
         r = self.weight_rewards(r_t, r_p, r_wp, r_s)
         self.reached_distance = reached_distance
 
-        return r if projection_distance < 0.2 else r_t
+        return r if projection_distance < self.max_reward_distance else r_t
     
     def __str__(self) -> str:
         return ""
