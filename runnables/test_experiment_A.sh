@@ -4,7 +4,7 @@
 cd ..
 cd agents
 
-timesteps="2000000"
+timesteps="10000000"
 gui="True"
 test="True"
 train="False"
@@ -12,7 +12,7 @@ base_output_folder="exp-A"
 total_runs=1
 
 declare -a action_types=("attitude")
-declare -a modes=("DIAGONAL_UP, DIAGONAL_DOWN, UP, DOWN")
+declare -a modes=("DIAGONAL_UP" "UP" "DOWN" "DIAGONAL_DOWN")
 
 for action_type in "${action_types[@]}"; do
     for mode in "${modes[@]}"; do
