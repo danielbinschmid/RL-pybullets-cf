@@ -17,7 +17,7 @@ class RewardDict:
         self.r_s = r_s 
     
     def __str__(self) -> str:
-        return f'r_t: {self.r_t}; r_p: {self.r_p}; r_wp: {self.r_wp}; r_s: {self.r_s}'
+        return f'r_t: {self.r_t:.2f}; r_p: {self.r_p:.2f}; r_wp: {self.r_wp:.2f}; r_s: {self.r_s:.2f}'
 
     def sum(self):
         return self.r_t + self.r_p + self.r_wp + self.r_s

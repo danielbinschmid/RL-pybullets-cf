@@ -189,7 +189,7 @@ class UZHAviary(BaseRLAviary):
                 )
         else:
             self.projection_id = p.addUserDebugLine(self._getDroneStateVector(0)[0:3], self.current_projection, [1,0,0], physicsClientId=self.CLIENT, replaceItemUniqueId=self.projection_id)
-            self.text_id = refreshed_text("Reward A: x; Reward B: y", self.CLIENT, self.text_id)
+            self.text_id = refreshed_text(str(self.rewards.cur_reward), self.CLIENT, self.text_id)
         
         return super().step(action)
 
