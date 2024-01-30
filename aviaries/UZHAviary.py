@@ -16,9 +16,31 @@ class Rewards:
         self.p1 = self.trajectory[:-1]
         self.p2 = self.trajectory[1:]
         self.diffs = self.p2 - self.p1
+        self.distances = np.linalg.norm(self.p1 - self.p2, axis=1)
+
+    def get_projections(self, position: np.ndarray):
+
+        # projections
+        shifted_position = position - self.p1
+        dots = np.einsum('ij,ij->i', shifted_position, self.diffs)
+        norm = np.linalg.norm(self.diffs, axis=1) ** 2
+        coefs = dots / (norm + 1e-5)
+        coefs = np.clip(coefs, 0, 1)
+        projections = coefs[:, np.newaxis] * self.diffs + self.p1
+        
+        displacement_size = np.linalg.norm(projections- position, axis=1)
+        closest_point_idx = np.argmin(displacement_size)
+
+        current_projection = projections[closest_point_idx]
+        current_projection_idx = min(closest_point_idx + 1, len(self.trajectory) - 1)
+
+        overall_distance_travelled = np.sum(self.distances[:closest_point_idx]) + np.linalg.norm(projections[closest_point_idx])
+
+        return current_projection, current_projection_idx, overall_distance_travelled
 
     def forward(self, position: np.ndarray):
-        return 0
+        projections = self.get_projections(position)
+        return projections
     
 
     def __str__(self) -> str:
@@ -78,7 +100,10 @@ class UZHAviary(BaseRLAviary):
             self.trajectory,
             np.array(self.trajectory[-1] * np.ones((self.WAYPOINT_BUFFER_SIZE, 3)))
         ])
-
+        
+        self.rewards = Rewards(
+            trajectory=self.trajectory
+        )
         # precompute trajectory variables
         self.p1 = self.trajectory[:-1]
         self.p2 = self.trajectory[1:]
@@ -114,37 +139,14 @@ class UZHAviary(BaseRLAviary):
         self.reached_distance = 0
         self.current_projection = self.trajectory[0]
         self.current_projection_idx = 0
-
-    def compute_projection(self, v, p1, p2):
-        # get p1, p2 (deepcopy)
-        p1 = copy.deepcopy(p1)
-        p2 = copy.deepcopy(p2)
-
-        p2 -= p1
-        v -= p1
-
-        # compute projection
-        coef = np.dot(v, p2) / np.dot(p2, p2)
-        return coef, p2
     
     def get_travelled_distance(self):
         # track progress reward
         position = self._getDroneStateVector(0)[0:3]
-        shifted_position = position - self.p1
-        # multiply row-wise shifted position and diffs
-        dots = np.einsum('ij,ij->i', shifted_position, self.diffs)
-        norm = np.linalg.norm(self.diffs, axis=1) ** 2
-        coefs = dots / (norm + 1e-5)
-        coefs = np.clip(coefs, 0, 1)
-        projections = coefs[:, np.newaxis] * self.diffs + self.p1
-        displacement_size = np.linalg.norm(projections- position, axis=1)
-        
-        closest_point = np.argmin(displacement_size)
 
-        self.current_projection = projections[closest_point]
-        self.current_projection_idx = min(closest_point + 1, len(self.trajectory) - 1)
+        self.current_projection, self.current_projection_idx, overall_distance_travelled = self.rewards.forward(position)
 
-        return np.sum(self.distances[:closest_point]) + np.linalg.norm(projections[closest_point])
+        return overall_distance_travelled
     
     def closest_waypoint_distance(self):
         position = self._getDroneStateVector(0)[0:3]
