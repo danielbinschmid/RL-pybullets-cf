@@ -3,8 +3,10 @@ TODOs.md
 examples/debug.py
 examples/test.py
 
+local/
+
 build_vscode/
-venv_arch
+venv_arch*
 # NumPy saves and videos
 results/
 tmp/
