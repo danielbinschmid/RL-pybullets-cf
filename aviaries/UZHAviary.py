@@ -9,25 +9,51 @@ from gymnasium import spaces
 from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
 from trajectories import TrajectoryFactory, DiscretizedTrajectory, Waypoint
 
-class Rewards:
+class RewardDict: 
+    def __init__(self, r_t: float=0, r_p: float=0, r_wp:float=0, r_s: float=0) -> None:
+        self.r_t = r_t
+        self.r_p = r_p 
+        self.r_wp = r_wp 
+        self.r_s = r_s 
+    
+    def __str__(self) -> str:
+        return f'r_t: {self.r_t}; r_p: {self.r_p}; r_wp: {self.r_wp}; r_s: {self.r_s}'
 
-    def __init__(self, trajectory: np.ndarray) -> None:
+    def sum(self):
+        return self.r_t + self.r_p + self.r_wp + self.r_s
+    
+class Rewards:
+    cur_reward: RewardDict
+
+    def __init__(self, trajectory: np.ndarray, k_p: float=5, k_wp: float=5, k_s: float=0.5) -> None:
         self.trajectory = trajectory
+
+        # intermediates
         self.p1 = self.trajectory[:-1]
         self.p2 = self.trajectory[1:]
         self.diffs = self.p2 - self.p1
         self.distances = np.linalg.norm(self.p1 - self.p2, axis=1)
+        self.reached_distance = 0
+
+        # weights for reward
+        self.k_p = k_p
+        self.k_wp = k_wp
+        self.k_s = k_s 
+        
+        self.dist_tol = 0.08
+        self.cur_reward = RewardDict()
 
     def get_projections(self, position: np.ndarray):
-
-        # projections
         shifted_position = position - self.p1
         dots = np.einsum('ij,ij->i', shifted_position, self.diffs)
         norm = np.linalg.norm(self.diffs, axis=1) ** 2
         coefs = dots / (norm + 1e-5)
         coefs = np.clip(coefs, 0, 1)
         projections = coefs[:, np.newaxis] * self.diffs + self.p1
-        
+        return projections
+    
+    def get_travelled_distance(self, position: np.ndarray):
+        projections = self.get_projections(position)
         displacement_size = np.linalg.norm(projections- position, axis=1)
         closest_point_idx = np.argmin(displacement_size)
 
@@ -37,12 +63,41 @@ class Rewards:
         overall_distance_travelled = np.sum(self.distances[:closest_point_idx]) + np.linalg.norm(projections[closest_point_idx])
 
         return current_projection, current_projection_idx, overall_distance_travelled
-
-    def forward(self, position: np.ndarray):
-        projections = self.get_projections(position)
-        return projections
     
+    def closest_waypoint_distance(self, position: np.ndarray):
+        distances = np.linalg.norm(self.trajectory - position, axis=1)
+        return np.min(distances)
 
+    def weight_rewards(self, r_t, r_p, r_wp, r_s):
+        self.cur_reward = RewardDict(
+            r_t=r_t,
+            r_p=self.k_p * r_p,
+            r_wp=self.k_wp * r_wp,
+            r_s=self.k_s * r_s
+        )
+
+        return self.cur_reward.sum()
+
+    def compute_reward(self, drone_state: np.ndarray, reached_distance: np.ndarray):
+        """
+        TODO high body rates punishment
+        """
+        position = drone_state[:3]
+        closest_waypoint_distance = self.closest_waypoint_distance(position)
+
+        r_t = -10 if (abs(position[0]) > 1.5 or abs(position[1]) > 1.5 or position[2] > 2.0 # when the drone is too far away
+            or abs(drone_state[7]) > .4 or abs(drone_state[8]) > .4 # when the drone is too tilted
+        ) else 0
+        r_p = reached_distance - self.reached_distance
+        r_s = reached_distance
+        r_wp = np.exp(-closest_waypoint_distance/self.dist_tol) if closest_waypoint_distance <= self.dist_tol else 0
+
+
+        r = self.weight_rewards(r_t, r_p, r_wp, r_s)
+        self.reached_distance = reached_distance
+
+        return r if closest_waypoint_distance < 0.2 else r_t
+    
     def __str__(self) -> str:
         return ""
     
@@ -141,51 +196,29 @@ class UZHAviary(BaseRLAviary):
         self.current_projection_idx = 0
     
     def get_travelled_distance(self):
-        # track progress reward
         position = self._getDroneStateVector(0)[0:3]
-
-        self.current_projection, self.current_projection_idx, overall_distance_travelled = self.rewards.forward(position)
-
+        self.current_projection, self.current_projection_idx, overall_distance_travelled = self.rewards.get_travelled_distance(position)
         return overall_distance_travelled
     
-    def closest_waypoint_distance(self):
-        position = self._getDroneStateVector(0)[0:3]
-        distances = np.linalg.norm(self.trajectory - position, axis=1)
-        return np.min(distances)
-
 
     def _computeReward(self):
-        position = self._getDroneStateVector(0)
+        drone_state = self._getDroneStateVector(0)
 
         reached_distance = self.get_travelled_distance()
-        closest_waypoint_distance = self.closest_waypoint_distance()
 
-        r_t = -10 if (abs(position[0]) > 1.5 or abs(position[1]) > 1.5 or position[2] > 2.0 # when the drone is too far away
-            or abs(position[7]) > .4 or abs(position[8]) > .4 # when the drone is too tilted
-        ) else 0
-        r_p = reached_distance - self.reached_distance
-        r_s = reached_distance
-        r_wp = np.exp(-closest_waypoint_distance/self.dist_tol) if closest_waypoint_distance <= self.dist_tol else 0
-        # TODO high body rates punishment
+        r = self.rewards.compute_reward(
+            drone_state=drone_state,
+            reached_distance=reached_distance
+        )
 
-        k_p = 5
-        k_wp = 5 
-        k_s = 0.5
-        # print(np.round(r_p, 2), np.round(r_wp, 2), np.round(r_s, 2))
-        r = r_t + k_p * r_p + k_wp * r_wp + k_s * r_s
         self.reached_distance = reached_distance
-        return r if closest_waypoint_distance < 0.2 else r_t
 
+        return r
 
-
-
-    ################################################################################
 
     def _computeTerminated(self):
         return False
         
-    ################################################################################
-    
     def _computeTruncated(self):
         state = self._getDroneStateVector(0)
         if (abs(state[0]) > 1.5 or abs(state[1]) > 1.5 or state[2] > 2.0 # Truncate when the drone is too far away
@@ -199,8 +232,6 @@ class UZHAviary(BaseRLAviary):
         else:
             return False
 
-    ################################################################################
-    
     def _computeInfo(self):
         return {"distance": self.reached_distance}
 
@@ -281,13 +312,9 @@ class UZHAviary(BaseRLAviary):
             print(self.current_projection)
             print(self.trajectory[self.current_projection_idx: self.current_projection_idx+2])
 
-        #obs = self._clipAndNormalizeState(self._getDroneStateVector(i))
         obs = self._getDroneStateVector(0)
         ret = np.hstack([obs[0:3], obs[7:10], obs[10:13], obs[13:16]]).reshape(1, -1).astype('float32')
-        #### Add action buffer to observation #######################
-        # for i in range(self.ACTION_BUFFER_SIZE):
-        #     ret = np.hstack([ret, np.array(self.action_buffer[i])])
-        
+
         #### Add future waypoints to observation
         ret = np.hstack([ret, self.trajectory[self.current_projection_idx: self.current_projection_idx+2].reshape(1, -1)])
         return ret
