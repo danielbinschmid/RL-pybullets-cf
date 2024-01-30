@@ -4,11 +4,11 @@
 import argparse
 from gym_pybullet_drones.utils.utils import str2bool
 from gym_pybullet_drones.utils.enums import ObservationType
-from agents.utils.create_env import EnvFactorySimpleFollowerAviary
-from agents.utils.parse_configuration import Configuration
+from factories.simple_follower_factory import EnvFactorySimpleFollowerAviary
+from agents.utils.configuration import Configuration
 from train_policy import run_train
 from test_policy import run_test
-from utils.parse_configuration import parse_config
+from agents.utils.configuration import parse_config
 
 # defaults for command line arguments
 DEFAULT_OUTPUT_FOLDER = 'results'

@@ -4,10 +4,11 @@ from aviaries.PositionControllerAviary import PositionControllerAviary
 from gym_pybullet_drones.utils.enums import ObservationType, ActionType
 from trajectories import DiscretizedTrajectory
 from stable_baselines3.common.vec_env import VecEnv
-from agents.utils.parse_configuration import Configuration
+from agents.utils.configuration import Configuration
+from .base_factory import BaseFactory
 
 
-class PositionControllerFactory():
+class PositionControllerFactory(BaseFactory):
     action_type: ActionType
     observation_type: ObservationType
     t_traj: DiscretizedTrajectory
@@ -25,7 +26,7 @@ class PositionControllerFactory():
                  n_env_training: int=20,
                  seed: int = 0,
         ) -> None:
-
+        super().__init__()
         initial_xyzs = config.initial_xyzs
         action_type = config.action_type
         t_traj = config.t_traj

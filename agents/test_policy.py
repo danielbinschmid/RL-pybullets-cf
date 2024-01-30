@@ -1,5 +1,5 @@
-from agents.utils.create_env import EnvFactorySimpleFollowerAviary
-from agents.utils.parse_configuration import Configuration
+from factories.simple_follower_factory import EnvFactorySimpleFollowerAviary
+from agents.utils.configuration import Configuration
 import os
 from stable_baselines3.common.evaluation import evaluate_policy
 from aviaries.SimpleFollowerAviary import SimpleFollowerAviary

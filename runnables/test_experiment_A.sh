@@ -18,7 +18,7 @@ for action_type in "${action_types[@]}"; do
     for mode in "${modes[@]}"; do
         for (( run=1; run<=total_runs; run++ )); do
             output_folder="${base_output_folder}_${action_type}_${mode}_run${run}"
-            python ./run_experiment_A.py --timesteps "$timesteps" --gui "$gui" --output_folder "$output_folder" --test "$test" --action_type "$action_type" --train "$train" --mode "$mode" 
+            python ./A_attitude_vs_rpm.py --timesteps "$timesteps" --gui "$gui" --output_folder "$output_folder" --test "$test" --action_type "$action_type" --train "$train" --mode "$mode" 
         done
     done
 done

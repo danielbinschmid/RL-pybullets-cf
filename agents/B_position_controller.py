@@ -1,11 +1,10 @@
 """Script learns an agent to follow a target trajectory.
 """
-
 import argparse
 from gym_pybullet_drones.utils.utils import str2bool
 from gym_pybullet_drones.utils.enums import ObservationType, ActionType
-from factories.PositionControllerFactory import PositionControllerFactory
-from agents.utils.parse_configuration import Configuration
+from factories.position_controller_factory import PositionControllerFactory
+from agents.utils.configuration import Configuration
 from train_policy import run_train
 from test_policy import run_test
 import numpy as np
@@ -15,8 +14,8 @@ DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_GUI = True
 DEFAULT_TIMESTEPS = 5e6
 DEFAULT_ACTION_TYPE = ActionType.RPM
-DEFAULT_TRAIN = False
-DEFAULT_TEST = True
+DEFAULT_TRAIN = True
+DEFAULT_TEST = False
 
 # more configurations
 DEFAULT_OBS = ObservationType('kin') # 'kin' or 'rgb'
