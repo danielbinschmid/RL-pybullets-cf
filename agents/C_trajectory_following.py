@@ -41,11 +41,11 @@ DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_COLAB = False
 
 DEFAULT_OBS = ObservationType('kin') # 'kin' or 'rgb'
-DEFAULT_ACT = ActionType('rpm') # 'rpm' or 'pid' or 'vel' or 'one_d_rpm' or 'one_d_pid'
+DEFAULT_ACT = ActionType.ATTITUDE_PID
 DEFAULT_AGENTS = 1
 DEFAULT_MA = False
-DEFAULT_TIMESTEPS = 3e5
-DEFAULT_N_ENVS = 8
+DEFAULT_TIMESTEPS = 1e5
+DEFAULT_N_ENVS = 5
 DEFAULT_TRAIN = False
 DEFAULT_TEST = True
 from agents.test_policy import run_test
@@ -54,7 +54,6 @@ from agents.train_policy import run_train
 def init_targets():
     t_wps = TrajectoryFactory.waypoints_from_numpy(
         np.asarray([
-            [0, 0, 0],
             [0, 0, 0.2],
             [0, 0, 0.4],
             [0, 0, 0.6],
@@ -80,7 +79,8 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER,
         initial_xyzs=init_wp,
         output_path_location=output_folder,
         n_timesteps=timesteps,
-        t_traj=t_traj
+        t_traj=t_traj,
+        local=True
     )
     
     env_factory = TrajectoryFollowerAviaryFactory(
