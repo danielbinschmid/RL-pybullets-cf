@@ -149,8 +149,8 @@ class UZHAviary(BaseRLAviary):
             obs_upper_bound = np.array([[hi,hi,hi,hi,hi,hi,hi,hi,hi,hi,hi,hi]])
 
             # Add future waypoints to observation space
-            obs_lower_bound = np.hstack([obs_lower_bound, np.array([[lo,lo,lo] for i in range(2)]).reshape(1, -1)])
-            obs_upper_bound = np.hstack([obs_upper_bound, np.array([[hi,hi,hi] for i in range(2)]).reshape(1, -1)])
+            obs_lower_bound = np.hstack([obs_lower_bound, np.array([[lo,lo,lo] for i in range(self.WAYPOINT_BUFFER_SIZE)]).reshape(1, -1)])
+            obs_upper_bound = np.hstack([obs_upper_bound, np.array([[hi,hi,hi] for i in range(self.WAYPOINT_BUFFER_SIZE)]).reshape(1, -1)])
 
             return spaces.Box(low=obs_lower_bound, high=obs_upper_bound, dtype=np.float32)
         else:
