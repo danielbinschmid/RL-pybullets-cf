@@ -12,7 +12,7 @@ base_output_folder="exp-A"
 total_runs=1
 
 declare -a action_types=("attitude" "rpm")
-declare -a modes=("DIAGONAL_UP" "UP" "DOWN" "SIDEWAYS" "DIAGONAL_UP" "DIAGONAL_DOWN")
+declare -a modes=("DIAGONAL_UP" "UP" "DOWN" "DIAGONAL_DOWN")
 
 for action_type in "${action_types[@]}"; do
     for mode in "${modes[@]}"; do
