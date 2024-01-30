@@ -19,7 +19,8 @@ def run_train(config: Configuration, env_factory: BaseFactory):
     model = PPO('MlpPolicy',    
                 train_env,
                 tensorboard_log=config.output_path_location+'/tb/',
-                verbose=1)
+                verbose=1,
+                device="cpu")
 
     # callbacks
     callback_on_best = StopTrainingOnRewardThreshold(
