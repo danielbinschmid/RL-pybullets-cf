@@ -34,6 +34,7 @@ class Rewards:
         self.diffs = self.p2 - self.p1
         self.distances = np.linalg.norm(self.p1 - self.p2, axis=1)
         self.reached_distance = 0
+        self.current_projection = self.trajectory[0]
 
         # weights for reward
         self.k_p = k_p
@@ -44,6 +45,9 @@ class Rewards:
         self.cur_reward = RewardDict()
 
     def get_projections(self, position: np.ndarray):
+        """
+        Returns closest points from the drone to each trajectory segment
+        """
         shifted_position = position - self.p1
         dots = np.einsum('ij,ij->i', shifted_position, self.diffs)
         norm = np.linalg.norm(self.diffs, axis=1) ** 2
@@ -53,19 +57,29 @@ class Rewards:
         return projections
     
     def get_travelled_distance(self, position: np.ndarray):
+        """
+        current_projection: closest point on the trajectory to the drone
+        current_projection_idx: index of the closest waypoint on the segmented trajectory to the drone that is next
+        overall_distance_travelled: total distance travelled by the drone (on trajectory)
+        """
         projections = self.get_projections(position)
         displacement_size = np.linalg.norm(projections- position, axis=1)
         closest_point_idx = np.argmin(displacement_size)
 
         current_projection = projections[closest_point_idx]
+        self.current_projection = current_projection
         current_projection_idx = min(closest_point_idx + 1, len(self.trajectory) - 1)
 
         overall_distance_travelled = np.sum(self.distances[:closest_point_idx]) \
             + np.linalg.norm(projections[closest_point_idx] - self.p1[closest_point_idx])
+        
 
         return current_projection, current_projection_idx, overall_distance_travelled
     
     def closest_waypoint_distance(self, position: np.ndarray):
+        """
+        Find the closest waypoint to the drone (for waypoint reward)
+        """
         distances = np.linalg.norm(self.trajectory - position, axis=1)
         return np.min(distances)
 
@@ -81,10 +95,15 @@ class Rewards:
 
     def compute_reward(self, drone_state: np.ndarray, reached_distance: np.ndarray):
         """
+        r_t - reward for crashing
+        r_p - reward for delta distance travelled
+        r_s - reward for overall distance travelled
+        r_wp - reward for reaching waypoint 
         TODO high body rates punishment
         """
         position = drone_state[:3]
         closest_waypoint_distance = self.closest_waypoint_distance(position)
+        projection_distance = np.linalg.norm(self.current_projection - position)
 
         r_t = -10 if (abs(position[0]) > 1.5 or abs(position[1]) > 1.5 or position[2] > 2.0 # when the drone is too far away
             or abs(drone_state[7]) > .4 or abs(drone_state[8]) > .4 # when the drone is too tilted
@@ -97,7 +116,7 @@ class Rewards:
         r = self.weight_rewards(r_t, r_p, r_wp, r_s)
         self.reached_distance = reached_distance
 
-        return r if closest_waypoint_distance < 0.2 else r_t
+        return r if projection_distance < 0.2 else r_t
     
     def __str__(self) -> str:
         return ""

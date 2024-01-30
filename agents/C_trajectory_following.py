@@ -32,7 +32,7 @@ DEFAULT_OBS = ObservationType('kin') # 'kin' or 'rgb'
 DEFAULT_ACT = ActionType.ATTITUDE_PID
 DEFAULT_AGENTS = 1
 DEFAULT_MA = False
-DEFAULT_TIMESTEPS = 3e5
+DEFAULT_TIMESTEPS = 5e5
 DEFAULT_N_ENVS = 5
 DEFAULT_TRAIN = False
 DEFAULT_TEST = True
@@ -47,6 +47,15 @@ def init_targets():
             [0, 0, 0.6],
             [0, 0, 0.8],
             [0, 0, 1],
+            [0, 0.2, 1],
+            [0, 0.4, 1],
+            [0, 0.6, 1],
+            [0, 0.8, 1],
+            [0, 1, 1],
+            [0.2, 1, 1],
+            [0.4, 1, 1],
+            [0.8, 1, 1],
+            [1, 1, 1],
         ])
     )
     initial_xyzs = np.array([[0.,     0.,     0.]])
