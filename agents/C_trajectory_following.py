@@ -46,7 +46,7 @@ DEFAULT_AGENTS = 1
 DEFAULT_MA = False
 DEFAULT_TIMESTEPS = 1e5
 DEFAULT_N_ENVS = 5
-DEFAULT_TRAIN = True
+DEFAULT_TRAIN = False
 DEFAULT_TEST = True
 from agents.test_policy import run_test
 from agents.train_policy import run_train

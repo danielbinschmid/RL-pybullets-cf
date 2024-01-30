@@ -9,6 +9,41 @@ from gymnasium import spaces
 from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
 from trajectories import TrajectoryFactory, DiscretizedTrajectory, Waypoint
 
+class Rewards:
+
+    def __init__(self, trajectory: np.ndarray) -> None:
+        self.trajectory = trajectory
+        self.p1 = self.trajectory[:-1]
+        self.p2 = self.trajectory[1:]
+        self.diffs = self.p2 - self.p1
+
+    def forward(self, position: np.ndarray):
+        return 0
+    
+
+    def __str__(self) -> str:
+        return ""
+    
+txt_colour = [0,0,0]
+txt_size = 2
+txt_position = [0, 0, 0]
+
+dummy_text = lambda txt, client_id: p.addUserDebugText(txt, 
+                           txt_position,
+                           lifeTime=0,
+                           textSize=txt_size,
+                           textColorRGB=txt_colour,
+                           physicsClientId=client_id)
+
+refreshed_text = lambda txt, client_id, replace_id: p.addUserDebugText(txt, 
+                           txt_position,
+                           lifeTime=0,
+                           textSize=txt_size,
+                           textColorRGB=txt_colour,
+                           physicsClientId=client_id,
+                           replaceItemUniqueId=replace_id)
+
+
 class UZHAviary(BaseRLAviary):
     """Single agent RL problem: hover at position."""
 
@@ -72,8 +107,8 @@ class UZHAviary(BaseRLAviary):
         self.visualised = False
         drone = self._getDroneStateVector(0)[:3]
         self.projection_id = p.addUserDebugLine(drone, drone, [1,0,0], physicsClientId=self.CLIENT)
+        self.text_id = dummy_text("Rewards: None", self.CLIENT)
 
-    
     def reset_vars(self):
         self.current_waypoint_idx = 0
         self.reached_distance = 0
@@ -200,6 +235,8 @@ class UZHAviary(BaseRLAviary):
         if self.GUI and not self.visualised:
             drone = self._getDroneStateVector(0)[:3]
             self.projection_id = p.addUserDebugLine(drone, drone, [1,0,0], physicsClientId=self.CLIENT)
+            self.text_id = dummy_text("Rewards: None", self.CLIENT)
+
             self.visualised = True
             for point in self.trajectory:
                 sphere_visual = p.createVisualShape(
@@ -224,7 +261,8 @@ class UZHAviary(BaseRLAviary):
                 )
         else:
             self.projection_id = p.addUserDebugLine(self._getDroneStateVector(0)[0:3], self.current_projection, [1,0,0], physicsClientId=self.CLIENT, replaceItemUniqueId=self.projection_id)
-
+            self.text_id = refreshed_text("Reward A: x; Reward B: y", self.CLIENT, self.text_id)
+        
         return super().step(action)
 
 
