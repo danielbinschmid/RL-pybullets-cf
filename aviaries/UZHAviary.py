@@ -98,11 +98,12 @@ class UZHAviary(BaseRLAviary):
         shifted_position = position - self.p1
         # multiply row-wise shifted position and diffs
         dots = np.einsum('ij,ij->i', shifted_position, self.diffs)
-        norm = np.linalg.norm(self.diffs, axis=1)
+        norm = np.linalg.norm(self.diffs, axis=1) ** 2
         coefs = dots / (norm + 1e-5)
         coefs = np.clip(coefs, 0, 1)
         projections = coefs[:, np.newaxis] * self.diffs + self.p1
-        displacement_size = np.linalg.norm(projections, axis=1)
+        displacement_size = np.linalg.norm(projections- position, axis=1)
+        
         closest_point = np.argmin(displacement_size)
 
         self.current_projection = projections[closest_point]
