@@ -5,8 +5,8 @@ import numpy as np
 import pybullet as p
 from gymnasium import spaces
 
-from trajectories import DiscretizedTrajectory, Waypoint
-from aviaries.rewards.uzh_trajectory_reward import Rewards, RewardDict
+from trajectories import DiscretizedTrajectory
+from aviaries.rewards.uzh_trajectory_reward import Rewards
     
 txt_colour = [0,0,0]
 txt_size = 2
@@ -52,7 +52,7 @@ class UZHAviary(BaseRLAviary):
         self.NUM_DRONES = 1
         self.INIT_XYZS = initial_xyzs
         self.trajectory = np.array([x.coordinate for x in target_trajectory])
-        self.WAYPOINT_BUFFER_SIZE = 3 # how many steps into future to interpolate
+        self.WAYPOINT_BUFFER_SIZE = 2 # how many steps into future to interpolate
         
         assert self.WAYPOINT_BUFFER_SIZE < len(self.trajectory), "Buffer size should be smaller than the number of waypoints"
         # ------------------------
@@ -83,13 +83,18 @@ class UZHAviary(BaseRLAviary):
         self.rewards = Rewards(
             trajectory=self.trajectory
         )
+
+        self.current_projection_idx = 0
+        self.future_waypoints_relative = self.trajectory[self.current_projection_idx: self.current_projection_idx+self.WAYPOINT_BUFFER_SIZE] - self.trajectory[self.current_projection_idx]
         
         # for visualisation
         self.current_projection = np.array([0,0,0])
-        self.current_projection_idx = 0
         self.visualised = False
         drone_pos = self._getDroneStateVector(0)[:3]
-        self.projection_id = p.addUserDebugLine(drone_pos, drone_pos, [1,0,0], physicsClientId=self.CLIENT)
+        self.projection_id = p.addUserDebugLine(drone_pos, drone_pos, [0.3,0.3,0.3], physicsClientId=self.CLIENT)
+        self.waypoint_connection_ids = [
+            p.addUserDebugLine(drone_pos, drone_pos, [0,0,0], physicsClientId=self.CLIENT) for i in range(self.WAYPOINT_BUFFER_SIZE)
+        ]
         self.text_id = dummy_text("Rewards: None", self.CLIENT)
         # ------------------------        
 
@@ -98,6 +103,9 @@ class UZHAviary(BaseRLAviary):
         self.rewards.reached_distance = 0
         self.current_projection = self.trajectory[0]
         self.current_projection_idx = 0
+        self.rewards = Rewards(
+            trajectory=self.trajectory
+        )
 
     def _computeReward(self):
         drone_state = self._getDroneStateVector(0)
@@ -131,30 +139,23 @@ class UZHAviary(BaseRLAviary):
         return {"distance": self.rewards.reached_distance}
 
     def _observationSpace(self):
-        if self.OBS_TYPE == ObservationType.RGB:
-            return spaces.Box(low=0,
-                              high=255,
-                              shape=(self.NUM_DRONES, self.IMG_RES[1], self.IMG_RES[0], 4), dtype=np.uint8)
-        elif self.OBS_TYPE == ObservationType.KIN:
-            # OBS SPACE OF SIZE 12
-            # Observation vector - X Y Z Q1 Q2 Q3 Q4 R P Y VX VY VZ WX WY WZ
-            # Position [0:3]
-            # Orientation [3:7]
-            # Roll, Pitch, Yaw [7:10]
-            # Linear Velocity [10:13]
-            # Angular Velocity [13:16]
-            lo = -np.inf
-            hi = np.inf
-            obs_lower_bound = np.array([[lo,lo,0, lo,lo,lo,lo,lo,lo,lo,lo,lo]])
-            obs_upper_bound = np.array([[hi,hi,hi,hi,hi,hi,hi,hi,hi,hi,hi,hi]])
+        # OBS SPACE OF SIZE 12
+        # Observation vector - X Y Z Q1 Q2 Q3 Q4 R P Y VX VY VZ WX WY WZ
+        # Position [0:3]
+        # Orientation [3:7]
+        # Roll, Pitch, Yaw [7:10]
+        # Linear Velocity [10:13]
+        # Angular Velocity [13:16]
+        lo = -np.inf
+        hi = np.inf
+        obs_lower_bound = np.array([[lo,lo,0, lo,lo,lo,lo,lo,lo,lo,lo,lo]])
+        obs_upper_bound = np.array([[hi,hi,hi,hi,hi,hi,hi,hi,hi,hi,hi,hi]])
 
-            # Add future waypoints to observation space
-            obs_lower_bound = np.hstack([obs_lower_bound, np.array([[lo,lo,lo] for i in range(self.WAYPOINT_BUFFER_SIZE)]).reshape(1, -1)])
-            obs_upper_bound = np.hstack([obs_upper_bound, np.array([[hi,hi,hi] for i in range(self.WAYPOINT_BUFFER_SIZE)]).reshape(1, -1)])
+        # Add future waypoints to observation space
+        obs_lower_bound = np.hstack([obs_lower_bound, np.array([[lo,lo,lo] for i in range(self.WAYPOINT_BUFFER_SIZE)]).reshape(1, -1)])
+        obs_upper_bound = np.hstack([obs_upper_bound, np.array([[hi,hi,hi] for i in range(self.WAYPOINT_BUFFER_SIZE)]).reshape(1, -1)])
 
-            return spaces.Box(low=obs_lower_bound, high=obs_upper_bound, dtype=np.float32)
-        else:
-            print("[ERROR] in BaseRLAviary._observationSpace()")
+        return spaces.Box(low=obs_lower_bound, high=obs_upper_bound, dtype=np.float32)
     
     ################################################################################
 
@@ -163,6 +164,8 @@ class UZHAviary(BaseRLAviary):
         if self.GUI and not self.visualised:
             drone = self._getDroneStateVector(0)[:3]
             self.projection_id = p.addUserDebugLine(drone, drone, [1,0,0], physicsClientId=self.CLIENT)
+            for i, wp in enumerate(self.waypoint_connection_ids):
+                p.addUserDebugLine(drone, drone, [0,0,0], physicsClientId=self.CLIENT, replaceItemUniqueId=wp)
             self.text_id = dummy_text("Rewards: None", self.CLIENT)
 
             self.visualised = True
@@ -170,7 +173,7 @@ class UZHAviary(BaseRLAviary):
                 sphere_visual = p.createVisualShape(
                     shapeType=p.GEOM_SPHERE,
                     radius=0.03,
-                    rgbaColor=[0, 1, 0, 1],
+                    rgbaColor=[0, 1, 0, 0.6],
                     physicsClientId=self.CLIENT
                 )
                 target = p.createMultiBody(
@@ -184,11 +187,17 @@ class UZHAviary(BaseRLAviary):
                 p.changeVisualShape(
                     target,
                     -1,
-                    rgbaColor=[0.9, 0.3, 0.3, 1],
+                    rgbaColor=[0.9, 0.3, 0.3, 0.6],
                     physicsClientId=self.CLIENT
                 )
         else:
-            self.projection_id = p.addUserDebugLine(self._getDroneStateVector(0)[0:3], self.current_projection, [1,0,0], physicsClientId=self.CLIENT, replaceItemUniqueId=self.projection_id)
+            drone_pos = self._getDroneStateVector(0)[:3]
+            self.projection_id = p.addUserDebugLine(drone_pos, self.current_projection, [1,0,0], physicsClientId=self.CLIENT, replaceItemUniqueId=self.projection_id)
+            # print(self.future_waypoints_relative)
+            for i in range(len(self.waypoint_connection_ids)):
+                self.waypoint_connection_ids[i] = \
+                    p.addUserDebugLine(drone_pos, self.future_waypoints_relative[i], [0.3,0.3,0.3], physicsClientId=self.CLIENT, replaceItemUniqueId=self.waypoint_connection_ids[i])
+
             self.text_id = refreshed_text(str(self.rewards.cur_reward), self.CLIENT, self.text_id)
         
         return super().step(action)
@@ -196,8 +205,8 @@ class UZHAviary(BaseRLAviary):
     def _computeObs(self):
         obs = self._getDroneStateVector(0)
         ret = np.hstack([obs[0:3], obs[7:10], obs[10:13], obs[13:16]]).reshape(1, -1).astype('float32')
+        self.future_waypoints_relative = self.trajectory[self.current_projection_idx:self.current_projection_idx+self.WAYPOINT_BUFFER_SIZE]
 
         #### Add relative positions of future waypoints to observation
-        future_waypoints_relative = self.trajectory[self.current_projection_idx: self.current_projection_idx+self.WAYPOINT_BUFFER_SIZE] - self.trajectory[self.current_projection_idx]
-        ret = np.hstack([ret, future_waypoints_relative.reshape(1, -1).astype('float32')])
+        ret = np.hstack([ret, (self.future_waypoints_relative - obs[:3]).reshape(1, -1).astype('float32')])
         return ret

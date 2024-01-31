@@ -1,13 +1,7 @@
-from gym_pybullet_drones.envs.BaseRLAviary import BaseRLAviary
-from gym_pybullet_drones.utils.enums import DroneModel, Physics, ActionType, ObservationType
-
 import numpy as np
-import copy
 import pybullet as p
-from gymnasium import spaces
 
 from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
-from trajectories import TrajectoryFactory, DiscretizedTrajectory, Waypoint
 
 class RewardDict: 
     def __init__(self, r_t: float=0, r_p: float=0, r_wp:float=0, r_s: float=0) -> None:
@@ -25,7 +19,7 @@ class RewardDict:
 class Rewards:
     cur_reward: RewardDict
 
-    def __init__(self, trajectory: np.ndarray, k_p: float=5, k_wp: float=5, k_s: float=0.5) -> None:
+    def __init__(self, trajectory: np.ndarray, k_p: float=1.5, k_wp: float=3, k_s: float=0.07) -> None:
         self.trajectory = trajectory
 
         # intermediates
@@ -42,9 +36,9 @@ class Rewards:
         self.k_s = k_s 
 
         self.wp_rewards = np.zeros(len(self.trajectory))
-        self.max_reward_distance = 0.13
+        self.max_reward_distance = 0.2
         
-        self.dist_tol = 0.08
+        self.dist_tol = 0.12
         self.cur_reward = RewardDict()
 
     def get_projections(self, position: np.ndarray):

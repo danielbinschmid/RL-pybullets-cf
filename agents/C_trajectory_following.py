@@ -1,20 +1,3 @@
-"""Script demonstrating the use of `gym_pybullet_drones`'s Gymnasium interface.
-
-Classes HoverAviary and MultiHoverAviary are used as learning envs for the PPO algorithm.
-
-Example
--------
-In a terminal, run as:
-
-    $ python learn.py --multiagent false
-    $ python learn.py --multiagent true
-
-Notes
------
-This is a minimal working example integrating `gym-pybullet-drones` with 
-reinforcement learning library `stable-baselines3`.
-
-"""
 import argparse
 import numpy as np
 from gym_pybullet_drones.utils.utils import str2bool
@@ -23,57 +6,75 @@ from trajectories import TrajectoryFactory
 from agents.utils.configuration import Configuration
 from factories.uzh_trajectory_follower_factory import TrajectoryFollowerAviaryFactory
 
-DEFAULT_GUI = True
-DEFAULT_RECORD_VIDEO = False
-DEFAULT_OUTPUT_FOLDER = 'results'
-DEFAULT_COLAB = False
+###### INFRASTRUCTURE PARAMS #######
+GUI = True
+RECORD_VIDEO = False
+OUTPUT_FOLDER = 'results'
+COLAB = False
+####################################
 
-DEFAULT_OBS = ObservationType('kin') # 'kin' or 'rgb'
-DEFAULT_ACT = ActionType.ATTITUDE_PID
-DEFAULT_AGENTS = 1
-DEFAULT_MA = False
-DEFAULT_TIMESTEPS = 1.5e6
-DEFAULT_N_ENVS = 5
-DEFAULT_TRAIN = True
-DEFAULT_TEST = True
+###### USUALLY NOT CHANGED #########
+OBS = ObservationType('kin') # 'kin' or 'rgb'
+ACT = ActionType.ATTITUDE_PID
+AGENTS = 1
+NUM_DRONES = 1
+CTRL_FREQ = 30
+MA = False
+####################################
+
+###### TEST TRAIN FLAGS ############
+TRAIN = True
+TEST = True
+####################################
+
+###### ENVIRONMENT PARAMS ##########
+TIMESTEPS = 1e6
+N_ENVS = 5
+EPISODE_LEN_SEC = 8
+####################################
+
+###### HYPERPARAMS #################
+WAYPOINT_BUFFER_SIZE = 2
+K_P = 1
+K_WP = 3
+K_S = 0.1
+MAX_REWARD_DISTANCE = 0.2 
+WAYPOINT_DIST_TOL = 0.12
+####################################
+
 from agents.test_policy import run_test
 from agents.train_policy import run_train
 
 def init_targets():
-    t_wps = TrajectoryFactory.waypoints_from_numpy(
-        np.asarray([
-            [0, 0, 0.2],
-            [0, 0, 0.4],
-            [0, 0, 0.6],
-            [0, 0, 0.8],
-            [0, 0, 1],
-            [0, 0.2, 1],
-            [0, 0.4, 1],
-            [0, 0.6, 1],
-            [0, 0.8, 1],
-            [0, 1, 1],
-            [0.2, 1, 1],
-            [0.4, 1, 1],
-            [0.6, 1, 1],
-            [0.8, 1, 1],
-            [1, 1, 1],
-        ])
-    )
+    points_per_segment = 4
+    z_segment = np.array([
+        [0, 0, (1/points_per_segment)*i] for i in range(1, points_per_segment + 1)
+    ])
+    y_segment = np.array([
+        [0, (1/points_per_segment)*i, 1] for i in range(1, points_per_segment + 1)
+    ])
+    x_segment = np.array([
+        [(1/points_per_segment)*i, 1, 1] for i in range(1, points_per_segment + 1)
+    ])
     initial_xyzs = np.array([[0.,     0.,     0.]])
+    pts = np.vstack([initial_xyzs, z_segment, y_segment, x_segment])
+    t_wps = TrajectoryFactory.waypoints_from_numpy(
+        pts
+    )
     t_traj = TrajectoryFactory.get_discr_from_wps(t_wps)
     return t_traj, initial_xyzs
 
-def run(output_folder=DEFAULT_OUTPUT_FOLDER,
-        gui=DEFAULT_GUI, n_envs = DEFAULT_N_ENVS,
-        timesteps=DEFAULT_TIMESTEPS,
-        train: bool = DEFAULT_TRAIN,
-        test: bool = DEFAULT_TEST):
+def run(output_folder=OUTPUT_FOLDER,
+        gui=GUI, n_envs = N_ENVS,
+        timesteps=TIMESTEPS,
+        train: bool = TRAIN,
+        test: bool = TEST):
 
     # CONFIG ##################################################
     t_traj, init_wp = init_targets()
 
     config = Configuration(
-        action_type=DEFAULT_ACT,
+        action_type=ACT,
         initial_xyzs=init_wp,
         output_path_location=output_folder,
         n_timesteps=timesteps,
@@ -83,7 +84,7 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER,
     
     env_factory = TrajectoryFollowerAviaryFactory(
         config=config,
-        observation_type=DEFAULT_OBS,
+        observation_type=OBS,
         use_gui_for_test_env=gui,
         n_env_training=n_envs,
         seed=0
@@ -103,11 +104,11 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER,
 if __name__ == '__main__':
     #### Define and parse (optional) arguments for the script ##
     parser = argparse.ArgumentParser(description='Single agent reinforcement learning example script')
-    parser.add_argument('--gui',                default=DEFAULT_GUI,           type=str2bool,      help='Whether to use PyBullet GUI (default: True)', metavar='')
-    parser.add_argument('--output_folder',      default=DEFAULT_OUTPUT_FOLDER, type=str,           help='Folder where to save logs (default: "results")', metavar='')
-    parser.add_argument('--timesteps',          default=DEFAULT_TIMESTEPS,     type=int,           help='number of train timesteps before stopping', metavar='')
-    parser.add_argument('--train',          default=DEFAULT_TRAIN,     type=str2bool,           help='Whether to train (default: True)', metavar='')
-    parser.add_argument('--test',          default=DEFAULT_TEST,     type=str2bool,           help='Whether to test (default: True)', metavar='')
+    parser.add_argument('--gui',                default=GUI,           type=str2bool,      help='Whether to use PyBullet GUI (default: True)', metavar='')
+    parser.add_argument('--output_folder',      default=OUTPUT_FOLDER, type=str,           help='Folder where to save logs (default: "results")', metavar='')
+    parser.add_argument('--timesteps',          default=TIMESTEPS,     type=int,           help='number of train timesteps before stopping', metavar='')
+    parser.add_argument('--train',          default=TRAIN,     type=str2bool,           help='Whether to train (default: True)', metavar='')
+    parser.add_argument('--test',          default=TEST,     type=str2bool,           help='Whether to test (default: True)', metavar='')
     ARGS = parser.parse_args()
 
     run(**vars(ARGS))
