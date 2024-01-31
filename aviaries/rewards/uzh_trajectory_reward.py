@@ -19,7 +19,13 @@ class RewardDict:
 class Rewards:
     cur_reward: RewardDict
 
-    def __init__(self, trajectory: np.ndarray, k_p: float=1.5, k_wp: float=3, k_s: float=0.07) -> None:
+    def __init__(self, 
+                 trajectory: np.ndarray,
+                 k_p: float=1.5,
+                 k_wp: float=3,
+                 k_s: float=0.07,
+                 max_reward_distance: float=0.2,
+                 dist_tol: float=0.12) -> None:
         self.trajectory = trajectory
 
         # intermediates
@@ -34,12 +40,17 @@ class Rewards:
         self.k_p = k_p
         self.k_wp = k_wp
         self.k_s = k_s 
+        print(f'k_p: {k_p}; k_wp: {k_wp}; k_s: {k_s}')
 
         self.wp_rewards = np.zeros(len(self.trajectory))
-        self.max_reward_distance = 0.2
+        self.max_reward_distance = max_reward_distance
         
-        self.dist_tol = 0.12
+        self.dist_tol = dist_tol
         self.cur_reward = RewardDict()
+    
+    def reset(self):
+        self.cur_reward = RewardDict()
+        self.wp_rewards = np.zeros(len(self.trajectory))
 
     def get_projections(self, position: np.ndarray):
         """

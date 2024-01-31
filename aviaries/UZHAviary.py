@@ -44,18 +44,39 @@ class UZHAviary(BaseRLAviary):
                  gui=False,
                  record=False,
                  obs: ObservationType=ObservationType.KIN,
-                 act: ActionType=ActionType.RPM
+                 act: ActionType=ActionType.RPM,
+                 episode_len_sec: int = 8,
+                 waypoint_buffer_size: int = 2,
+                 k_p: float = 1.0,
+                 k_wp: float = 1.0,
+                 k_s: float = 0.0,
+                 max_reward_distance: float = 0.2,
+                 waypoint_dist_tol: float = 0.12
                  ):
         
-        # CONFIG ------------------
-        self.EPISODE_LEN_SEC = 8
+        self.EPISODE_LEN_SEC = episode_len_sec
         self.NUM_DRONES = 1
         self.INIT_XYZS = initial_xyzs
+
+        # TRAJECTORY
         self.trajectory = np.array([x.coordinate for x in target_trajectory])
-        self.WAYPOINT_BUFFER_SIZE = 2 # how many steps into future to interpolate
-        
+        self.WAYPOINT_BUFFER_SIZE = waypoint_buffer_size # how many steps into future to interpolate
+        self.current_waypoint_idx = 0
+        self.trajectory = np.vstack([
+            self.trajectory,
+            np.array(self.trajectory[-1] * np.ones((self.WAYPOINT_BUFFER_SIZE, 3)))
+        ])
+        self.current_projection_idx = 0
+        self.future_waypoints_relative = self.trajectory[self.current_projection_idx: self.current_projection_idx+self.WAYPOINT_BUFFER_SIZE] - self.trajectory[self.current_projection_idx]
         assert self.WAYPOINT_BUFFER_SIZE < len(self.trajectory), "Buffer size should be smaller than the number of waypoints"
-        # ------------------------
+        self.rewards = Rewards(
+            trajectory=self.trajectory,
+            k_p=k_p,
+            k_wp=k_wp,
+            k_s=k_s,
+            max_reward_distance=max_reward_distance,
+            dist_tol=waypoint_dist_tol
+        )
 
         super().__init__(
             drone_model=drone_model,
@@ -71,23 +92,8 @@ class UZHAviary(BaseRLAviary):
             act=act
         )
 
-        # SETUP ------------------
-        self.current_waypoint_idx = 0
-
-        # pad the trajectory for waypoint buffer
-        self.trajectory = np.vstack([
-            self.trajectory,
-            np.array(self.trajectory[-1] * np.ones((self.WAYPOINT_BUFFER_SIZE, 3)))
-        ])
         
-        self.rewards = Rewards(
-            trajectory=self.trajectory
-        )
-
-        self.current_projection_idx = 0
-        self.future_waypoints_relative = self.trajectory[self.current_projection_idx: self.current_projection_idx+self.WAYPOINT_BUFFER_SIZE] - self.trajectory[self.current_projection_idx]
-        
-        # for visualisation
+        # Visualisation
         self.current_projection = np.array([0,0,0])
         self.visualised = False
         drone_pos = self._getDroneStateVector(0)[:3]
@@ -96,16 +102,13 @@ class UZHAviary(BaseRLAviary):
             p.addUserDebugLine(drone_pos, drone_pos, [0,0,0], physicsClientId=self.CLIENT) for i in range(self.WAYPOINT_BUFFER_SIZE)
         ]
         self.text_id = dummy_text("Rewards: None", self.CLIENT)
-        # ------------------------        
 
     def reset_vars(self):
         self.current_waypoint_idx = 0
         self.rewards.reached_distance = 0
         self.current_projection = self.trajectory[0]
         self.current_projection_idx = 0
-        self.rewards = Rewards(
-            trajectory=self.trajectory
-        )
+        self.rewards.reset()
 
     def _computeReward(self):
         drone_state = self._getDroneStateVector(0)

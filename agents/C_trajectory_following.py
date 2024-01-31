@@ -65,10 +65,20 @@ def init_targets():
     return t_traj, initial_xyzs
 
 def run(output_folder=OUTPUT_FOLDER,
-        gui=GUI, n_envs = N_ENVS,
+        gui=GUI,
         timesteps=TIMESTEPS,
         train: bool = TRAIN,
-        test: bool = TEST):
+        test: bool = TEST,
+        n_envs: int = N_ENVS,
+        episode_len_sec: int = EPISODE_LEN_SEC,
+        waypoint_buffer_size: int = WAYPOINT_BUFFER_SIZE,
+        k_p: float = K_P,
+        k_wp: float = K_WP,
+        k_s: float = K_S,
+        max_reward_distance: float = MAX_REWARD_DISTANCE,
+        waypoint_dist_tol: float = WAYPOINT_DIST_TOL,
+    ):
+
 
     # CONFIG ##################################################
     t_traj, init_wp = init_targets()
@@ -79,7 +89,14 @@ def run(output_folder=OUTPUT_FOLDER,
         output_path_location=output_folder,
         n_timesteps=timesteps,
         t_traj=t_traj,
-        local=True
+        local=True,
+        episode_len_sec=episode_len_sec,
+        waypoint_buffer_size=waypoint_buffer_size,
+        k_p=k_p,
+        k_wp=k_wp,
+        k_s=k_s,
+        max_reward_distance=max_reward_distance,
+        waypoint_dist_tol=waypoint_dist_tol
     )
     
     env_factory = TrajectoryFollowerAviaryFactory(
@@ -109,6 +126,14 @@ if __name__ == '__main__':
     parser.add_argument('--timesteps',          default=TIMESTEPS,     type=int,           help='number of train timesteps before stopping', metavar='')
     parser.add_argument('--train',          default=TRAIN,     type=str2bool,           help='Whether to train (default: True)', metavar='')
     parser.add_argument('--test',          default=TEST,     type=str2bool,           help='Whether to test (default: True)', metavar='')
+    parser.add_argument('--n_envs',          default=N_ENVS,     type=int,           help='number of parallel environments', metavar='')
+    parser.add_argument('--episode_len_sec',          default=EPISODE_LEN_SEC,     type=int,           help='number of parallel environments', metavar='')
+    parser.add_argument('--waypoint_buffer_size',          default=WAYPOINT_BUFFER_SIZE,     type=int,           help='number of parallel environments', metavar='')
+    parser.add_argument('--k_p',          default=K_P,     type=float,           help='number of parallel environments', metavar='')
+    parser.add_argument('--k_wp',          default=K_WP,     type=float,           help='number of parallel environments', metavar='')
+    parser.add_argument('--k_s',          default=K_S,     type=float,           help='number of parallel environments', metavar='')
+    parser.add_argument('--max_reward_distance',          default=MAX_REWARD_DISTANCE,     type=float,           help='number of parallel environments', metavar='')
+    parser.add_argument('--waypoint_dist_tol',          default=WAYPOINT_DIST_TOL,     type=float,           help='number of parallel environments', metavar='')
     ARGS = parser.parse_args()
 
     run(**vars(ARGS))
