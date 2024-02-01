@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker
 import numpy as np
 
-import us_cmap
+import vis.us_cmap as us_cmap
 """
 > \TU/OpenSansLight(0)/m/n/10.95 .
 <recently read> \font

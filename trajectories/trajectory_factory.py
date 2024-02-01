@@ -6,6 +6,8 @@ from typing import List
 import numpy as np 
 from .discretized_trajectory import DiscretizedTrajectory, DiscreteTrajectoryFromContinuous, DiscretizedTrajectoryFromWaypoints
 from typing import Optional
+from .random_trajectories import sample_random_ctrl_points
+from typing import Tuple 
 
 class WAYPOINT_BOOTH:
     T_WAYPOINTS_POLY = [
@@ -110,3 +112,32 @@ class TrajectoryFactory:
             in range(len(t_waypoints))
         ]
         return res
+
+    @classmethod
+    def gen_random_trajectory(
+        cls, 
+        start: np.ndarray, 
+        std_dev_dev: float=90, 
+        n_ctrl_points: int=10, 
+        distance_between_ctrl_points: float=1, 
+        n_discr_level: int=100,
+        init_dir: Optional[np.ndarray]=None,
+        return_ctrl_points: bool=False
+    ) -> DiscretizedTrajectory | Tuple[DiscretizedTrajectory, List[Waypoint]]:
+        
+        # sample random feasible control points
+        random_ctrl_points: List[Waypoint] = sample_random_ctrl_points(
+            start_wp=start,
+            std_dev_deg=std_dev_dev,
+            n_ctrl_points=n_ctrl_points,
+            distance_between_ctrl_point=distance_between_ctrl_points,
+            init_dir=init_dir
+        )
+
+        # compute polynomial minimum snap trajectory
+        traj = cls.get_pol_discretized_trajectory(random_ctrl_points,n_points_discretization_level=n_discr_level)
+
+        if return_ctrl_points:
+            return traj, random_ctrl_points
+        else:
+            return traj
