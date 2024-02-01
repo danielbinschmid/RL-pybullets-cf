@@ -128,7 +128,7 @@ class TrajectoryFactory:
         # sample random feasible control points
         random_ctrl_points: List[Waypoint] = sample_random_ctrl_points(
             start_wp=start,
-            std_dev_deg=std_dev_dev,
+            std_dev_deg=std_dev_deg,
             n_ctrl_points=n_ctrl_points,
             distance_between_ctrl_point=distance_between_ctrl_points,
             init_dir=init_dir
