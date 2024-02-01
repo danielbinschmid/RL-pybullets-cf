@@ -17,6 +17,13 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
     seed: int 
     use_gui_for_test_env: bool
     output_path_location: str
+    episode_len_sec: int
+    waypoint_buffer_size: int
+    k_p: float
+    k_wp: float
+    k_s: float
+    max_reward_distance: float
+    waypoint_dist_tol: float
 
     def __init__(self,
                  config: Configuration,
@@ -37,6 +44,13 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
         self.n_env_training = n_env_training
         self.seed = seed
         self.use_gui_for_test_env = use_gui_for_test_env
+        self.episode_len_sec = config.episode_len_sec
+        self.waypoint_buffer_size = config.waypoint_buffer_size
+        self.k_p = config.k_p
+        self.k_wp = config.k_wp
+        self.k_s = config.k_s
+        self.max_reward_distance = config.max_reward_distance
+        self.waypoint_dist_tol = config.waypoint_dist_tol
 
     def get_train_env(self) -> VecEnv:
         train_env = make_vec_env(
@@ -45,7 +59,14 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
                 target_trajectory=self.t_traj,
                 initial_xyzs=self.initial_xyzs,
                 obs=self.observation_type, 
-                act=self.action_type
+                act=self.action_type,
+                episode_len_sec=self.episode_len_sec,
+                waypoint_buffer_size=self.waypoint_buffer_size,
+                k_p=self.k_p,
+                k_wp=self.k_wp,
+                k_s=self.k_s,
+                max_reward_distance=self.max_reward_distance,
+                waypoint_dist_tol=self.waypoint_dist_tol
             ),
             n_envs=self.n_env_training,
             seed=self.seed
@@ -57,7 +78,14 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
             target_trajectory=self.t_traj,
             initial_xyzs=self.initial_xyzs,
             obs=self.observation_type, 
-            act=self.action_type
+            act=self.action_type,
+            episode_len_sec=self.episode_len_sec,
+            waypoint_buffer_size=self.waypoint_buffer_size,
+            k_p=self.k_p,
+            k_wp=self.k_wp,
+            k_s=self.k_s,
+            max_reward_distance=self.max_reward_distance,
+            waypoint_dist_tol=self.waypoint_dist_tol
         )
         return eval_env
 
@@ -68,7 +96,14 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
             gui=self.use_gui_for_test_env,
             obs=self.observation_type,
             act=self.action_type,
-            record=False
+            record=False,
+            episode_len_sec=self.episode_len_sec,
+            waypoint_buffer_size=self.waypoint_buffer_size,
+            k_p=self.k_p,
+            k_wp=self.k_wp,
+            k_s=self.k_s,
+            max_reward_distance=self.max_reward_distance,
+            waypoint_dist_tol=self.waypoint_dist_tol
         )
         return test_env
 
@@ -77,6 +112,13 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
             target_trajectory=self.t_traj,
             initial_xyzs=self.initial_xyzs,
             obs=self.observation_type, 
-            act=self.action_type
+            act=self.action_type,
+            episode_len_sec=self.episode_len_sec,
+            waypoint_buffer_size=self.waypoint_buffer_size,
+            k_p=self.k_p,
+            k_wp=self.k_wp,
+            k_s=self.k_s,
+            max_reward_distance=self.max_reward_distance,
+            waypoint_dist_tol=self.waypoint_dist_tol
         )
         return test_env_nogui

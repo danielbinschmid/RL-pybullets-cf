@@ -16,10 +16,31 @@ class Configuration:
     output_path_location: str
     n_timesteps: int
     local: bool 
+    episode_len_sec: float
+    waypoint_buffer_size: int
+    k_p: float
+    k_wp: float
+    k_s: float
+    max_reward_distance: float
+    waypoint_dist_tol: float
+
 
     def __init__(self, 
                  action_type: ActionType, 
-                 initial_xyzs: np.ndarray, output_path_location: str, n_timesteps: int, local: bool,  t_traj=None, t_reward = None) -> None:
+                 initial_xyzs: np.ndarray,
+                 output_path_location: str,
+                 n_timesteps: int,
+                 local: bool,
+                 episode_len_sec : int,
+                 waypoint_buffer_size : int,
+                 k_p : float,
+                 k_wp : float,
+                 k_s : float,
+                 max_reward_distance : float,
+                 waypoint_dist_tol : float,
+                 t_traj=None,
+                 t_reward = None,
+                 ) -> None:
         self.action_type = action_type
         self.initial_xyzs = initial_xyzs
         self.t_traj = t_traj
@@ -31,5 +52,12 @@ class Configuration:
         self.output_path_location = output_path_location
         self.n_timesteps = n_timesteps
         self.local = local
+        self.episode_len_sec = episode_len_sec
+        self.waypoint_buffer_size = waypoint_buffer_size
+        self.k_p = k_p
+        self.k_wp = k_wp
+        self.k_s = k_s
+        self.max_reward_distance = max_reward_distance
+        self.waypoint_dist_tol = waypoint_dist_tol
 
 
