@@ -24,7 +24,6 @@ class Configuration:
     max_reward_distance: float
     waypoint_dist_tol: float
 
-
     def __init__(self, 
                  action_type: ActionType, 
                  initial_xyzs: np.ndarray,
@@ -32,12 +31,12 @@ class Configuration:
                  n_timesteps: int,
                  local: bool,
                  episode_len_sec : int,
-                 waypoint_buffer_size : int,
-                 k_p : float,
-                 k_wp : float,
-                 k_s : float,
-                 max_reward_distance : float,
-                 waypoint_dist_tol : float,
+                 waypoint_buffer_size : int=2,
+                 k_p : float=1,
+                 k_wp : float=1,
+                 k_s : float=1,
+                 max_reward_distance : float=1,
+                 waypoint_dist_tol : float=1,
                  t_traj=None,
                  t_reward = None,
                  ) -> None:
