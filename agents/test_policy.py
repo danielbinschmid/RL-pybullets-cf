@@ -1,4 +1,4 @@
-from factories.simple_follower_factory import EnvFactorySimpleFollowerAviary
+from aviaries.factories.simple_follower_factory import EnvFactorySimpleFollowerAviary
 from agents.utils.configuration import Configuration
 import os
 from stable_baselines3.common.evaluation import evaluate_policy

@@ -3,7 +3,7 @@
 import argparse
 from gym_pybullet_drones.utils.utils import str2bool
 from gym_pybullet_drones.utils.enums import ObservationType, ActionType
-from factories.position_controller_factory import PositionControllerFactory
+from aviaries.factories.position_controller_factory import PositionControllerFactory
 from agents.utils.configuration import Configuration
 from train_policy import run_train
 from test_policy import run_test

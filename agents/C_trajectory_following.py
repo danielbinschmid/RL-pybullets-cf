@@ -4,7 +4,7 @@ from gym_pybullet_drones.utils.utils import str2bool
 from gym_pybullet_drones.utils.enums import ObservationType, ActionType
 from trajectories import TrajectoryFactory
 from agents.utils.configuration import Configuration
-from factories.uzh_trajectory_follower_factory import TrajectoryFollowerAviaryFactory
+from aviaries.factories.uzh_trajectory_follower_factory import TrajectoryFollowerAviaryFactory
 
 ###### INFRASTRUCTURE PARAMS #######
 GUI = True

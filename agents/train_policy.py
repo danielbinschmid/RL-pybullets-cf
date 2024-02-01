@@ -2,7 +2,7 @@ import numpy as np
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
 from agents.utils.configuration import Configuration
-from factories.base_factory import BaseFactory
+from aviaries.factories.base_factory import BaseFactory
 
 def run_train(config: Configuration, env_factory: BaseFactory):
 
