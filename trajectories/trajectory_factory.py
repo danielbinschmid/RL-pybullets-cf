@@ -117,7 +117,7 @@ class TrajectoryFactory:
     def gen_random_trajectory(
         cls, 
         start: np.ndarray, 
-        std_dev_dev: float=90, 
+        std_dev_deg: float=90, 
         n_ctrl_points: int=10, 
         distance_between_ctrl_points: float=1, 
         n_discr_level: int=100,
