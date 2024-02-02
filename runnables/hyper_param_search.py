@@ -1,13 +1,12 @@
 import subprocess
 import itertools
-from concurrent.futures import ProcessPoolExecutor
 
 # Define your grid parameters
 param_grid = {
     'waypoint_buffer_size': [3,4],
-    # 'k_p' : [0.5, 1],
-    # 'k_wp' : [4, 8],
-    # 'k_s' : [0.5, 1],
+    'k_p' : [1, 2],
+    'k_wp' : [3, 7],
+    'k_s' : [0.1, 0.2],
     'max_reward_distance': [0.1, 0.2],
     'waypoint_dist_tol': [0.05, 0.12],
 }
@@ -24,7 +23,3 @@ def run_program(combo):
     subprocess.run(args)
 
 print(len(combinations))
-
-# Run subprocesses in parallel
-with ProcessPoolExecutor() as executor:
-    executor.map(run_program, combinations)
