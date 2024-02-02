@@ -115,9 +115,9 @@ def run(output_folder=OUTPUT_FOLDER,
         run_train(config=config,
                   env_factory=env_factory)
 
-    if test:
-        run_test(config=config,
-                 env_factory=env_factory)
+    # if test:
+    #     run_test(config=config,
+    #              env_factory=env_factory)
 
 
     
