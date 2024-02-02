@@ -6,6 +6,9 @@ from trajectories import TrajectoryFactory
 from agents.utils.configuration import Configuration
 from aviaries.factories.uzh_trajectory_follower_factory import TrajectoryFollowerAviaryFactory
 
+from agents.test_policy import run_test
+from agents.train_policy import run_train
+
 ###### INFRASTRUCTURE PARAMS #######
 GUI = True
 RECORD_VIDEO = False
@@ -28,13 +31,13 @@ TEST = True
 ####################################
 
 ###### ENVIRONMENT PARAMS ##########
-TIMESTEPS = 1e6
+TIMESTEPS = 1e4
 N_ENVS = 5
 EPISODE_LEN_SEC = 8
 ####################################
 
 ###### HYPERPARAMS #################
-WAYPOINT_BUFFER_SIZE = 2
+WAYPOINT_BUFFER_SIZE = 3
 K_P = 1
 K_WP = 3
 K_S = 0.1
@@ -42,8 +45,6 @@ MAX_REWARD_DISTANCE = 0.2
 WAYPOINT_DIST_TOL = 0.12
 ####################################
 
-from agents.test_policy import run_test
-from agents.train_policy import run_train
 
 def init_targets():
     points_per_segment = 4
@@ -56,7 +57,7 @@ def init_targets():
     x_segment = np.array([
         [(1/points_per_segment)*i, 1, 1] for i in range(1, points_per_segment + 1)
     ])
-    initial_xyzs = np.array([[0.,     0.,     0.]])
+    initial_xyzs = np.array([[0.,     0.,     1.]])
     pts = np.vstack([initial_xyzs, z_segment, y_segment, x_segment])
     t_wps = TrajectoryFactory.waypoints_from_numpy(
         pts
@@ -82,6 +83,9 @@ def run(output_folder=OUTPUT_FOLDER,
 
     # CONFIG ##################################################
     t_traj, init_wp = init_targets()
+
+    output_folder = f"{output_folder}/k_p={k_p}_k_wp={k_wp}_k_s={k_s}_max_reward_distance={max_reward_distance}_waypoint_dist_tol={waypoint_dist_tol}"
+    print(f"Output folder: {output_folder}")
 
     config = Configuration(
         action_type=ACT,
@@ -121,19 +125,19 @@ def run(output_folder=OUTPUT_FOLDER,
 if __name__ == '__main__':
     #### Define and parse (optional) arguments for the script ##
     parser = argparse.ArgumentParser(description='Single agent reinforcement learning example script')
-    parser.add_argument('--gui',                default=GUI,           type=str2bool,      help='Whether to use PyBullet GUI (default: True)', metavar='')
-    parser.add_argument('--output_folder',      default=OUTPUT_FOLDER, type=str,           help='Folder where to save logs (default: "results")', metavar='')
-    parser.add_argument('--timesteps',          default=TIMESTEPS,     type=int,           help='number of train timesteps before stopping', metavar='')
-    parser.add_argument('--train',          default=TRAIN,     type=str2bool,           help='Whether to train (default: True)', metavar='')
-    parser.add_argument('--test',          default=TEST,     type=str2bool,           help='Whether to test (default: True)', metavar='')
-    parser.add_argument('--n_envs',          default=N_ENVS,     type=int,           help='number of parallel environments', metavar='')
-    parser.add_argument('--episode_len_sec',          default=EPISODE_LEN_SEC,     type=int,           help='number of parallel environments', metavar='')
-    parser.add_argument('--waypoint_buffer_size',          default=WAYPOINT_BUFFER_SIZE,     type=int,           help='number of parallel environments', metavar='')
-    parser.add_argument('--k_p',          default=K_P,     type=float,           help='number of parallel environments', metavar='')
-    parser.add_argument('--k_wp',          default=K_WP,     type=float,           help='number of parallel environments', metavar='')
-    parser.add_argument('--k_s',          default=K_S,     type=float,           help='number of parallel environments', metavar='')
-    parser.add_argument('--max_reward_distance',          default=MAX_REWARD_DISTANCE,     type=float,           help='number of parallel environments', metavar='')
-    parser.add_argument('--waypoint_dist_tol',          default=WAYPOINT_DIST_TOL,     type=float,           help='number of parallel environments', metavar='')
+    parser.add_argument('--gui',                    default=GUI,                    type=str2bool,      help='Whether to use PyBullet GUI (default: True)', metavar='')
+    parser.add_argument('--output_folder',          default=OUTPUT_FOLDER,          type=str,           help='Folder where to save logs (default: "results")', metavar='')
+    parser.add_argument('--timesteps',              default=TIMESTEPS,              type=int,           help='number of train timesteps before stopping', metavar='')
+    parser.add_argument('--train',                  default=TRAIN,                  type=str2bool,      help='Whether to train (default: True)', metavar='')
+    parser.add_argument('--test',                   default=TEST,                   type=str2bool,      help='Whether to test (default: True)', metavar='')
+    parser.add_argument('--n_envs',                 default=N_ENVS,                 type=int,           help='number of parallel environments', metavar='')
+    parser.add_argument('--episode_len_sec',        default=EPISODE_LEN_SEC,        type=int,           help='number of parallel environments', metavar='')
+    parser.add_argument('--waypoint_buffer_size',   default=WAYPOINT_BUFFER_SIZE,   type=int,           help='number of parallel environments', metavar='')
+    parser.add_argument('--k_p',                    default=K_P,                    type=float,         help='number of parallel environments', metavar='')
+    parser.add_argument('--k_wp',                   default=K_WP,                   type=float,         help='number of parallel environments', metavar='')
+    parser.add_argument('--k_s',                    default=K_S,                    type=float,         help='number of parallel environments', metavar='')
+    parser.add_argument('--max_reward_distance',    default=MAX_REWARD_DISTANCE,    type=float,         help='number of parallel environments', metavar='')
+    parser.add_argument('--waypoint_dist_tol',      default=WAYPOINT_DIST_TOL,      type=float,         help='number of parallel environments', metavar='')
     ARGS = parser.parse_args()
 
     run(**vars(ARGS))

@@ -1,9 +1,7 @@
 import numpy as np
 from gym_pybullet_drones.utils.enums import ActionType
 from trajectories import DiscretizedTrajectory
-import os
 import numpy as np
-from trajectories import TrajectoryFactory
 from typing import List
 
 

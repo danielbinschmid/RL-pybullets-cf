@@ -5,7 +5,7 @@ import numpy as np
 import pybullet as p
 from gymnasium import spaces
 
-from trajectories import DiscretizedTrajectory
+from trajectories import TrajectoryFactory, DiscretizedTrajectory
 from aviaries.rewards.uzh_trajectory_reward import Rewards
     
 txt_colour = [0,0,0]
@@ -58,17 +58,18 @@ class UZHAviary(BaseRLAviary):
         self.NUM_DRONES = 1
         self.INIT_XYZS = initial_xyzs
 
+
+        # FOR DEVELOPMENT 
+        self.one_traj = False
+        self.single_traj = target_trajectory
+
         # TRAJECTORY
-        self.trajectory = np.array([x.coordinate for x in target_trajectory])
         self.WAYPOINT_BUFFER_SIZE = waypoint_buffer_size # how many steps into future to interpolate
+        self.trajectory = self.set_trajectory()
+        assert self.WAYPOINT_BUFFER_SIZE < len(self.trajectory), "Buffer size should be smaller than the number of waypoints"
         self.current_waypoint_idx = 0
-        self.trajectory = np.vstack([
-            self.trajectory,
-            np.array(self.trajectory[-1] * np.ones((self.WAYPOINT_BUFFER_SIZE, 3)))
-        ])
         self.current_projection_idx = 0
         self.future_waypoints_relative = self.trajectory[self.current_projection_idx: self.current_projection_idx+self.WAYPOINT_BUFFER_SIZE] - self.trajectory[self.current_projection_idx]
-        assert self.WAYPOINT_BUFFER_SIZE < len(self.trajectory), "Buffer size should be smaller than the number of waypoints"
         self.rewards = Rewards(
             trajectory=self.trajectory,
             k_p=k_p,
@@ -77,6 +78,8 @@ class UZHAviary(BaseRLAviary):
             max_reward_distance=max_reward_distance,
             dist_tol=waypoint_dist_tol
         )
+
+        self.INIT_XYZS = self.trajectory[0]
 
         super().__init__(
             drone_model=drone_model,
@@ -108,7 +111,28 @@ class UZHAviary(BaseRLAviary):
         self.rewards.reached_distance = 0
         self.current_projection = self.trajectory[0]
         self.current_projection_idx = 0
+        self.self_trajectory = self.set_trajectory()
         self.rewards.reset()
+
+    def set_trajectory(self):
+        if self.one_traj:
+            trajectory = np.array([x.coordinate for x in self.single_traj])
+        else:
+            ctrl_wps = TrajectoryFactory.gen_random_trajectory(
+                start=np.array([0, 0, 1]),
+                n_discr_level=12,
+                n_ctrl_points=3,
+                std_dev_deg=60,
+                distance_between_ctrl_points=0.75,
+                init_dir=None,
+                return_ctrl_points=False
+            )
+            trajectory = [x.coordinate for x in ctrl_wps]
+
+        return np.vstack([
+            trajectory,
+            np.array(trajectory[-1] * np.ones((self.WAYPOINT_BUFFER_SIZE, 3)))
+        ])
 
     def _computeReward(self):
         drone_state = self._getDroneStateVector(0)
