@@ -4,12 +4,12 @@ from concurrent.futures import ProcessPoolExecutor
 
 # Define your grid parameters
 param_grid = {
-    'waypoint_buffer_size': [2, 3],
-    'k_p' : [0.5, 1],
-    'k_wp' : [4, 8],
-    'k_s' : [0.5, 1],
+    'waypoint_buffer_size': [3,4],
+    # 'k_p' : [0.5, 1],
+    # 'k_wp' : [4, 8],
+    # 'k_s' : [0.5, 1],
     'max_reward_distance': [0.1, 0.2],
-    'waypoint_dist_tol': [0.08, 0.12],
+    'waypoint_dist_tol': [0.05, 0.12],
 }
 
 # Generate all combinations of parameters
