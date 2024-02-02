@@ -31,7 +31,7 @@ TEST = True
 ####################################
 
 ###### ENVIRONMENT PARAMS ##########
-TIMESTEPS = 1e4
+TIMESTEPS = 1e6
 N_ENVS = 5
 EPISODE_LEN_SEC = 8
 ####################################
@@ -39,8 +39,8 @@ EPISODE_LEN_SEC = 8
 ###### HYPERPARAMS #################
 WAYPOINT_BUFFER_SIZE = 3
 K_P = 1
-K_WP = 3
-K_S = 0.1
+K_WP = 3.5
+K_S = 0.12
 MAX_REWARD_DISTANCE = 0.2 
 WAYPOINT_DIST_TOL = 0.12
 ####################################
