@@ -115,8 +115,9 @@ def run(output_folder=OUTPUT_FOLDER,
                   env_factory=env_factory)
 
     if test:
-        run_test(config=config,
-                 env_factory=env_factory)
+        for _ in range(5):
+            run_test(config=config,
+                    env_factory=env_factory)
 
 
     
