@@ -80,12 +80,11 @@ def run(output_folder=OUTPUT_FOLDER,
         waypoint_dist_tol: float = WAYPOINT_DIST_TOL,
     ):
 
-
     # CONFIG ##################################################
     t_traj, init_wp = init_targets()
 
-    output_folder = f"{output_folder}/k_p={k_p}_k_wp={k_wp}_k_s={k_s}_max_reward_distance={max_reward_distance}_waypoint_dist_tol={waypoint_dist_tol}"
-    print(f"Output folder: {output_folder}")
+    # output_folder = f"{output_folder}/k_p={k_p}_k_wp={k_wp}_k_s={k_s}_max_reward_distance={max_reward_distance}_waypoint_dist_tol={waypoint_dist_tol}"
+    # print(f"Output folder: {output_folder}")
 
     config = Configuration(
         action_type=ACT,
@@ -115,9 +114,9 @@ def run(output_folder=OUTPUT_FOLDER,
         run_train(config=config,
                   env_factory=env_factory)
 
-    # if test:
-    #     run_test(config=config,
-    #              env_factory=env_factory)
+    if test:
+        run_test(config=config,
+                 env_factory=env_factory)
 
 
     
