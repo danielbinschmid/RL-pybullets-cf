@@ -45,6 +45,13 @@ class MPCCasADiControl(BaseControl):
         if self.DRONE_MODEL != DroneModel.CF2X and self.DRONE_MODEL != DroneModel.CF2P:
             print("[ERROR] in DSLPIDControl.__init__(), DSLPIDControl requires DroneModel.CF2X or DroneModel.CF2P")
             exit()
+
+        self.P_COEFF_FOR = np.array([.4, .4, 1.25])
+        self.I_COEFF_FOR = np.array([.05, .05, .05])
+        self.D_COEFF_FOR = np.array([.2, .2, .5])
+        self.P_COEFF_TOR = np.array([70000., 70000., 60000.])
+        self.I_COEFF_TOR = np.array([.0, .0, 500.])
+        self.D_COEFF_TOR = np.array([20000., 20000., 12000.])
         '''
         self.Ix = 0.0000166  
         self.Iy = 0.0000167
@@ -133,6 +140,7 @@ class MPCCasADiControl(BaseControl):
         x_dot = vertcat(x_pos_dot, y_dot, z_dot, phi_dot, theta_dot, psi_dot, x_pos_ddot, y_ddot, z_ddot, phi_ddot,
                         theta_ddot, psi_ddot)
 
+        self.f = Function('f', [x, u], [x_dot], ['x', 'u'], ['x_dot'])
         f = Function('f', [x, u], [x_dot], ['x', 'u'], ['x_dot'])
 
         U = MX.sym("U", Nu, Nhoriz)  # Decision variables (controls)
@@ -306,6 +314,14 @@ class MPCCasADiControl(BaseControl):
         self.cat_states = DM2Arr(self.X0)
         self.cat_controls = DM2Arr(self.u0[:, 0])
 
+        #### Store the last roll, pitch, and yaw ###################
+        self.last_rpy = np.zeros(3)
+        #### Initialized PID control variables #####################
+        self.last_pos_e = np.zeros(3)
+        self.integral_pos_e = np.zeros(3)
+        self.last_rpy_e = np.zeros(3)
+        self.integral_rpy_e = np.zeros(3)
+
     ################################################################################
 
     def computeControl(self,
@@ -434,6 +450,15 @@ class MPCCasADiControl(BaseControl):
         tau_phi_step_0 = u[1, 0]  # Tau_phi
         tau_theta_step_0 = u[2, 0]  # Tau_theta
         tau_psi_step_0 = u[3, 0]  # Tau_psi
+        u_step_0 = u[:,0]
+
+        x_step_0 = self.f(self.state_init, u_step_0)
+
+        phi = x_step_0[3]  # phi-angle, Euler angles
+        theta = x_step_0[4]  # theta-angle, Euler angles
+        psi = x_step_0[5]  # psi-angle, Euler angles
+
+        print("phi: " + str(float(phi)))
 
         '''u_np = np.array(u.full())
         np.set_printoptions(precision=4, suppress=True)
@@ -468,14 +493,26 @@ class MPCCasADiControl(BaseControl):
         )
 
         self.control_counter += 1
-        thrust, computed_target_rpy, pos_e = self._dslPIDPositionControl(control_timestep,
+        '''thrust, computed_target_rpy, pos_e = self._dslPIDPositionControl(control_timestep,
                                                                          cur_pos,
                                                                          cur_quat,
                                                                          cur_vel,
                                                                          target_pos,
                                                                          target_rpy,
                                                                          target_vel
-                                                                         )
+                                                                         )'''
+
+
+        thrust_normalized = thrust_step_0 / 35.0
+        thrust = thrust_normalized * (self.MAX_PWM - self.MIN_PWM ) + self.MIN_PWM
+
+
+
+
+        target_rotation = np.array([float(phi), float(theta), float(psi)])
+        #computed_target_rpy = (Rotation.from_matrix(target_rotation)).as_euler('XYZ', degrees=False)
+        computed_target_rpy = target_rotation
+
         cur_rpy = p.getEulerFromQuaternion(cur_quat)
         if target_thrust is None:
             rpm = self._dslPIDAttitudeControl(control_timestep,
@@ -495,7 +532,8 @@ class MPCCasADiControl(BaseControl):
                 target_rpy_rates=target_rpy_rates
             )
 
-        return rpm, pos_e, computed_target_rpy[2] - cur_rpy[2]
+        #return rpm, pos_e, computed_target_rpy[2] - cur_rpy[2]
+        return rpm, None, None
 
     ################################################################################
 
