@@ -2,60 +2,38 @@ import numpy as np
 
 from gym_pybullet_drones.envs.BaseRLAviary import BaseRLAviary
 from gym_pybullet_drones.utils.enums import DroneModel, Physics, ActionType, ObservationType
-from trajectories import DiscretizedTrajectory
+from trajectories.random_trajectory import RandomTrajectory
+from trajectories.trajectory import Trajectory
 from typing import Dict, Any
 import pybullet as p
 from gymnasium import spaces
 
+
 class PositionControllerAviary(BaseRLAviary):
-    """Single agent RL problem: hover at position."""
 
     ################################################################################
-    
+
     def __init__(self,
                  initial_xyzs: np.ndarray,
                  drone_model: DroneModel=DroneModel.CF2X,
                  initial_rpys=None,
                  physics: Physics=Physics.PYB,
                  pyb_freq: int = 240,
-                 ctrl_freq: int = 30,
+                 ctrl_freq: int = 240,
                  gui=False,
                  record=False,
                  obs: ObservationType=ObservationType.KIN,
-                 act: ActionType=ActionType.RPM
+                 act: ActionType=ActionType.RPM,
+                 zero_velocity_at_target: bool = False,
+                 trajectory: Trajectory = RandomTrajectory()
                  ):
-        """Initialization of a single agent RL environment.
 
-        Using the generic single agent RL superclass.
-
-        Parameters
-        ----------
-        drone_model : DroneModel, optional
-            The desired drone type (detailed in an .urdf file in folder `assets`).
-        initial_xyzs: ndarray | None, optional
-            (NUM_DRONES, 3)-shaped array containing the initial XYZ position of the drones.
-        initial_rpys: ndarray | None, optional
-            (NUM_DRONES, 3)-shaped array containing the initial orientations of the drones (in radians).
-        physics : Physics, optional
-            The desired implementation of PyBullet physics/custom dynamics.
-        pyb_freq : int, optional
-            The frequency at which PyBullet steps (a multiple of ctrl_freq).
-        ctrl_freq : int, optional
-            The frequency at which the environment steps.
-        gui : bool, optional
-            Whether to use PyBullet's GUI.
-        record : bool, optional
-            Whether to save a video of the simulation.
-        obs : ObservationType, optional
-            The type of observation space (kinematic information or vision)
-        act : ActionType, optional
-            The type of action space (1 or 3D; RPMS, thurst and torques, or waypoint with PID control)
-
-        """
         self.INIT_XYZS = initial_xyzs
-        self.TARGET_POS = np.random.uniform(low=0, high=1, size=(3,))
-        self.EPISODE_LEN_SEC = 8
+        self.TRAJECTORY = trajectory
+        self.TARGET_POS = self.TRAJECTORY.get_next_waypoint().coordinate
+        self.EPISODE_LEN_SEC = 20
         self.N_TARGET_REACHED = 0
+        self.ZERO_VELOCITY_AT_TARGET = zero_velocity_at_target
         super().__init__(drone_model=drone_model,
                          num_drones=1,
                          initial_xyzs=initial_xyzs,
@@ -83,10 +61,13 @@ class PositionControllerAviary(BaseRLAviary):
         state = self._getDroneStateVector(0)
         ret = max(0, 2 - np.linalg.norm(self.TARGET_POS-state[0:3])**4)
         # new target
-        if np.linalg.norm(self.TARGET_POS-state[0:3]) < .05:
-            ret += 100
+        position = state[0:3]
+        velocity = state[10:13]
+        if np.linalg.norm(self.TARGET_POS-position) < .1 and np.linalg.norm(velocity) < .05:
+            ret += 150
             self.N_TARGET_REACHED += 1
-            self.TARGET_POS = np.random.uniform(low=0, high=1, size=(3,))
+            waypoint = self.TRAJECTORY.get_next_waypoint()
+            self.TARGET_POS = waypoint.coordinate
         return ret
 
     ################################################################################
@@ -100,10 +81,11 @@ class PositionControllerAviary(BaseRLAviary):
             Whether the current episode is done.
 
         """
-        return False
-        
+        if self.step_counter/self.PYB_FREQ > self.EPISODE_LEN_SEC or self.TRAJECTORY.is_done():
+            return True
+
     ################################################################################
-    
+
     def _computeTruncated(self):
         """Computes the current truncated value.
 
@@ -118,13 +100,11 @@ class PositionControllerAviary(BaseRLAviary):
              or abs(state[7]) > .4 or abs(state[8]) > .4 # Truncate when the drone is too tilted
         ):
             return True
-        if self.step_counter/self.PYB_FREQ > self.EPISODE_LEN_SEC:
-            return True
         else:
             return False
 
     ################################################################################
-    
+
     def _computeInfo(self) -> Dict[str, Any]:
         """
         Any additional computation in simulation loop. 
@@ -223,3 +203,9 @@ class PositionControllerAviary(BaseRLAviary):
 
         return ret
 
+    def get_position(self, drone_id):
+        return self._getDroneStateVector(drone_id)[0:3]
+
+    def reset(self, seed: int = None, options: dict = None):
+        self.TRAJECTORY.reset()
+        return super().reset(seed, options)

@@ -4,6 +4,8 @@ import argparse
 from gym_pybullet_drones.utils.utils import str2bool
 from gym_pybullet_drones.utils.enums import ObservationType, ActionType
 from factories.position_controller_factory import PositionControllerFactory
+from trajectories.cube_trajectory import CubeTrajectory
+from trajectories.random_trajectory import RandomTrajectory
 from agents.utils.configuration import Configuration
 from train_policy import run_train
 from test_policy import run_test
@@ -12,13 +14,14 @@ import numpy as np
 # defaults for command line arguments
 DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_GUI = True
-DEFAULT_TIMESTEPS = 5e6
+DEFAULT_TIMESTEPS = 10e6
 DEFAULT_ACTION_TYPE = ActionType.RPM
 DEFAULT_TRAIN = True
-DEFAULT_TEST = False
+DEFAULT_TEST = True
+DEFAULT_ZERO_VELOCITY_AT_TARGET = False  # True does not work
 
 # more configurations
-DEFAULT_OBS = ObservationType('kin') # 'kin' or 'rgb'
+DEFAULT_OBS = ObservationType('kin')  # 'kin' or 'rgb'
 
 
 def run(output_folder=DEFAULT_OUTPUT_FOLDER,
@@ -44,6 +47,9 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER,
         use_gui_for_test_env=gui,
         n_env_training=20,
         seed=0,
+        zero_velocity_at_target=DEFAULT_ZERO_VELOCITY_AT_TARGET,
+        training_trajectory=RandomTrajectory(),
+        testing_trajectory=CubeTrajectory()
     )
 
     if train:
@@ -61,8 +67,8 @@ if __name__ == '__main__':
     parser.add_argument('--gui',                default=DEFAULT_GUI,           type=str2bool,      help='Whether to use PyBullet GUI (default: True)', metavar='')
     parser.add_argument('--output_folder',      default=DEFAULT_OUTPUT_FOLDER, type=str,           help='Folder where to save logs (default: "results")', metavar='')
     parser.add_argument('--timesteps',          default=DEFAULT_TIMESTEPS,     type=int,           help='number of train timesteps before stopping', metavar='')
-    parser.add_argument('--train',          default=DEFAULT_TRAIN,     type=str2bool,           help='Whether to train (default: True)', metavar='')
-    parser.add_argument('--test',          default=DEFAULT_TEST,     type=str2bool,           help='Whether to test (default: True)', metavar='')
+    parser.add_argument('--train',              default=DEFAULT_TRAIN,         type=str2bool,      help='Whether to train (default: True)', metavar='')
+    parser.add_argument('--test',               default=DEFAULT_TEST,          type=str2bool,      help='Whether to test (default: True)', metavar='')
     ARGS = parser.parse_args()
 
     run(**vars(ARGS))

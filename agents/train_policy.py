@@ -2,9 +2,9 @@ import numpy as np
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
 from agents.utils.configuration import Configuration
-from factories.base_factory import BaseFactory
 
-def run_train(config: Configuration, env_factory: BaseFactory):
+
+def run_train(config: Configuration, env_factory):
 
     # CONFIG ##################################################
 
@@ -16,7 +16,7 @@ def run_train(config: Configuration, env_factory: BaseFactory):
     # SETUP ###################################################
 
     # model
-    model = PPO('MlpPolicy',    
+    model = PPO('MlpPolicy',
                 train_env,
                 tensorboard_log=config.output_path_location+'/tb/',
                 verbose=1,
@@ -35,7 +35,7 @@ def run_train(config: Configuration, env_factory: BaseFactory):
                                  eval_freq=int(1000),
                                  deterministic=True,
                                  render=False)
-    
+
     # ##########################################################
 
     print('[INFO] Action space:', train_env.action_space)
@@ -48,7 +48,7 @@ def run_train(config: Configuration, env_factory: BaseFactory):
     model.learn(total_timesteps=config.n_timesteps,
                 callback=eval_callback,
                 log_interval=100)
-    
+
     # save model
     model.save(config.output_path_location+'/final_model.zip')
     print(config.output_path_location)
@@ -57,8 +57,5 @@ def run_train(config: Configuration, env_factory: BaseFactory):
     with np.load(config.output_path_location+'/evaluations.npz') as data:
         for j in range(data['timesteps'].shape[0]):
             print(str(data['timesteps'][j])+","+str(data['results'][j][0]))
-    
+
     # ##########################################################
-
-
-

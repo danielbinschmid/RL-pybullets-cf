@@ -97,8 +97,6 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER,
                  env_factory=env_factory)
 
 
-    
-
 if __name__ == '__main__':
     #### Define and parse (optional) arguments for the script ##
     parser = argparse.ArgumentParser(description='Single agent reinforcement learning example script')

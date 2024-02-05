@@ -100,9 +100,9 @@ class SimpleFollowerAviary(BaseRLAviary):
             return True
         else:
             return False
-        
-    ################################################################################
     
+    ################################################################################
+
     def _computeTruncated(self):
         """Computes the current truncated value.
 

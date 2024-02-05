@@ -6,6 +6,9 @@ from trajectories import DiscretizedTrajectory
 from stable_baselines3.common.vec_env import VecEnv
 from agents.utils.configuration import Configuration
 from .base_factory import BaseFactory
+from trajectories.random_trajectory import RandomTrajectory
+from trajectories.cube_trajectory import CubeTrajectory
+from trajectories.trajectory import Trajectory
 
 
 class PositionControllerFactory(BaseFactory):
@@ -23,8 +26,11 @@ class PositionControllerFactory(BaseFactory):
                  observation_type: ObservationType,
                  output_folder: str,
                  use_gui_for_test_env: bool = True,
-                 n_env_training: int=20,
+                 n_env_training: int = 20,
                  seed: int = 0,
+                 zero_velocity_at_target: bool = False,
+                 training_trajectory: Trajectory = RandomTrajectory(),
+                 testing_trajectory: Trajectory = CubeTrajectory()
         ) -> None:
         super().__init__()
         initial_xyzs = config.initial_xyzs
@@ -38,6 +44,9 @@ class PositionControllerFactory(BaseFactory):
         self.n_env_training = n_env_training
         self.seed = seed
         self.use_gui_for_test_env = use_gui_for_test_env
+        self.zero_velocity_at_target = zero_velocity_at_target,
+        self.training_trajectory: Trajectory = training_trajectory
+        self.testing_trajectory: Trajectory = testing_trajectory
 
     def get_train_env(self) -> VecEnv:
         train_env = make_vec_env(
@@ -45,7 +54,9 @@ class PositionControllerFactory(BaseFactory):
             env_kwargs=dict(
                 initial_xyzs=self.initial_xyzs,
                 obs=self.observation_type,
-                act=self.action_type
+                act=self.action_type,
+                zero_velocity_at_target=self.zero_velocity_at_target,
+                trajectory=self.training_trajectory
             ),
             n_envs=self.n_env_training,
             seed=self.seed
@@ -56,7 +67,9 @@ class PositionControllerFactory(BaseFactory):
         eval_env = PositionControllerAviary(
             initial_xyzs=self.initial_xyzs,
             obs=self.observation_type,
-            act=self.action_type
+            act=self.action_type,
+            zero_velocity_at_target=self.zero_velocity_at_target,
+            trajectory=self.training_trajectory
         )
         return eval_env
 
@@ -66,7 +79,9 @@ class PositionControllerFactory(BaseFactory):
             gui=self.use_gui_for_test_env,
             obs=self.observation_type,
             act=self.action_type,
-            record=False
+            zero_velocity_at_target=self.zero_velocity_at_target,
+            record=False,
+            trajectory=self.testing_trajectory
         )
         return test_env
 
@@ -74,6 +89,8 @@ class PositionControllerFactory(BaseFactory):
         test_env_nogui = PositionControllerAviary(
             initial_xyzs=self.initial_xyzs,
             obs=self.observation_type,
-            act=self.action_type
+            act=self.action_type,
+            zero_velocity_at_target=self.zero_velocity_at_target,
+            trajectory=self.testing_trajectory
         )
         return test_env_nogui

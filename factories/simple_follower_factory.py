@@ -25,7 +25,7 @@ class EnvFactorySimpleFollowerAviary(BaseFactory):
                  observation_type: ObservationType,
                  output_folder: str,
                  use_gui_for_test_env: bool = True,
-                 n_env_training: int=20,
+                 n_env_training: int = 20,
                  seed: int = 0,
         ) -> None:
         super().__init__()
@@ -41,7 +41,6 @@ class EnvFactorySimpleFollowerAviary(BaseFactory):
         self.seed = seed 
         self.use_gui_for_test_env = use_gui_for_test_env
 
-        
     def get_train_env(self) -> VecEnv:
         train_env = make_vec_env(
             SimpleFollowerAviary,

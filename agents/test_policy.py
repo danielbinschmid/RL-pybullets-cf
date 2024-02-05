@@ -34,7 +34,7 @@ def test_simple_follower(local: bool, filename: str, test_env_nogui: SimpleFollo
                 output_folder=output_folder,
                 colab=False
                 )
-    
+
     obs, info = test_env.reset(seed=42, options={})
     start = time.time()
     for i in range((test_env.EPISODE_LEN_SEC)*test_env.CTRL_FREQ):
@@ -78,5 +78,4 @@ def run_test(config: Configuration, env_factory: EnvFactorySimpleFollowerAviary)
         test_env=test_env,
         output_folder=config.output_path_location
     )
-
 
