@@ -58,7 +58,7 @@ class ControlPointSampler:
         # TODO improve handling of infeasible waypoint below ground
         while_loop_count = 0
         new_wp = np.array([0,0,-1])
-        while new_wp[2] < 0:
+        while new_wp[2] < 0.5: #hotfix
             rand_dir = self._sample_random_vec()
             projected_rand_dir = normalise_vec(np.dot(inv_rot_mat, rand_dir))
             new_wp = wp + self.distance * projected_rand_dir

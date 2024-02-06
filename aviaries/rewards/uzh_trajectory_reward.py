@@ -11,7 +11,7 @@ class RewardDict:
         self.r_s = r_s 
     
     def __str__(self) -> str:
-        return f'r_t: {self.r_t:.2f}; r_p: {self.r_p:.2f}; r_wp: {self.r_wp:.2f}; r_s: {self.r_s:.2f}'
+        return f'r_t: {self.r_t:.3f}; r_p: {self.r_p:.3f}; r_wp: {self.r_wp:.3f}; r_s: {self.r_s:.3f}'
 
     def sum(self):
         return self.r_t + self.r_p + self.r_wp + self.r_s
@@ -34,6 +34,7 @@ class Rewards:
         self.diffs = self.p2 - self.p1
         self.distances = np.linalg.norm(self.p1 - self.p2, axis=1)
         self.reached_distance = 0
+        self.current_projection_distance = 0
         self.current_projection = self.trajectory[0]
 
         # weights for reward
@@ -48,8 +49,9 @@ class Rewards:
         self.dist_tol = dist_tol
         self.cur_reward = RewardDict()
     
-    def reset(self):
+    def reset(self, trajectory):
         self.cur_reward = RewardDict()
+        self.trajectory = trajectory
         self.wp_rewards = np.zeros(len(self.trajectory))
 
     def get_projections(self, position: np.ndarray):
@@ -59,7 +61,7 @@ class Rewards:
         shifted_position = position - self.p1
         dots = np.einsum('ij,ij->i', shifted_position, self.diffs)
         norm = np.linalg.norm(self.diffs, axis=1) ** 2
-        coefs = dots / (norm + 1e-5)
+        coefs = dots / (norm + 1e-9)
         coefs = np.clip(coefs, 0, 1)
         projections = coefs[:, np.newaxis] * self.diffs + self.p1
         return projections
@@ -71,7 +73,7 @@ class Rewards:
         overall_distance_travelled: total distance travelled by the drone (on trajectory)
         """
         projections = self.get_projections(position)
-        displacement_size = np.linalg.norm(projections- position, axis=1)
+        displacement_size = np.linalg.norm(projections-position, axis=1)
         closest_point_idx = np.argmin(displacement_size)
 
         current_projection = projections[closest_point_idx]
@@ -96,7 +98,7 @@ class Rewards:
             r_t=r_t,
             r_p=self.k_p * r_p,
             r_wp=self.k_wp * r_wp,
-            r_s=self.k_s * r_s
+            r_s=self.k_s * r_s,
         )
 
         return self.cur_reward.sum()
@@ -113,9 +115,7 @@ class Rewards:
         closest_waypoint_distance, closest_waypoint = self.get_closest_waypoint(position)
         projection_distance = np.linalg.norm(self.current_projection - position)
 
-        r_t = -10 if (abs(position[0]) > 1.5 or abs(position[1]) > 1.5 or position[2] > 2.0 # when the drone is too far away
-            or abs(drone_state[7]) > .4 or abs(drone_state[8]) > .4 # when the drone is too tilted
-        ) else 0
+        r_t = -10 if (abs(drone_state[7]) > .4 or abs(drone_state[8]) > .4) else 0 # when its tilted 
         r_p = reached_distance - self.reached_distance
         r_s = reached_distance
 
@@ -126,11 +126,24 @@ class Rewards:
         else:
             r_wp = 0
 
-
-        r = self.weight_rewards(r_t, r_p, r_wp, r_s)
+        # weighting by velocity
+        velocity = drone_state[10:13] 
+        velocity_norm = np.linalg.norm(velocity)
+        min_vel = 0.2
+        max_vel = 0.35
+        s_vmax = (5**(max_vel - velocity_norm)) if velocity_norm > max_vel else 1
+        s_min = (5**(velocity_norm - min_vel)) if velocity_norm < min_vel else 1
+        s_gd = np.exp(self.max_reward_distance - projection_distance) if projection_distance > self.max_reward_distance else 1
+        scale = s_vmax * s_min * s_gd
+        # print(f'velocity size is {velocity_norm}')
+        r = self.weight_rewards(r_t, scale*r_p, r_wp, scale*r_s)
+        # print(f'max reward disance {self.max_reward_distance}')
+        self.current_projection_distance = projection_distance
         self.reached_distance = reached_distance
-
-        return r if projection_distance < self.max_reward_distance else r_t
+        # print(f'velocity is {np.linalg.norm(velocity)}')
+        # print(f'projection distance is {projection_distance}')
+        # print(f'r is {r}')
+        return r
     
     def __str__(self) -> str:
         return ""

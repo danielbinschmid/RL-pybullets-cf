@@ -9,6 +9,8 @@ from aviaries.factories.uzh_trajectory_follower_factory import TrajectoryFollowe
 from agents.test_policy import run_test
 from agents.train_policy import run_train
 
+from torch import nn
+
 ###### INFRASTRUCTURE PARAMS #######
 GUI = True
 RECORD_VIDEO = False
@@ -21,7 +23,7 @@ OBS = ObservationType('kin') # 'kin' or 'rgb'
 ACT = ActionType.ATTITUDE_PID
 AGENTS = 1
 NUM_DRONES = 1
-CTRL_FREQ = 30
+CTRL_FREQ = 10
 MA = False
 ####################################
 
@@ -31,18 +33,18 @@ TEST = True
 ####################################
 
 ###### ENVIRONMENT PARAMS ##########
-TIMESTEPS = 1e6
+TIMESTEPS = 2e6
 N_ENVS = 5
-EPISODE_LEN_SEC = 8
+EPISODE_LEN_SEC = 10
 ####################################
 
 ###### HYPERPARAMS #################
 WAYPOINT_BUFFER_SIZE = 3
-K_P = 1
-K_WP = 3.5
-K_S = 0.12
-MAX_REWARD_DISTANCE = 0.2 
-WAYPOINT_DIST_TOL = 0.12
+K_P = 5
+K_WP = 5
+K_S = 0.05
+MAX_REWARD_DISTANCE = 0.03
+WAYPOINT_DIST_TOL = 0.03
 ####################################
 
 
@@ -84,6 +86,7 @@ def run(output_folder=OUTPUT_FOLDER,
     # CONFIG ##################################################
     t_traj, init_wp = init_targets()
 
+    # random number in range 10-99
     output_folder = f"{output_folder}/k_p={k_p}_k_wp={k_wp}_k_s={k_s}_max_reward_distance={max_reward_distance}_waypoint_dist_tol={waypoint_dist_tol}"
     print(f"Output folder: {output_folder}")
 
@@ -116,8 +119,9 @@ def run(output_folder=OUTPUT_FOLDER,
                   env_factory=env_factory)
 
     if test:
-        run_test(config=config,
-                 env_factory=env_factory)
+        for _ in range(10):
+            run_test(config=config,
+                    env_factory=env_factory)
 
 
     
