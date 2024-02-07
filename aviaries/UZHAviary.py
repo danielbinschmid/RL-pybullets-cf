@@ -68,9 +68,8 @@ class UZHAviary(BaseRLAviary):
         self.trajectory = self.set_trajectory()
         assert self.WAYPOINT_BUFFER_SIZE < len(self.trajectory), "Buffer size should be smaller than the number of waypoints"
         self.current_waypoint_idx = 0
-        self.current_projection_idx = 0
         self.furthest_reached_waypoint_idx = 0
-        self.future_waypoints_relative = self.trajectory[self.current_projection_idx: self.current_projection_idx+self.WAYPOINT_BUFFER_SIZE] - self.trajectory[self.current_projection_idx]
+        self.future_waypoints_relative = self.trajectory[self.current_waypoint_idx: self.current_waypoint_idx+self.WAYPOINT_BUFFER_SIZE] - self.trajectory[self.current_waypoint_idx]
         self.rewards = Rewards(
             trajectory=self.trajectory,
             k_p=k_p,
@@ -111,7 +110,6 @@ class UZHAviary(BaseRLAviary):
         self.current_waypoint_idx = 0
         self.rewards.reached_distance = 0
         self.current_projection = self.trajectory[0]
-        self.current_projection_idx = 0
         self.self_trajectory = self.set_trajectory()
         self.rewards.reset(self.self_trajectory)
 
@@ -140,14 +138,13 @@ class UZHAviary(BaseRLAviary):
         drone_pos = drone_state[:3]
 
         self.current_projection, self.current_projection_idx, reached_distance = self.rewards.get_travelled_distance(drone_pos)
-        # self.furthest_reached_waypoint_idx = max(self.furthest_reached_waypoint_idx, self.current_projection_idx)
-        self.furthest_reached_waypoint_idx = self.current_projection_idx
 
         r = self.rewards.compute_reward(
             drone_state=drone_state,
             reached_distance=reached_distance,
             bodyrates=self.current_action[0, 1:4]
         )
+        self.current_waypoint_idx = self.rewards.cur_wp_idx
         return r
 
     def _computeTerminated(self):
@@ -235,7 +232,9 @@ class UZHAviary(BaseRLAviary):
     def _computeObs(self):
         obs = self._getDroneStateVector(0)
         ret = np.hstack([obs[2], obs[7:10], obs[10:13], obs[13:16]]).reshape(1, -1).astype('float32')
-        self.future_waypoints_relative = self.trajectory[self.furthest_reached_waypoint_idx:self.furthest_reached_waypoint_idx+self.WAYPOINT_BUFFER_SIZE]
+        cur_idx = self.current_waypoint_idx if self.current_waypoint_idx < len(self.trajectory) - 2 - self.WAYPOINT_BUFFER_SIZE else len(self.trajectory) - 2 - self.WAYPOINT_BUFFER_SIZE 
+        cur_idx += 1
+        self.future_waypoints_relative = self.trajectory[cur_idx:cur_idx+self.WAYPOINT_BUFFER_SIZE]
 
         #### Add relative positions of future waypoints to observation
         ret = np.hstack([ret, self.current_projection - obs[:3].reshape(1, -1).astype('float32'), (self.future_waypoints_relative - obs[:3]).reshape(1, -1).astype('float32')])

@@ -51,7 +51,7 @@ class Rewards:
         
         self.dist_tol = dist_tol
         self.cur_reward = RewardDict()
-    
+        self.cur_wp_idx = 0
     def reset(self, trajectory):
         self.cur_reward = RewardDict()
         self.trajectory = trajectory
@@ -86,15 +86,15 @@ class Rewards:
         overall_distance_travelled = np.sum(self.distances[:closest_point_idx]) \
             + np.linalg.norm(projections[closest_point_idx] - self.p1[closest_point_idx])
         
-
+       
         return current_projection, current_projection_idx, overall_distance_travelled
     
     def get_closest_waypoint(self, position: np.ndarray):
         """
         Find the closest waypoint to the drone (for waypoint reward)
         """
-        distances = np.linalg.norm(self.trajectory - position, axis=1)
-        return np.min(distances), np.argmin(distances)
+        distance = np.linalg.norm(self.trajectory[self.cur_wp_idx + 1] - position)
+        return distance, self.cur_wp_idx + 1
 
     def weight_rewards(self, r_t, r_p, r_wp, r_s, r_w=0):
         self.cur_reward = RewardDict(
@@ -122,11 +122,13 @@ class Rewards:
         r_t = -10 if (abs(drone_state[7]) > .4 or abs(drone_state[8]) > .4) else 0 # when its tilted 
         r_p = reached_distance - self.reached_distance
         r_s = reached_distance
-
+        print("WPCUR", self.cur_wp_idx)
         # If we are passing waypoint for the first time, give reward for passing it and remember it
         if closest_waypoint_distance <= self.dist_tol and not self.wp_rewards[closest_waypoint]:
             self.wp_rewards[closest_waypoint] = 1
             r_wp = np.exp(-closest_waypoint_distance/self.dist_tol)
+            self.cur_wp_idx = self.cur_wp_idx + 1 if self.cur_wp_idx < len(self.trajectory) - 2 else len(self.trajectory) - 2
+            
         else:
             r_wp = 0
 

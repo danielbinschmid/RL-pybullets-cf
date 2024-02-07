@@ -28,23 +28,23 @@ MA = False
 ####################################
 
 ###### TEST TRAIN FLAGS ############
-TRAIN = True
+TRAIN = False
 TEST = True
 ####################################
 
 ###### ENVIRONMENT PARAMS ##########
 TIMESTEPS = 2.5e6
 N_ENVS = 20
-EPISODE_LEN_SEC = 10
+EPISODE_LEN_SEC = 30
 ####################################
 
 ###### HYPERPARAMS #################
 WAYPOINT_BUFFER_SIZE = 3
 K_P = 5
-K_WP = 10
+K_WP = 20
 K_S = 0.05
 MAX_REWARD_DISTANCE = 0.03
-WAYPOINT_DIST_TOL = 0.12
+WAYPOINT_DIST_TOL = 0.3
 ####################################
 
 
