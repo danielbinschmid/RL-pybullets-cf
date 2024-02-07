@@ -20,11 +20,11 @@ def test_simple_follower(local: bool, filename: str, test_env_nogui: BaseRLAviar
     model = PPO.load(path)
 
     # evaluate in test environment
-    mean_reward, std_reward = evaluate_policy(model,
-                                              test_env_nogui,
-                                              n_eval_episodes=10
-                                              )
-    print("\n\n\nMean reward ", mean_reward, " +- ", std_reward, "\n\n")
+    # mean_reward, std_reward = evaluate_policy(model,
+    #                                           test_env_nogui,
+    #                                           n_eval_episodes=10
+    #                                           )
+    # print("\n\n\nMean reward ", mean_reward, " +- ", std_reward, "\n\n")
 
     # visualise in test environment
     logger = Logger(logging_freq_hz=int(test_env.CTRL_FREQ),

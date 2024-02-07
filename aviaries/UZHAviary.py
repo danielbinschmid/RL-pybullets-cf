@@ -79,7 +79,7 @@ class UZHAviary(BaseRLAviary):
             max_reward_distance=max_reward_distance,
             dist_tol=waypoint_dist_tol
         )
-
+        self.current_action = None
         self.INIT_XYZS = self.trajectory[0]
 
         super().__init__(
@@ -145,7 +145,8 @@ class UZHAviary(BaseRLAviary):
 
         r = self.rewards.compute_reward(
             drone_state=drone_state,
-            reached_distance=reached_distance
+            reached_distance=reached_distance,
+            bodyrates=self.current_action[0, 1:4]
         )
         return r
 
@@ -188,6 +189,7 @@ class UZHAviary(BaseRLAviary):
     ################################################################################
 
     def step(self,action):
+        self.current_action = action
         # # visualise trajectory - this is cheating, but it works
         if self.GUI and not self.visualised:
             drone = self._getDroneStateVector(0)[:3]
