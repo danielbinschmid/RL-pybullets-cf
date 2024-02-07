@@ -176,12 +176,12 @@ class UZHAviary(BaseRLAviary):
         # Angular Velocity [13:16]
         lo = -np.inf
         hi = np.inf
-        obs_lower_bound = np.array([[lo,lo,0, lo,lo,lo,lo,lo,lo,lo,lo,lo]])
-        obs_upper_bound = np.array([[hi,hi,hi,hi,hi,hi,hi,hi,hi,hi,hi,hi]])
+        obs_lower_bound = np.array([[0, lo,lo,lo,lo,lo,lo,lo,lo,lo]])
+        obs_upper_bound = np.array([[hi,hi,hi,hi,hi,hi,hi,hi,hi,hi]])
 
         # Add future waypoints to observation space
-        obs_lower_bound = np.hstack([obs_lower_bound, np.array([[lo,lo,lo] for i in range(self.WAYPOINT_BUFFER_SIZE)]).reshape(1, -1)])
-        obs_upper_bound = np.hstack([obs_upper_bound, np.array([[hi,hi,hi] for i in range(self.WAYPOINT_BUFFER_SIZE)]).reshape(1, -1)])
+        obs_lower_bound = np.hstack([obs_lower_bound, np.array([[lo,lo,lo] for i in range(self.WAYPOINT_BUFFER_SIZE+1)]).reshape(1, -1)])
+        obs_upper_bound = np.hstack([obs_upper_bound, np.array([[hi,hi,hi] for i in range(self.WAYPOINT_BUFFER_SIZE+1)]).reshape(1, -1)])
 
         return spaces.Box(low=obs_lower_bound, high=obs_upper_bound, dtype=np.float32)
     
@@ -232,9 +232,9 @@ class UZHAviary(BaseRLAviary):
 
     def _computeObs(self):
         obs = self._getDroneStateVector(0)
-        ret = np.hstack([obs[0:3], obs[7:10], obs[10:13], obs[13:16]]).reshape(1, -1).astype('float32')
+        ret = np.hstack([obs[2], obs[7:10], obs[10:13], obs[13:16]]).reshape(1, -1).astype('float32')
         self.future_waypoints_relative = self.trajectory[self.furthest_reached_waypoint_idx:self.furthest_reached_waypoint_idx+self.WAYPOINT_BUFFER_SIZE]
 
         #### Add relative positions of future waypoints to observation
-        ret = np.hstack([ret, (self.future_waypoints_relative - obs[:3]).reshape(1, -1).astype('float32')])
+        ret = np.hstack([ret, self.current_projection - obs[:3].reshape(1, -1).astype('float32'), (self.future_waypoints_relative - obs[:3]).reshape(1, -1).astype('float32')])
         return ret

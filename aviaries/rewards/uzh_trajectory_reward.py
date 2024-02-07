@@ -130,7 +130,7 @@ class Rewards:
         velocity = drone_state[10:13] 
         velocity_norm = np.linalg.norm(velocity)
         min_vel = 0.2
-        max_vel = 0.35
+        max_vel = 0.5
         s_vmax = (5**(max_vel - velocity_norm)) if velocity_norm > max_vel else 1
         s_min = (5**(velocity_norm - min_vel)) if velocity_norm < min_vel else 1
         s_gd = np.exp(self.max_reward_distance - projection_distance) if projection_distance > self.max_reward_distance else 1
