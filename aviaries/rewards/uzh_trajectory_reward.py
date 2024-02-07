@@ -122,7 +122,6 @@ class Rewards:
         r_t = -10 if (abs(drone_state[7]) > .4 or abs(drone_state[8]) > .4) else 0 # when its tilted 
         r_p = reached_distance - self.reached_distance
         r_s = reached_distance
-        print("WPCUR", self.cur_wp_idx)
         # If we are passing waypoint for the first time, give reward for passing it and remember it
         if closest_waypoint_distance <= self.dist_tol and not self.wp_rewards[closest_waypoint]:
             self.wp_rewards[closest_waypoint] = 1
