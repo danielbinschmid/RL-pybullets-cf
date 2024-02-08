@@ -40,11 +40,11 @@ EPISODE_LEN_SEC = 10
 
 ###### HYPERPARAMS #################
 WAYPOINT_BUFFER_SIZE = 3
-K_P = 5
-K_WP = 20
+K_P = 0.05
+K_WP = 50
 K_S = 0.02
 MAX_REWARD_DISTANCE = 0.03
-WAYPOINT_DIST_TOL = 0.1
+WAYPOINT_DIST_TOL = 0.2
 ####################################
 
 
