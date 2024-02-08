@@ -376,6 +376,7 @@ class MPCCasADiControl(BaseControl):
         Nu = 4
         Nhoriz = 10
 
+        ## INIT
         x_pos_init = cur_pos[0]
         y_init = cur_pos[1]
         z_init = cur_pos[2]
@@ -391,6 +392,9 @@ class MPCCasADiControl(BaseControl):
         theta_dot_init = cur_ang_vel[1]
         psi_dot_init = cur_ang_vel[2]
 
+
+
+        ## TARGET
         # Set position targets
         x_pos_target = target_pos[0]
         y_target = target_pos[1]
@@ -503,8 +507,18 @@ class MPCCasADiControl(BaseControl):
                                                                          )'''
 
 
-        thrust_normalized = thrust_step_0 / 35.0
-        thrust = thrust_normalized * (self.MAX_PWM - self.MIN_PWM ) + self.MIN_PWM
+        cur_rotation = np.array(p.getMatrixFromQuaternion(cur_quat)).reshape(3, 3)
+
+        # Original scalar thrust normalized
+        thrust_normalized_scalar = float(thrust_step_0) * 1.2
+
+        # Convert to a 3D vector with the thrust applied along the z-axis
+        thrust_normalized = np.array([0, 0, thrust_normalized_scalar])
+
+        #thrust = thrust_normalized * (self.MAX_PWM - self.MIN_PWM ) + self.MIN_PWM
+        scalar_thrust = max(0., np.dot(thrust_normalized, cur_rotation[:, 2]))
+        thrust = (math.sqrt(scalar_thrust / (4 * self.KF)) - self.PWM2RPM_CONST) / self.PWM2RPM_SCALE
+
 
 
 
