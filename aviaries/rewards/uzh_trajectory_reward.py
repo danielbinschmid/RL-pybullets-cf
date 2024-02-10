@@ -4,17 +4,18 @@ import pybullet as p
 from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
 
 class RewardDict: 
-    def __init__(self, r_t: float=0, r_p: float=0, r_wp:float=0, r_s: float=0) -> None:
+    def __init__(self, r_t: float=0, r_p: float=0, r_wp:float=0, r_s: float=0, r_w: float=0) -> None:
         self.r_t = r_t
         self.r_p = r_p 
         self.r_wp = r_wp 
         self.r_s = r_s 
+        self.r_w = r_w
     
     def __str__(self) -> str:
-        return f'r_t: {self.r_t:.3f}; r_p: {self.r_p:.3f}; r_wp: {self.r_wp:.3f}; r_s: {self.r_s:.3f}'
+        return f'r_t: {self.r_t:.3f}; r_p: {self.r_p:.3f}; r_wp: {self.r_wp:.3f}; r_s: {self.r_s:.3f}; r_w: {self.r_w}'
 
     def sum(self):
-        return self.r_t + self.r_p + self.r_wp + self.r_s
+        return self.r_t + self.r_p + self.r_wp + self.r_s + self.r_w
     
 class Rewards:
     cur_reward: RewardDict
@@ -24,6 +25,7 @@ class Rewards:
                  k_p: float=1.5,
                  k_wp: float=3,
                  k_s: float=0.07,
+                 k_w: float=0,
                  max_reward_distance: float=0.2,
                  dist_tol: float=0.12) -> None:
         self.trajectory = trajectory
@@ -41,14 +43,15 @@ class Rewards:
         self.k_p = k_p
         self.k_wp = k_wp
         self.k_s = k_s 
-        print(f'k_p: {k_p}; k_wp: {k_wp}; k_s: {k_s}')
+        self.k_w = k_w
+        print(f'k_p: {k_p}; k_wp: {k_wp}; k_s: {k_s}; k_w: {k_w}')
 
         self.wp_rewards = np.zeros(len(self.trajectory))
         self.max_reward_distance = max_reward_distance
         
         self.dist_tol = dist_tol
         self.cur_reward = RewardDict()
-    
+        self.cur_wp_idx = 0
     def reset(self, trajectory):
         self.cur_reward = RewardDict()
         self.trajectory = trajectory
@@ -83,27 +86,28 @@ class Rewards:
         overall_distance_travelled = np.sum(self.distances[:closest_point_idx]) \
             + np.linalg.norm(projections[closest_point_idx] - self.p1[closest_point_idx])
         
-
+       
         return current_projection, current_projection_idx, overall_distance_travelled
     
     def get_closest_waypoint(self, position: np.ndarray):
         """
         Find the closest waypoint to the drone (for waypoint reward)
         """
-        distances = np.linalg.norm(self.trajectory - position, axis=1)
-        return np.min(distances), np.argmin(distances)
+        distance = np.linalg.norm(self.trajectory[self.cur_wp_idx + 1] - position)
+        return distance, self.cur_wp_idx + 1
 
-    def weight_rewards(self, r_t, r_p, r_wp, r_s):
+    def weight_rewards(self, r_t, r_p, r_wp, r_s, r_w=0):
         self.cur_reward = RewardDict(
             r_t=r_t,
             r_p=self.k_p * r_p,
             r_wp=self.k_wp * r_wp,
             r_s=self.k_s * r_s,
+            r_w=self.k_w * r_w
         )
 
         return self.cur_reward.sum()
 
-    def compute_reward(self, drone_state: np.ndarray, reached_distance: np.ndarray):
+    def compute_reward(self, drone_state: np.ndarray, reached_distance: np.ndarray, bodyrates=None):
         """
         r_t - reward for crashing
         r_p - reward for delta distance travelled
@@ -118,13 +122,19 @@ class Rewards:
         r_t = -10 if (abs(drone_state[7]) > .4 or abs(drone_state[8]) > .4) else 0 # when its tilted 
         r_p = reached_distance - self.reached_distance
         r_s = reached_distance
-
         # If we are passing waypoint for the first time, give reward for passing it and remember it
         if closest_waypoint_distance <= self.dist_tol and not self.wp_rewards[closest_waypoint]:
             self.wp_rewards[closest_waypoint] = 1
             r_wp = np.exp(-closest_waypoint_distance/self.dist_tol)
+            self.cur_wp_idx = self.cur_wp_idx + 1 if self.cur_wp_idx < len(self.trajectory) - 2 else len(self.trajectory) - 2
+            
         else:
             r_wp = 0
+
+        if bodyrates is not None:
+            r_w = - np.linalg.norm(bodyrates)
+        else:
+            r_w = 0
 
         # weighting by velocity
         velocity = drone_state[10:13] 
@@ -136,7 +146,7 @@ class Rewards:
         s_gd = np.exp(self.max_reward_distance - projection_distance) if projection_distance > self.max_reward_distance else 1
         scale = s_vmax * s_min * s_gd
         # print(f'velocity size is {velocity_norm}')
-        r = self.weight_rewards(r_t, scale*r_p, r_wp, scale*r_s)
+        r = self.weight_rewards(r_t, scale*r_p, r_wp, scale*r_s, r_w)
         # print(f'max reward disance {self.max_reward_distance}')
         self.current_projection_distance = projection_distance
         self.reached_distance = reached_distance
