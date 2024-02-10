@@ -51,7 +51,8 @@ class UZHAviary(BaseRLAviary):
                  k_wp: float = 1.0,
                  k_s: float = 0.0,
                  max_reward_distance: float = 0.2,
-                 waypoint_dist_tol: float = 0.12
+                 waypoint_dist_tol: float = 0.12,
+                 one_traj=False
                  ):
         
         self.EPISODE_LEN_SEC = episode_len_sec
@@ -60,7 +61,7 @@ class UZHAviary(BaseRLAviary):
 
 
         # FOR DEVELOPMENT 
-        self.one_traj = False
+        self.one_traj = one_traj
         self.single_traj = target_trajectory
 
         # TRAJECTORY
