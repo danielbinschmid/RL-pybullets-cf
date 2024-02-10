@@ -14,7 +14,8 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import StopTrainingOnNoModelImprovement
 from stable_baselines3.common.monitor import Monitor
 from agents.utils.configuration import Configuration
-from factories.base_factory import BaseFactory
+from aviaries.factories.base_factory import BaseFactory
+from aviaries.factories.position_controller_factory import PositionControllerFactory
 
 from optuna_utils.sample_params.ppo import sample_ppo_params
 from optuna_utils.trial_eval_callback import TrialEvalCallback
@@ -22,7 +23,7 @@ from optuna_utils.trial_eval_callback import TrialEvalCallback
 FLAGS = flags.FLAGS
 FLAGS(sys.argv)
 
-### TODO, it is still a work in progress
+# TODO, it is still a work in progress
 
 
 class Objective():
@@ -80,7 +81,7 @@ class Objective():
         return reward
 
 
-def run_train(config: Configuration, env_factory: BaseFactory):
+def run_hyperparameter_tuning(config: Configuration, env_factory: BaseFactory):
 
     sampler = TPESampler(n_startup_trials=10, multivariate=True)
     pruner = MedianPruner(n_startup_trials=10, n_warmup_steps=10)
@@ -127,3 +128,4 @@ def run_train(config: Configuration, env_factory: BaseFactory):
     except (ValueError, ImportError, RuntimeError) as e:
         print("Error during plotting")
         print(e)
+

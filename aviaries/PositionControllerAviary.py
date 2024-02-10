@@ -19,7 +19,7 @@ class PositionControllerAviary(BaseRLAviary):
                  initial_rpys=None,
                  physics: Physics=Physics.PYB,
                  pyb_freq: int = 240,
-                 ctrl_freq: int = 240,
+                 ctrl_freq: int = 30,
                  gui=False,
                  record=False,
                  obs: ObservationType=ObservationType.KIN,
@@ -31,7 +31,7 @@ class PositionControllerAviary(BaseRLAviary):
         self.INIT_XYZS = initial_xyzs
         self.TRAJECTORY = trajectory
         self.TARGET_POS = self.TRAJECTORY.get_next_waypoint().coordinate
-        self.EPISODE_LEN_SEC = 20
+        self.EPISODE_LEN_SEC = 8
         self.N_TARGET_REACHED = 0
         self.ZERO_VELOCITY_AT_TARGET = zero_velocity_at_target
         super().__init__(drone_model=drone_model,
@@ -63,11 +63,12 @@ class PositionControllerAviary(BaseRLAviary):
         # new target
         position = state[0:3]
         velocity = state[10:13]
-        if np.linalg.norm(self.TARGET_POS-position) < .1 and np.linalg.norm(velocity) < .05:
+        if np.linalg.norm(self.TARGET_POS-position) < .05:
             ret += 150
             self.N_TARGET_REACHED += 1
             waypoint = self.TRAJECTORY.get_next_waypoint()
             self.TARGET_POS = waypoint.coordinate
+            print(self.TARGET_POS)
         return ret
 
     ################################################################################

@@ -1,18 +1,16 @@
-from factories.simple_follower_factory import EnvFactorySimpleFollowerAviary
+from aviaries.factories.base_factory import BaseFactory
 from agents.utils.configuration import Configuration
 import os
 from stable_baselines3.common.evaluation import evaluate_policy
-from aviaries.SimpleFollowerAviary import SimpleFollowerAviary
 from gym_pybullet_drones.envs.BaseRLAviary import BaseRLAviary
 from gym_pybullet_drones.utils.Logger import Logger
 from stable_baselines3 import PPO
 import time
-from gym_pybullet_drones.utils.enums import ObservationType
 import numpy as np 
 from gym_pybullet_drones.utils.utils import sync
 
 
-def test_simple_follower(local: bool, filename: str, test_env_nogui: SimpleFollowerAviary, test_env: SimpleFollowerAviary, output_folder: str):
+def test_simple_follower(local: bool, filename: str, test_env_nogui: BaseRLAviary, test_env: BaseRLAviary, output_folder: str):
 
     # load model    
     if os.path.isfile(filename+'/best_model.zip'):
@@ -22,11 +20,11 @@ def test_simple_follower(local: bool, filename: str, test_env_nogui: SimpleFollo
     model = PPO.load(path)
 
     # evaluate in test environment
-    mean_reward, std_reward = evaluate_policy(model,
-                                              test_env_nogui,
-                                              n_eval_episodes=10
-                                              )
-    print("\n\n\nMean reward ", mean_reward, " +- ", std_reward, "\n\n")
+    # mean_reward, std_reward = evaluate_policy(model,
+    #                                           test_env_nogui,
+    #                                           n_eval_episodes=10
+    #                                           )
+    # print("\n\n\nMean reward ", mean_reward, " +- ", std_reward, "\n\n")
 
     # visualise in test environment
     logger = Logger(logging_freq_hz=int(test_env.CTRL_FREQ),
@@ -65,7 +63,7 @@ def test_simple_follower(local: bool, filename: str, test_env_nogui: SimpleFollo
     logger.plot()
 
 
-def run_test(config: Configuration, env_factory: EnvFactorySimpleFollowerAviary):
+def run_test(config: Configuration, env_factory: BaseFactory):
 
 
     test_env = env_factory.get_test_env_gui()

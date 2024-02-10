@@ -3,22 +3,24 @@
 import argparse
 from gym_pybullet_drones.utils.utils import str2bool
 from gym_pybullet_drones.utils.enums import ObservationType, ActionType
-from factories.position_controller_factory import PositionControllerFactory
+from aviaries.factories.position_controller_factory import PositionControllerFactory
 from trajectories.cube_trajectory import CubeTrajectory
 from trajectories.random_trajectory import RandomTrajectory
 from agents.utils.configuration import Configuration
 from train_policy import run_train
 from test_policy import run_test
 import numpy as np
+from train_policy_with_hyperparameter_tuning import run_hyperparameter_tuning
 
 # defaults for command line arguments
 DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_GUI = True
-DEFAULT_TIMESTEPS = 10e6
+DEFAULT_TIMESTEPS = 5e6
 DEFAULT_ACTION_TYPE = ActionType.RPM
-DEFAULT_TRAIN = True
+DEFAULT_TRAIN = False
+DEFAULT_HYPERPARAMETER_TUNING = False # Still wip
 DEFAULT_TEST = True
-DEFAULT_ZERO_VELOCITY_AT_TARGET = False  # True does not work
+DEFAULT_ZERO_VELOCITY_AT_TARGET = False  # True does not work, keep False
 
 # more configurations
 DEFAULT_OBS = ObservationType('kin')  # 'kin' or 'rgb'
@@ -29,15 +31,16 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER,
         timesteps=DEFAULT_TIMESTEPS,
         action_type: str = DEFAULT_ACTION_TYPE,
         train: bool = DEFAULT_TRAIN,
-        test: bool = DEFAULT_TEST
-    ):
+        test: bool = DEFAULT_TEST,
+        hyperparameter_tuning: bool = DEFAULT_HYPERPARAMETER_TUNING,):
 
     config = Configuration(
         action_type=action_type,
         initial_xyzs=np.array([[0, 0, 0.1]]),
         output_path_location=output_folder,
         n_timesteps=timesteps,
-        local=False
+        local=False,
+        episode_len_sec=8,
     )
 
     env_factory = PositionControllerFactory(
@@ -55,6 +58,10 @@ def run(output_folder=DEFAULT_OUTPUT_FOLDER,
     if train:
         run_train(config=config,
                   env_factory=env_factory)
+
+    if hyperparameter_tuning:
+        run_hyperparameter_tuning(config=config,
+                                  env_factory=env_factory)
 
     if test:
         run_test(config=config,

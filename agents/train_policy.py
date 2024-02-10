@@ -2,6 +2,7 @@ import numpy as np
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
 from agents.utils.configuration import Configuration
+from aviaries.factories.base_factory import BaseFactory
 
 
 def run_train(config: Configuration, env_factory):
@@ -20,7 +21,8 @@ def run_train(config: Configuration, env_factory):
                 train_env,
                 tensorboard_log=config.output_path_location+'/tb/',
                 verbose=1,
-                device="cpu")
+                device="cpu",
+                )
 
     # callbacks
     callback_on_best = StopTrainingOnRewardThreshold(

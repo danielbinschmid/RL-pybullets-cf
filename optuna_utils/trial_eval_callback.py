@@ -1,6 +1,6 @@
 from typing import Optional
 
-import gym
+import gymnasium as gym
 import optuna
 from stable_baselines3.common.callbacks import EvalCallback, BaseCallback
 
