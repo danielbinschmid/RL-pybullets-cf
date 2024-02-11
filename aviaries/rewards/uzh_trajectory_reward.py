@@ -52,6 +52,7 @@ class Rewards:
         self.dist_tol = dist_tol
         self.cur_reward = RewardDict()
         self.cur_wp_idx = 0
+
     def reset(self, trajectory):
         self.cur_reward = RewardDict()
         self.trajectory = trajectory
@@ -127,14 +128,8 @@ class Rewards:
             self.wp_rewards[closest_waypoint] = 1
             r_wp = np.exp(-closest_waypoint_distance/self.dist_tol)
             self.cur_wp_idx = self.cur_wp_idx + 1 if self.cur_wp_idx < len(self.trajectory) - 2 else len(self.trajectory) - 2
-            
         else:
             r_wp = 0
-
-        if bodyrates is not None:
-            r_w = - np.linalg.norm(bodyrates)
-        else:
-            r_w = 0
 
         # weighting by velocity
         velocity = drone_state[10:13] 

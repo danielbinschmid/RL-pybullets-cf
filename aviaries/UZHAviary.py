@@ -140,6 +140,8 @@ class UZHAviary(BaseRLAviary):
 
         self.current_projection, self.current_projection_idx, reached_distance = self.rewards.get_travelled_distance(drone_pos)
 
+        self.furthest_reached_waypoint_idx = self.current_projection_idx
+
         r = self.rewards.compute_reward(
             drone_state=drone_state,
             reached_distance=reached_distance,
@@ -233,9 +235,7 @@ class UZHAviary(BaseRLAviary):
     def _computeObs(self):
         obs = self._getDroneStateVector(0)
         ret = np.hstack([obs[2], obs[7:10], obs[10:13], obs[13:16]]).reshape(1, -1).astype('float32')
-        cur_idx = self.current_waypoint_idx if self.current_waypoint_idx < len(self.trajectory) - 2 - self.WAYPOINT_BUFFER_SIZE else len(self.trajectory) - 2 - self.WAYPOINT_BUFFER_SIZE 
-        cur_idx += 1
-        self.future_waypoints_relative = self.trajectory[cur_idx:cur_idx+self.WAYPOINT_BUFFER_SIZE]
+        self.future_waypoints_relative = self.trajectory[self.furthest_reached_waypoint_idx:self.furthest_reached_waypoint_idx+self.WAYPOINT_BUFFER_SIZE]
 
         #### Add relative positions of future waypoints to observation
         ret = np.hstack([ret, self.current_projection - obs[:3].reshape(1, -1).astype('float32'), (self.future_waypoints_relative - obs[:3]).reshape(1, -1).astype('float32')])

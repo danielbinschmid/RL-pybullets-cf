@@ -14,7 +14,7 @@ from torch import nn
 ###### INFRASTRUCTURE PARAMS #######
 GUI = True
 RECORD_VIDEO = False
-OUTPUT_FOLDER = 'results'
+OUTPUT_FOLDER = 'checkpointed_models'
 COLAB = False
 ####################################
 
@@ -35,7 +35,7 @@ TEST = True
 ###### ENVIRONMENT PARAMS ##########
 TIMESTEPS = 2.5e6
 N_ENVS = 20
-EPISODE_LEN_SEC = 20
+EPISODE_LEN_SEC = 10
 ####################################
 
 ###### HYPERPARAMS #################
@@ -43,8 +43,8 @@ WAYPOINT_BUFFER_SIZE = 2
 K_P = 5
 K_WP = 8
 K_S = 0.05
-MAX_REWARD_DISTANCE = 0.0001
-WAYPOINT_DIST_TOL = 0.04
+MAX_REWARD_DISTANCE = 0.0
+WAYPOINT_DIST_TOL = 0.05
 ####################################
 
 
