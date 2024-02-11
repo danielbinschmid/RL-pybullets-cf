@@ -35,7 +35,7 @@ TEST = True
 ###### ENVIRONMENT PARAMS ##########
 TIMESTEPS = 2.5e6
 N_ENVS = 20
-EPISODE_LEN_SEC = 10
+EPISODE_LEN_SEC = 20
 ####################################
 
 ###### HYPERPARAMS #################
