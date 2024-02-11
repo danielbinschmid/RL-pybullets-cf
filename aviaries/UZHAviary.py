@@ -122,7 +122,7 @@ class UZHAviary(BaseRLAviary):
                 start=np.array([0, 0, 1]),
                 n_discr_level=20,
                 n_ctrl_points=10,
-                std_dev_deg=30,
+                std_dev_deg=50,
                 distance_between_ctrl_points=1.3,
                 init_dir=None,
                 return_ctrl_points=False
