@@ -109,7 +109,7 @@ def run(
     use_gui = False
     n_discr_level=discr_level
 
-    eval_set_folder = "/shared/d/master/ws23/UAV-lab/git_repos/RL-pybullets-cf/runnables/test_suite_eval/eval-v0_n-ctrl-points-3_n-tracks-20_2024-02-11_22:18:28_46929077-0248-4c6e-b2b1-da2afb13b2e2"
+    eval_set_folder = "./eval-v0_n-ctrl-points-3_n-tracks-10000_2024-02-11_21:49:10_d526388c-3aa6-469e-b354-2f390c2a30c0"
     tracks = load_eval_tracks(eval_set_folder, discr_level=n_discr_level)
     
     all_visited_positions = []
