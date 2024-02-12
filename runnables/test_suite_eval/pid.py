@@ -173,7 +173,7 @@ def run(
                 sync(i, START, env.CTRL_TIMESTEP)
                 i += 1
 
-            if i == int(1e3) -1 :
+            if i == int(duration_sec*env.CTRL_FREQ) -1 :
                 successes.append(False)
         #### Close the environment
         env.close()
