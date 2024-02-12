@@ -363,7 +363,8 @@ class BaseAviary(gym.Env):
                 self._updateAndStoreKinematicInformation()
             if self.LOG_POSITIONS:
                 cur_pos = p.getBasePositionAndOrientation(self.DRONE_IDS[0], physicsClientId=self.CLIENT)[0]
-                self.pos_logger.log_position(cur_pos)
+                cur_vel, cur_angular_vel = p.getBaseVelocity(self.DRONE_IDS[0], physicsClientId=self.CLIENT)
+                self.pos_logger.log_position(cur_pos, cur_vel)
             #### Step the simulation using the desired physics update ##
             for i in range (self.NUM_DRONES):
                 if self.PHYSICS == Physics.PYB:

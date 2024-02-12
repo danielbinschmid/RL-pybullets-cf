@@ -4,11 +4,12 @@ import numpy as np
 import vis.plotting as plotting
 import matplotlib.pyplot as plt
 from trajectories import DiscretizedTrajectory, Waypoint, TrajectoryFactory
-from typing import List
+from typing import List, Tuple
 import numpy as np 
 from gym_pybullet_drones.utils.pos_logger import load_positions
 import matplotlib.cm as cm
 import matplotlib.lines as mlines
+from runnables.test_suite_eval.eval_tracks import load_eval_tracks 
 
 
 def wps_to_ndarray(wps: List[Waypoint]):
@@ -34,6 +35,7 @@ color_boutique = [
 ]
 
 cmaps = [
+    cm.cividis,
     cm.pink,
     cm.bone,
     cm.summer
@@ -50,8 +52,18 @@ names = [
     "Trajectory RL"
 ]
 
-def vis_discr_traj(trajs: List[DiscretizedTrajectory], wps: DiscretizedTrajectory=None, plotname: str="minimum_snap_poly_traj.pdf"):
+def vis_discr_traj(trajs_: List[Tuple[DiscretizedTrajectory, np.ndarray] ], wps: DiscretizedTrajectory=None, plotname: str="minimum_snap_poly_traj.pdf"):
     plotting.prepare_for_latex()
+
+    # print(trajs[0][1])
+    trajs = []
+    vels = []
+    for x in trajs_:
+        traj, vel = x 
+        trajs.append(traj)
+        vels.append(vel)
+
+    vels = [np.linalg.norm(vel, axis=1) for vel in vels]
 
     max_length = max([len(traj) for traj in trajs])
     time_sequence = np.linspace(0, 0.5, max_length)[::-1]
@@ -71,8 +83,8 @@ def vis_discr_traj(trajs: List[DiscretizedTrajectory], wps: DiscretizedTrajector
         y = traj_np[1]
         z = traj_np[2]
         time_seq_traj = time_sequence[:len(traj)]
-        color_map = cmaps[idx](time_seq_traj)
-        ax.scatter(x, y, z, c=color_map, marker=".", s=10, label=f'{idx}')
+        color_map = cmaps[idx](vels[idx])
+        ax.scatter(x, y, z, c=color_map, marker=".", s=15, label=f'{idx}')
         
     if wps is not None: 
         wps_np = discr_traj_to_ndarray(wps)
@@ -83,14 +95,21 @@ def vis_discr_traj(trajs: List[DiscretizedTrajectory], wps: DiscretizedTrajector
         print(reference_y)
         print(reference_z)
         # Plot the additional waypoints
-        ax.scatter(reference_x, reference_y, reference_z, color=waypoint_color, marker='x', s=100, label='Target waypoints')
+        ax.scatter(reference_x, reference_y, reference_z, color=waypoint_color, marker='x', s=20, label='Target waypoints')
 
-
+    xmin = min([pos.coordinate[0] for positions in trajs for pos in positions])
+    xmax = max([pos.coordinate[0] for positions in trajs for pos in positions])
+    ymin = min([pos.coordinate[1] for positions in trajs for pos in positions])
+    ymax = max([pos.coordinate[1] for positions in trajs for pos in positions])
+    zmin = min([pos.coordinate[2] for positions in trajs for pos in positions])
+    zmax = max([pos.coordinate[2] for positions in trajs for pos in positions])
     
+    print(xmin)
+    print(xmax)
     # Set the axes limits to 0-100
-    ax.set_xlim([-0.3, 1.3])
-    ax.set_ylim([-0.3, 1.3])
-    ax.set_zlim([-0.3, 1.3])
+    ax.set_xlim([-0.3, 1.7])
+    ax.set_ylim([-0.1, 0.3])
+    ax.set_zlim([0, 1.6])
 
     # Customization
     ax.set_title("")
@@ -98,8 +117,8 @@ def vis_discr_traj(trajs: List[DiscretizedTrajectory], wps: DiscretizedTrajector
     ax.set_ylabel("Y axis")
     ax.set_zlabel("Z axis")
     legend_handles = [
-        mlines.Line2D([], [], color=cmaps[0]([0.5]), marker='o', linestyle='None', markersize=10, label=names[0]),
-        mlines.Line2D([], [], color=cmaps[1]([0.5]), marker='o', linestyle='None', markersize=10, label=names[1])
+        mlines.Line2D([], [], color=cmaps[0]([0.95]), marker='o', linestyle='None', markersize=5, label="PID"),
+        mlines.Line2D([], [], color="black", marker='x', linestyle='None', markersize=5, label="Target waypoints")
     ]
     ax.legend(handles=legend_handles)
 
@@ -113,26 +132,32 @@ def vis_discr_traj(trajs: List[DiscretizedTrajectory], wps: DiscretizedTrajector
     plt.savefig(plotname)
 
 def load_from_path(path:str):
-    visited_positions = load_positions(
+    visited_positions, veloctities = load_positions(
         log_folder=path
     )
     wps = TrajectoryFactory.waypoints_from_numpy(visited_positions)
     traj = TrajectoryFactory.get_discr_from_wps(
         t_waypoints=wps
     )
-    return traj
+    return traj, veloctities
 
 def vis():
-    traj_rl = load_from_path("/shared/d/master/ws23/UAV-lab/git_repos/RL-pybullets-cf/runnables/test_suite/logs/pos_logs_rl")
-    traj_pid = load_from_path("/shared/d/master/ws23/UAV-lab/git_repos/RL-pybullets-cf/runnables/test_suite/logs/pos_logs_pid")
+    traj_pid, velocities = load_from_path("/shared/d/master/ws23/UAV-lab/git_repos/RL-pybullets-cf/runnables/test_suite_vis/logs/landing_pid")
+    # traj_rl, velocities = load_from_path("/shared/d/master/ws23/UAV-lab/git_repos/RL-pybullets-cf/runnables/test_suite_vis/logs/landing_rl")
+    
+    
+    # traj_pid = load_from_path("/shared/d/master/ws23/UAV-lab/git_repos/RL-pybullets-cf/runnables/test_suite/logs/pos_logs_pid")
     # traj_rl_traj = load_from_path("/shared/d/master/ws23/UAV-lab/git_repos/RL-pybullets-cf/runnables/test_suite/logs/pos_logs_rl_traj")
 
-    trajs = [traj_rl, traj_pid ]
+    trajs = [(traj_pid, velocities)]# , traj_pid ]
 
     t_traj = TrajectoryFactory.get_linear_square_traj_discretized(
         n_discretization_level=4,
     )
-    vis_discr_traj(trajs, t_traj, plotname="wp_following.pdf")
+    tracks = load_eval_tracks("/shared/d/master/ws23/UAV-lab/git_repos/RL-pybullets-cf/runnables/test_suite_eval/eval-v0_n-ctrl-points-3_n-tracks-200_2024-02-12_12:21:14_3115f5a9-bd48-4b63-9194-5eda43e1329d", 
+                              discr_level=9)
+    track = tracks[0]
+    vis_discr_traj(trajs, track, plotname="wp_following.pdf")
 
 
 
