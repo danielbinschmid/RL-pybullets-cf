@@ -97,7 +97,7 @@ class TrajectoryFactory:
         ) 
     
     @classmethod
-    def get_discr_from_wps(cls, t_waypoints: List[Waypoint]) -> DiscretizedTrajectory:
+    def get_discr_from_wps(cls, t_waypoints: List[Waypoint]) -> DiscretizedTrajectoryFromWaypoints:
         traj = DiscretizedTrajectoryFromWaypoints(t_waypoints)        
         return traj
 
@@ -128,7 +128,7 @@ class TrajectoryFactory:
         n_discr_level: int=100,
         init_dir: Optional[np.ndarray]=None,
         return_ctrl_points: bool=False
-    ) -> DiscretizedTrajectory | Tuple[DiscretizedTrajectory, List[Waypoint]]:
+    ) -> PolynomialDiscretizedTrajectory | Tuple[PolynomialDiscretizedTrajectory, List[Waypoint]]:
         
         # sample random feasible control points
         random_ctrl_points: List[Waypoint] = sample_random_ctrl_points(

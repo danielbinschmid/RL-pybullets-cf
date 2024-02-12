@@ -52,7 +52,8 @@ class UZHAviary(BaseRLAviary):
                  k_s: float = 0.0,
                  max_reward_distance: float = 0.2,
                  waypoint_dist_tol: float = 0.12,
-                 one_traj=False
+                 one_traj=False,
+                 eval_mode=False
                  ):
         
         self.EPISODE_LEN_SEC = episode_len_sec
@@ -63,6 +64,12 @@ class UZHAviary(BaseRLAviary):
         # FOR DEVELOPMENT 
         self.one_traj = one_traj
         self.single_traj = target_trajectory
+
+        # FOR EVAL
+        self.eval_mode = eval_mode
+        if self.eval_mode: 
+            assert(self.one_traj)
+        self.reached_last_point = False
 
         # TRAJECTORY
         self.WAYPOINT_BUFFER_SIZE = waypoint_buffer_size # how many steps into future to interpolate
@@ -148,13 +155,40 @@ class UZHAviary(BaseRLAviary):
             bodyrates=self.current_action[0, 1:4]
         )
         self.current_waypoint_idx = self.rewards.cur_wp_idx
+
         return r
 
     def _computeTerminated(self):
-        return False
+        if self.eval_mode:
+            drone_state = self._getDroneStateVector(0)
+            drone_pos = drone_state[:3]
+
+            velocity = drone_state[10:13] 
+            velocity_norm = np.linalg.norm(velocity)
+
+            is_close = (np.linalg.norm(drone_pos - self.trajectory[-1]) < 0.2) and (velocity_norm < 0.05)
+            if is_close:
+                self.reset_vars()
+                self.reached_last_point = True
+            return is_close
+        else:
+            return False
+        
         
     def _computeTruncated(self):
         state = self._getDroneStateVector(0)
+
+        if self.eval_mode:
+            drone_state = self._getDroneStateVector(0)
+            drone_pos = drone_state[:3]
+
+            velocity = drone_state[10:13] 
+            velocity_norm = np.linalg.norm(velocity)
+
+            is_close = (np.linalg.norm(drone_pos - self.trajectory[-1]) < 0.2) and (velocity_norm < 0.05)
+            if is_close:
+                self.reset_vars()
+            return is_close
         if (abs(state[7]) > .4 or abs(state[8]) > .4):
             self.reset_vars()
             return True
@@ -188,7 +222,7 @@ class UZHAviary(BaseRLAviary):
     
     ################################################################################
 
-    def step(self,action):
+    def step(self,action):    
         self.current_action = action
         # # visualise trajectory - this is cheating, but it works
         if self.GUI and not self.visualised:

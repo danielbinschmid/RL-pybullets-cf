@@ -40,7 +40,7 @@ class PolynomialDiscretizedTrajectory(DiscretizedTrajectory):
             t_durations_np,
             n_points_discretization_level
         )
-        
+                
         # assert n_points
         assert(self.waypoints.shape[1] == n_points_discretization_level) 
         assert(self.waypoints.shape[1] == len(self.timestamps))
@@ -55,3 +55,15 @@ class PolynomialDiscretizedTrajectory(DiscretizedTrajectory):
         )
         return wp
 
+    def _reverse_timestamps(self):
+        min_ = np.min(self.timestamps)
+        max_ = np.max(self.timestamps)
+        t_reversed = np.array([min_ + (max_ - t) for t in self.timestamps])
+        self.timestamps = t_reversed
+
+    def reverse(self):
+        """
+        Reverses trajectory in-place
+        """
+        self.waypoints = np.flip(self.waypoints)
+        self._reverse_timestamps()

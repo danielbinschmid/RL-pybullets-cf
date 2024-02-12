@@ -31,9 +31,11 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
                  use_gui_for_test_env: bool = True,
                  n_env_training: int=20,
                  seed: int = 0,
-                 single_traj=False
+                 single_traj=False,
+                 eval_mode=False
         ) -> None:
         super().__init__()
+        self.eval_mode = eval_mode
         initial_xyzs = config.initial_xyzs
         action_type = config.action_type
         t_traj = config.t_traj
@@ -88,7 +90,8 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
             k_s=self.k_s,
             max_reward_distance=self.max_reward_distance,
             waypoint_dist_tol=self.waypoint_dist_tol,
-            one_traj=self.single_traj
+            one_traj=self.single_traj,
+            eval_mode=self.eval_mode
         )
         return eval_env
 
@@ -107,7 +110,8 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
             k_s=self.k_s,
             max_reward_distance=self.max_reward_distance,
             waypoint_dist_tol=self.waypoint_dist_tol,
-            one_traj=self.single_traj
+            one_traj=self.single_traj,
+            eval_mode=self.eval_mode
         )
         return test_env
 
@@ -124,6 +128,7 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
             k_s=self.k_s,
             max_reward_distance=self.max_reward_distance,
             waypoint_dist_tol=self.waypoint_dist_tol,
-            one_traj=self.single_traj
+            one_traj=self.single_traj,
+            eval_mode=self.eval_mode
         )
         return test_env_nogui

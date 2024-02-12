@@ -7,6 +7,18 @@ class PosLoggerConfig:
         self.max_len=max_len
         self.log_folder = log_folder
 
+
+def load_positions(log_folder: str) -> np.ndarray:
+    all_positions = []
+    filenames = os.listdir(log_folder)
+    filenames = sorted(filenames, key=lambda x: int(x.split('.')[0]))
+    for fname in filenames:
+        fname_full = os.path.join(log_folder, fname)
+        positions = np.load(fname_full)
+        all_positions.append(positions)
+    all_positions = np.concatenate(all_positions)
+    return all_positions
+
 class PositionLogger:
     def __init__(self, config: PosLoggerConfig) -> None:
         self.max_len = config.max_len
@@ -39,15 +51,9 @@ class PositionLogger:
         self.n_logged_files += 1
 
     def flush(self):
-        self._log()
-
-def load_positions(log_folder: str) -> np.ndarray:
-    all_positions = []
-    filenames = os.listdir(log_folder)
-    filenames = sorted(filenames, key=lambda x: int(x.split('.')[0]))
-    for fname in filenames:
-        fname_full = os.path.join(log_folder, fname)
-        positions = np.load(fname_full)
-        all_positions.append(positions)
-    all_positions = np.concatenate(all_positions)
-    return all_positions
+        if len(self.positions) > 0:
+            self._log()
+    
+    def load_all(self) -> np.ndarray: 
+        return load_positions(self.log_folder)
+    

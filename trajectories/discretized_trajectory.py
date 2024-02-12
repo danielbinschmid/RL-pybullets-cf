@@ -31,6 +31,13 @@ class DiscretizedTrajectory:
         wps = np.concatenate([self[i].coordinate for i in range(self.__len__())])
         np.save(fname, wps)
 
+    def __str__(self) -> str:
+        log_str = ""
+        for i in range(self.__len__()):
+            wp = self.__getitem__(i)
+            wp_log_str = f'Waypoint {i}, coordinate: {wp.coordinate}; timestamp: {wp.timestamp} \n'
+            log_str += wp_log_str
+        return log_str
 
 class DiscreteTrajectoryFromContinuous(DiscretizedTrajectory):
     _n_discretization_level: int
@@ -61,6 +68,12 @@ class DiscretizedTrajectoryFromWaypoints(DiscretizedTrajectory):
 
     def __getitem__(self, idx: int) -> Waypoint:
         return self.wps[idx]
+    
+    def reverse(self):
+        """
+        Reverses trajectory in-place
+        """
+        self.wps = np.flip(self.wps)
     
 class DiscretizedTrajFromNumpy(DiscretizedTrajectoryFromWaypoints):
     def __init__(self, wps_np: np.ndarray) -> None:
