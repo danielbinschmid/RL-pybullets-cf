@@ -101,7 +101,8 @@ class Logger(object):
 
         """
         if drone < 0 or drone >= self.NUM_DRONES or timestamp < 0 or len(state) != 20 or len(control) != 12:
-            print(f'[ERROR] in Logger.log(), invalid data. len(state)={len(state)}!=20 or len(control){len(control)}!=12.')
+            pass
+            # print(f'[ERROR] in Logger.log(), invalid data. len(state)={len(state)}!=20 or len(control){len(control)}!=12.')
 
         current_counter = int(self.counters[drone])
         #### Add rows to the matrices if a counter exceeds their size

@@ -46,7 +46,7 @@ def test_simple_follower(local: bool, filename: str, test_env_nogui: BaseRLAviar
             obs, reward, terminated, truncated, info = test_env.step(action)
             obs2 = obs.squeeze()
             act2 = action.squeeze()
-            print("Obs:", obs, "\tAction", action, "\tReward:", reward, "\tTerminated:", terminated, "\tTruncated:", truncated)
+            # print("Obs:", obs, "\tAction", action, "\tReward:", reward, "\tTerminated:", terminated, "\tTruncated:", truncated)
             logger.log(drone=0,
                         timestamp=i/test_env.CTRL_FREQ,
                         state=np.hstack([obs2[0:3],
@@ -57,8 +57,8 @@ def test_simple_follower(local: bool, filename: str, test_env_nogui: BaseRLAviar
                         control=np.zeros(12)
                         )
 
-            test_env.render()
-            print(terminated)
+            # test_env.render()
+            # print(terminated)
             if not eval_mode:
                 sync(i, start, test_env.CTRL_TIMESTEP)
             if terminated:
@@ -96,9 +96,6 @@ def run_test(config: Configuration, env_factory: BaseFactory, eval_mode=False):
         output_folder=config.output_path_location,
         eval_mode=eval_mode
     )
-    print("YY")
-    print(eval_mode)
-    print(eval_res)
     return eval_res
 
 

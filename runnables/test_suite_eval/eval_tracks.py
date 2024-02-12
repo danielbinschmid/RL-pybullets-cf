@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
     if gen:
         t_folder = "./eval-v0"
-        n_tracks = 1
+        n_tracks = 1000
         gen_eval_tracks(t_folder, n_tracks=n_tracks)
     if load: 
         tracks = load_eval_tracks(load_folder)

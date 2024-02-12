@@ -44,7 +44,7 @@ class Rewards:
         self.k_wp = k_wp
         self.k_s = k_s 
         self.k_w = k_w
-        print(f'k_p: {k_p}; k_wp: {k_wp}; k_s: {k_s}; k_w: {k_w}')
+        # print(f'k_p: {k_p}; k_wp: {k_wp}; k_s: {k_s}; k_w: {k_w}')
 
         self.wp_rewards = np.zeros(len(self.trajectory))
         self.max_reward_distance = max_reward_distance

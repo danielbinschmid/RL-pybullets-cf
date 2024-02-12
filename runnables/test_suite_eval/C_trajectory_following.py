@@ -15,12 +15,13 @@ from torch import nn
 from typing import List, Dict
 from tqdm import tqdm
 import json 
-
+from runnables.test_suite_eval.utils import compute_metrics_single
 ###### INFRASTRUCTURE PARAMS #######
 GUI = True
 RECORD_VIDEO = False
 OUTPUT_FOLDER = 'checkpointed_models'
 COLAB = False
+DEFAULT_EVAL_SET_FOLDER = "/shared/d/master/ws23/UAV-lab/git_repos/RL-pybullets-cf/runnables/test_suite_eval/eval-v0_n-ctrl-points-3_n-tracks-20_2024-02-11_22:18:28_46929077-0248-4c6e-b2b1-da2afb13b2e2"
 ####################################
 
 ###### USUALLY NOT CHANGED #########
@@ -57,40 +58,6 @@ def save_benchmark(benchmarks: Dict[str, float], file_path: str):
     with open(file_path, 'w') as file:
         json.dump(benchmarks, file)
 
-def compute_metrics(all_visisted_positions: np.ndarray, successes, tracks: List[DiscretizedTrajectory], n_discr_level=int(1e4)):
-
-    means = []
-    max_devs = []
-    n_fails = 0
-    for idx, success in enumerate(tqdm(successes)):
-        
-        if success:
-            visited_positions = all_visisted_positions[idx - n_fails]
-            track = [wp for wp in tracks[idx]]
-            high_discr_ref_traj = TrajectoryFactory.get_pol_discretized_trajectory(
-                t_waypoints=track,
-                n_points_discretization_level=n_discr_level
-            )
-            ref_wps = np.array([wp.coordinate for wp in high_discr_ref_traj])
-            
-            # metrics
-            time = len(visited_positions)
-
-            # Compute norms
-            # Reshape A and B for broadcasting, compute difference, norm, then mean across axis=1 (corresponding to M)
-            norms: np.ndarray = np.linalg.norm(visited_positions[:, np.newaxis, :] - ref_wps[np.newaxis, :, :], axis=2)
-            min_distances = norms.min(axis=1)
-            mean_dist = np.mean(min_distances)
-            
-            max_dist = np.max(min_distances)
-
-            # max_dev_norms = norms.max(axis=1)
-
-            means.append(mean_dist)
-            max_devs.append(max_dist)
-        else:
-            n_fails += 1
-    return means, max_devs
 def init_targets():
     points_per_segment = 4
     z_segment = np.array([
@@ -123,10 +90,11 @@ def run(output_folder=OUTPUT_FOLDER,
         k_s: float = K_S,
         max_reward_distance: float = MAX_REWARD_DISTANCE,
         waypoint_dist_tol: float = WAYPOINT_DIST_TOL,
-        discr_level: float=DEFAULT_DISCR_LEVEL
+        discr_level: float=DEFAULT_DISCR_LEVEL,
+        eval_set: set = DEFAULT_EVAL_SET_FOLDER
     ):
 
-    eval_set_folder = "./eval-v0_n-ctrl-points-3_n-tracks-1000_2024-02-12_10:59:21_d689e67e-4179-4764-a474-e5f3237a239d"
+    eval_set_folder = eval_set# "./eval-v0_n-ctrl-points-3_n-tracks-1000_2024-02-12_10:59:21_d689e67e-4179-4764-a474-e5f3237a239d"
     tracks = load_eval_tracks(eval_set_folder, discr_level=discr_level)
 
     
@@ -136,9 +104,12 @@ def run(output_folder=OUTPUT_FOLDER,
     print(f"Output folder: {output_folder}")
 
     all_visited_positions = []
+    mean_devs = []
+    max_devs = []
     successes = []
     times = []
-    for track in tracks:
+
+    for track in tqdm(tracks):
         t_traj, init_wp = track, np.array([track[0].coordinate])
         config = Configuration(
             action_type=ACT,
@@ -168,19 +139,21 @@ def run(output_folder=OUTPUT_FOLDER,
                     env_factory=env_factory, eval_mode=True)
         successes.append(success)
         if success:
+            mean_dev, max_dev = compute_metrics_single(visited_positions, track)
+            mean_devs.append(mean_dev)
+            max_devs.append(max_dev)
             all_visited_positions.append(visited_positions)
             times.append(time)
     
-    mean_dev, max_dev = compute_metrics(all_visited_positions, successes, tracks)
     print("SUCCESS RATE: ", np.mean(np.array(successes)))
-    print("AVERAGE MEAN DEVIATION: ", np.mean(mean_dev))
-    print("AVERAGE MAX DEVIATION: ", np.mean(max_dev))
+    print("AVERAGE MEAN DEVIATION: ", np.mean(mean_devs))
+    print("AVERAGE MAX DEVIATION: ", np.mean(max_devs))
     print("AVERAGE TIME UNTIL LANDING: ", np.mean(times))
 
     save_benchmark({
         "success_rate": np.mean(successes),
-        "avg mean dev": np.mean(mean_dev),
-        "avg max dev": np.mean(max_dev),
+        "avg mean dev": np.mean(mean_devs),
+        "avg max dev": np.mean(max_devs),
         "avt time": np.mean(times)
     }, 
     f'rl_{discr_level}.json')
@@ -207,6 +180,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_reward_distance',    default=MAX_REWARD_DISTANCE,    type=float,         help='number of parallel environments', metavar='')
     parser.add_argument('--waypoint_dist_tol',      default=WAYPOINT_DIST_TOL,      type=float,         help='number of parallel environments', metavar='')
     parser.add_argument('--discr_level',              default=DEFAULT_DISCR_LEVEL, type=int,           help='Whether example is being run by a notebook (default: "False")', metavar='')
+    parser.add_argument('--eval_set',              default=DEFAULT_EVAL_SET_FOLDER, type=str,           help='Whether example is being run by a notebook (default: "False")', metavar='')
 
     ARGS = parser.parse_args()
 

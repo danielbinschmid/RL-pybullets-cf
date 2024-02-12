@@ -48,45 +48,14 @@ DEFAULT_DURATION_SEC = 50
 DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_COLAB = False
 DEFAULT_DISCR_LEVEL = 10
+DEFAULT_EVAL_SET = "./eval-v0_n-ctrl-points-3_n-tracks-20_2024-02-11_22:18:28_46929077-0248-4c6e-b2b1-da2afb13b2e2"
+
+from runnables.test_suite_eval.utils import compute_metrics_single
 
 def save_benchmark(benchmarks: Dict[str, float], file_path: str):
     with open(file_path, 'w') as file:
         json.dump(benchmarks, file)
 
-def compute_metrics(all_visisted_positions: np.ndarray, successes, tracks: List[DiscretizedTrajectory], n_discr_level=int(1e4)):
-
-    means = []
-    max_devs = []
-    n_fails = 0
-    for idx, success in enumerate(tqdm(successes)):
-        
-        if success:
-            visited_positions = all_visisted_positions[idx - n_fails]
-            track = [wp for wp in tracks[idx]]
-            high_discr_ref_traj = TrajectoryFactory.get_pol_discretized_trajectory(
-                t_waypoints=track,
-                n_points_discretization_level=n_discr_level
-            )
-            ref_wps = np.array([wp.coordinate for wp in high_discr_ref_traj])
-            
-            # metrics
-            time = len(visited_positions)
-
-            # Compute norms
-            # Reshape A and B for broadcasting, compute difference, norm, then mean across axis=1 (corresponding to M)
-            norms: np.ndarray = np.linalg.norm(visited_positions[:, np.newaxis, :] - ref_wps[np.newaxis, :, :], axis=2)
-            min_distances = norms.min(axis=1)
-            mean_dist = np.mean(min_distances)
-            
-            max_dist = np.max(min_distances)
-
-            # max_dev_norms = norms.max(axis=1)
-
-            means.append(mean_dist)
-            max_devs.append(max_dist)
-        else:
-            n_fails += 1
-    return means, max_devs
 def run(
         drone=DEFAULT_DRONES,
         num_drones=DEFAULT_NUM_DRONES,
@@ -101,7 +70,8 @@ def run(
         duration_sec=DEFAULT_DURATION_SEC,
         output_folder=DEFAULT_OUTPUT_FOLDER,
         colab=DEFAULT_COLAB,
-        discr_level=DEFAULT_DISCR_LEVEL
+        discr_level=DEFAULT_DISCR_LEVEL,
+        eval_set = DEFAULT_EVAL_SET
         ):
     #### Initialize the simulation #############################
 
@@ -109,13 +79,14 @@ def run(
     use_gui = False
     n_discr_level=discr_level
 
-    eval_set_folder = "./eval-v0_n-ctrl-points-3_n-tracks-1000_2024-02-12_10:59:21_d689e67e-4179-4764-a474-e5f3237a239d"
+    eval_set_folder = eval_set
     tracks = load_eval_tracks(eval_set_folder, discr_level=n_discr_level)
     
-    all_visited_positions = []
+    mean_devs = []
+    max_devs = []
     successes = []
     times = []
-    for track in tracks:
+    for track in tqdm(tracks):
         current_step = 0
         INIT_RPYS = np.array([[0., 0., 0.]])
 
@@ -180,10 +151,12 @@ def run(
             velocity = np.linalg.norm(obs[0][10:13])
             if distance < 0.2 and velocity < 0.05:
                 if current_step == len(TARGET_TRAJECTORY) -1 and velocity < 0.05:
-                    env.render()
+                    # env.render()
                     all_pos = env.pos_logger.load_all() 
                     t = env.step_counter*env.PYB_TIMESTEP
-                    all_visited_positions.append(all_pos)
+                    mean_dev, max_dev = compute_metrics_single(all_pos, track)
+                    mean_devs.append(mean_dev)
+                    max_devs.append(max_dev)
                     times.append(t)
                     successes.append(True)
                     break
@@ -193,7 +166,7 @@ def run(
             ##### Log the simulation ####################################
 
             #### Printout
-            env.render()
+            # env.render()
 
             #### Sync the simulation
             if gui and use_gui:
@@ -209,18 +182,16 @@ def run(
     logger.save()
     
     
-    avg_dev, max_dev = compute_metrics(all_visited_positions, successes, tracks)
-
     print(f'N DISCR LEVEL: {n_discr_level}')
     print("COMPLETION TIME MEAN:", np.mean(times))
     print("SUCCESS RATE:", np.mean(successes))
-    print("AVERAGE DEVIATION: ", np.mean(avg_dev))
-    print("MAXIMUM DEVIATION:", np.mean(max_dev))
+    print("AVERAGE DEVIATION: ", np.mean(mean_devs))
+    print("MAXIMUM DEVIATION:", np.mean(max_devs))
 
     save_benchmark({
         "success_rate": np.mean(successes),
-        "avg mean dev": np.mean(avg_dev),
-        "avg max dev": np.mean(max_dev),
+        "avg mean dev": np.mean(mean_devs),
+        "avg max dev": np.mean(max_devs),
         "avt time": np.mean(times)
     }, 
     f'pid_{discr_level}.json')
@@ -246,6 +217,7 @@ if __name__ == "__main__":
     parser.add_argument('--output_folder',     default=DEFAULT_OUTPUT_FOLDER, type=str,           help='Folder where to save logs (default: "results")', metavar='')
     parser.add_argument('--colab',              default=DEFAULT_COLAB, type=bool,           help='Whether example is being run by a notebook (default: "False")', metavar='')
     parser.add_argument('--discr_level',              default=DEFAULT_DISCR_LEVEL, type=int,           help='Whether example is being run by a notebook (default: "False")', metavar='')
+    parser.add_argument('--eval_set',              default=DEFAULT_EVAL_SET, type=str,           help='Whether example is being run by a notebook (default: "False")', metavar='')
     ARGS = parser.parse_args()
 
     run(**vars(ARGS))
