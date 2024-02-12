@@ -1,8 +1,8 @@
 #!/bin/bash
 
-for level in {5..20}
+for level in {14,17,20,23,26}
 do
-  python C_trajectory_following.py --output_folder "../../checkpointed_models/" --eval_set "./eval-v0_n-ctrl-points-3_n-tracks-1000_2024-02-12_10:59:21_d689e67e-4179-4764-a474-e5f3237a239d" --discr_level $level
-  python pid.py --discr_level $level --eval_set "./eval-v0_n-ctrl-points-3_n-tracks-1000_2024-02-12_10:59:21_d689e67e-4179-4764-a474-e5f3237a239d"
+  # python C_trajectory_following.py --output_folder "../../checkpointed_models/" --eval_set "./eval-v0_n-ctrl-points-10_n-tracks-200_2024-02-12_15:01:53_bdee17ed-07ad-4e26-8e68-fa0a5ca1318c" --discr_level $level
+  python pid.py --discr_level $level --eval_set "./eval-v0_n-ctrl-points-10_n-tracks-200_2024-02-12_15:01:53_bdee17ed-07ad-4e26-8e68-fa0a5ca1318c"
 
 done

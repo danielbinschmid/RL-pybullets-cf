@@ -22,8 +22,8 @@ def gen_eval_tracks(target_folder: str, n_tracks: int, n_ctrl_points: int=3):
 
     for i in tqdm(range(n_tracks)):
         _, ctrl_wp = TrajectoryFactory.gen_random_trajectory(
-            start=np.array([0, 0, 0]),
-            n_discr_level=10,
+            start=np.array([0, 0, 1]),
+            n_discr_level=20,
             n_ctrl_points=n_ctrl_points,
             std_dev_deg=50,
             distance_between_ctrl_points=1.3,
@@ -60,8 +60,8 @@ if __name__ == "__main__":
 
     if gen:
         t_folder = "./eval-v0"
-        n_tracks = 1000
-        gen_eval_tracks(t_folder, n_tracks=n_tracks)
+        n_tracks = 200
+        gen_eval_tracks(t_folder, n_tracks=n_tracks, n_ctrl_points=10)
     if load: 
         tracks = load_eval_tracks(load_folder)
         for track in tracks:
