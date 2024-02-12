@@ -30,7 +30,8 @@ from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
 from gym_pybullet_drones.utils.Logger import Logger
 from gym_pybullet_drones.utils.utils import sync, str2bool
 from runnables.test_suite_eval.eval_tracks import load_eval_tracks 
-from typing import List 
+from typing import List, Dict 
+import json
 from tqdm import tqdm
 
 DEFAULT_DRONES = DroneModel("cf2x")
@@ -48,14 +49,19 @@ DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_COLAB = False
 DEFAULT_DISCR_LEVEL = 10
 
+def save_benchmark(benchmarks: Dict[str, float], file_path: str):
+    with open(file_path, 'w') as file:
+        json.dump(benchmarks, file)
+
 def compute_metrics(all_visisted_positions: np.ndarray, successes, tracks: List[DiscretizedTrajectory], n_discr_level=int(1e4)):
 
     means = []
     max_devs = []
     n_fails = 0
     for idx, success in enumerate(tqdm(successes)):
-        visited_positions = all_visisted_positions[idx - n_fails]
+        
         if success:
+            visited_positions = all_visisted_positions[idx - n_fails]
             track = [wp for wp in tracks[idx]]
             high_discr_ref_traj = TrajectoryFactory.get_pol_discretized_trajectory(
                 t_waypoints=track,
@@ -210,6 +216,14 @@ def run(
     print("SUCCESS RATE:", np.mean(successes))
     print("AVERAGE DEVIATION: ", np.mean(avg_dev))
     print("MAXIMUM DEVIATION:", np.mean(max_dev))
+
+    save_benchmark({
+        "success_rate": np.mean(successes),
+        "avg mean dev": np.mean(avg_dev),
+        "avg max dev": np.mean(max_dev),
+        "avt time": np.mean(times)
+    }, 
+    f'pid_{discr_level}.json')
     #############
     # if plot:
     #     logger.plot()

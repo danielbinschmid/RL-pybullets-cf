@@ -48,8 +48,8 @@ WAYPOINT_BUFFER_SIZE = 2
 K_P = 5
 K_WP = 8
 K_S = 0.05
-MAX_REWARD_DISTANCE = 0.0001
-WAYPOINT_DIST_TOL = 0.04
+MAX_REWARD_DISTANCE = 0.0
+WAYPOINT_DIST_TOL = 0.05
 DEFAULT_DISCR_LEVEL = 10
 ####################################
 
@@ -63,8 +63,9 @@ def compute_metrics(all_visisted_positions: np.ndarray, successes, tracks: List[
     max_devs = []
     n_fails = 0
     for idx, success in enumerate(tqdm(successes)):
-        visited_positions = all_visisted_positions[idx - n_fails]
+        
         if success:
+            visited_positions = all_visisted_positions[idx - n_fails]
             track = [wp for wp in tracks[idx]]
             high_discr_ref_traj = TrajectoryFactory.get_pol_discretized_trajectory(
                 t_waypoints=track,
