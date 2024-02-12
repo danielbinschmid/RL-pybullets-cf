@@ -126,7 +126,7 @@ def run(output_folder=OUTPUT_FOLDER,
         discr_level: float=DEFAULT_DISCR_LEVEL
     ):
 
-    eval_set_folder = "./eval-v0_n-ctrl-points-3_n-tracks-10000_2024-02-11_21:49:10_d526388c-3aa6-469e-b354-2f390c2a30c0"
+    eval_set_folder = "./eval-v0_n-ctrl-points-3_n-tracks-1000_2024-02-12_10:59:21_d689e67e-4179-4764-a474-e5f3237a239d"
     tracks = load_eval_tracks(eval_set_folder, discr_level=discr_level)
 
     
