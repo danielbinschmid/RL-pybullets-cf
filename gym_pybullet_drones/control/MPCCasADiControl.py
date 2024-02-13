@@ -513,7 +513,7 @@ class MPCCasADiControl(BaseControl):
 
         #target_torques = np.array([float(tau_phi_step_0) * 3200 / 1.257, float(tau_theta_step_0) * 3200 / 1.257, float(tau_psi_step_0) * 3200 / 0.2145])
 
-        ## ETH system identification functions approach
+        ## ETH system identification functions approach. Source: Julian Förster's ETH Zurich Bachelor Thesis
 
         # Torque tau_i -> Thrust f_i
 
@@ -528,8 +528,10 @@ class MPCCasADiControl(BaseControl):
 
         pwm_i_torques = np.zeros_like(f_i, dtype=float)
 
-        # ETH Zurich sysID : f(x)=2.130295*10^-11*x² + 1.032633*10^-6*x+5.484560*10^-4
-        # Wolfram Alpha: find the inverse function of f(x)=2.130295*10^-11*x² + 1.032633*10^-6*x+5.484560*10^-4
+        # ETH Zurich sysID : f_i = 2.130295*10^-11*pwm_i² + 1.032633*10^-6*pwm_i + 5.484560*10^-4
+
+
+        '''# Wolfram Alpha: find the inverse function of f(x)=2.130295*10^-11*x² + 1.032633*10^-6*x+5.484560*10^-4
         # We have to make a distinction of two cases here, where f_i is positive or negative, because of the root function
         mask_pos = f_i >= 0
         mask_neg = f_i < 0
@@ -538,7 +540,14 @@ class MPCCasADiControl(BaseControl):
 
         # Treat the negative f_i like the f_i. We effectively mirror the root function on the y-axis
         # Then we mirror it on the x-axis to get a point-mirrored function continuation for the negative range
-        pwm_i_torques[mask_neg] = (-1)*(-24236.9 + 1.57508e-11 * np.sqrt(1.89215e32 * -f_i[mask_neg] + 2.26404e30))
+        pwm_i_torques[mask_neg] = (-1)*(-24236.9 + 1.57508e-11 * np.sqrt(1.89215e32 * -f_i[mask_neg] + 2.26404e30))'''
+
+        ### Linearization alternative
+        #  f_i =2.130295*10^-11*pwm_i² + 1.032633*10^-6*pwm_i + 5.484560*10^-4 can be approximated with
+        #  f_i_lin(x) = 0.15 / 65000 pwm_i =  2.30769e-6 pwm_i
+        #  pwm_i_lin = 1 / 2.30769e-6 * f_i =  433333 * f_i
+        TORQUES_TUNING = 1.2
+        pwm_i_torques = 433333 * TORQUES_TUNING * f_i
 
 
         # Thrust calculation
