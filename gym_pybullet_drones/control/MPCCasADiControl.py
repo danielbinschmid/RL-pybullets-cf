@@ -176,7 +176,7 @@ class MPCCasADiControl(BaseControl):
 
         x_init = P[0:Nx]
         g = X[:, 0] - P[0:Nx]  # initial condition constraints
-        h = 0.2
+        h = 0.15
         J = 0
 
         # Calculate the hovering thrust as a scalar
@@ -516,6 +516,7 @@ class MPCCasADiControl(BaseControl):
         ## ETH system identification functions approach. Source: Julian Förster's ETH Zurich Bachelor Thesis
 
         # Torque tau_i -> Thrust f_i
+        TORQUES_TUNING = 1.0
 
         tau_i = np.array([
             tau_phi_step_0,
@@ -531,29 +532,29 @@ class MPCCasADiControl(BaseControl):
         # ETH Zurich sysID : f_i = 2.130295*10^-11*pwm_i² + 1.032633*10^-6*pwm_i + 5.484560*10^-4
 
 
-        '''# Wolfram Alpha: find the inverse function of f(x)=2.130295*10^-11*x² + 1.032633*10^-6*x+5.484560*10^-4
+        # Wolfram Alpha: find the inverse function of f(x)=2.130295*10^-11*x² + 1.032633*10^-6*x+5.484560*10^-4
         # We have to make a distinction of two cases here, where f_i is positive or negative, because of the root function
         mask_pos = f_i >= 0
         mask_neg = f_i < 0
 
-        pwm_i_torques[mask_pos] = -24236.9 + 1.57508e-11 * np.sqrt(1.89215e32 * f_i[mask_pos] + 2.26404e30)
+        pwm_i_torques[mask_pos] = -24236.9 + TORQUES_TUNING * 1.57508e-11 * np.sqrt(1.89215e32 * f_i[mask_pos] + 2.26404e30)
 
         # Treat the negative f_i like the f_i. We effectively mirror the root function on the y-axis
         # Then we mirror it on the x-axis to get a point-mirrored function continuation for the negative range
-        pwm_i_torques[mask_neg] = (-1)*(-24236.9 + 1.57508e-11 * np.sqrt(1.89215e32 * -f_i[mask_neg] + 2.26404e30))'''
+        pwm_i_torques[mask_neg] = (-1)*(-24236.9 + TORQUES_TUNING * 1.57508e-11 * np.sqrt(1.89215e32 * -f_i[mask_neg] + 2.26404e30))
 
-        ### Linearization alternative
+        '''### Linearization alternative
         #  f_i =2.130295*10^-11*pwm_i² + 1.032633*10^-6*pwm_i + 5.484560*10^-4 can be approximated with
         #  f_i_lin(x) = 0.15 / 65000 pwm_i =  2.30769e-6 pwm_i
         #  pwm_i_lin = 1 / 2.30769e-6 * f_i =  433333 * f_i
-        TORQUES_TUNING = 1.2
-        pwm_i_torques = 433333 * TORQUES_TUNING * f_i
+        pwm_i_torques = 433333 * TORQUES_TUNING * f_i'''
 
 
         # Thrust calculation
 
         # Original scalar thrust normalized
-        thrust_normalized_scalar = thrust_step_0
+        THRUST_TUNING = 0.925 # h= 0.2
+        thrust_normalized_scalar = THRUST_TUNING * thrust_step_0
 
         # Convert to a 3D vector with the thrust applied along the z-axis
         thrust_normalized = np.array([0, 0, thrust_normalized_scalar])

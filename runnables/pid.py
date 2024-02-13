@@ -60,7 +60,7 @@ def run(
         colab=DEFAULT_COLAB
         ):
     #### Initialize the simulation #############################
-    INIT_XYZS = np.array([[0., 0., 0.5]])
+    INIT_XYZS = np.array([[0., 0., 0.7]])
     INIT_RPYS = np.array([[0., 0., 0.]])
 
     #### Initialize a circular trajectory ######################
@@ -112,7 +112,8 @@ def run(
 
         #### Step the simulation ###################################
         obs, reward, terminated, truncated, info = env.step(action)
-        target_position = TARGET_TRAJECTORY.get_waypoint(current_step).coordinate
+        #target_position = TARGET_TRAJECTORY.get_waypoint(current_step).coordinate
+        target_position = np.array([0.1, 0.1, 0.8])
         #### Compute control for the current way point #############
         action, _, _ = ctrl.computeControlFromState(control_timestep=env.CTRL_TIMESTEP,
             state=obs[0],
