@@ -179,11 +179,21 @@ class MPCCasADiControl(BaseControl):
         h = 0.2
         J = 0
 
+        # Calculate the hovering thrust as a scalar
+        hovering_thrust = 0.28449  # 0.029 * 9.81   m and g should be scalar values (floats or ints)
+        tau_phi_ref = 0
+        tau_theta_ref = 0
+        tau_psi_ref = 0
+
+        # Create a DM vector for the reference control input
+        u_ref = DM([hovering_thrust, tau_phi_ref, tau_theta_ref, tau_psi_ref])
+
         for k in range(Nhoriz - 1):
             st_ref = P[Nx:2 * Nx]
             st = X[:, k]
             cont = U[:, k]
-            J += (st - st_ref).T @ Q @ (st - st_ref) + cont.T @ R @ cont
+            cont_ref = u_ref
+            J += (st - st_ref).T @ Q @ (st - st_ref) + (cont - cont_ref).T @ R @ (cont - cont_ref)
             st_next = X[:, k + 1]
             k1 = f(st, cont)
             k2 = f(st + h / 2 * k1, cont)
@@ -534,7 +544,7 @@ class MPCCasADiControl(BaseControl):
         # Thrust calculation
 
         # Original scalar thrust normalized
-        thrust_normalized_scalar = thrust_step_0 * 1.2
+        thrust_normalized_scalar = thrust_step_0
 
         # Convert to a 3D vector with the thrust applied along the z-axis
         thrust_normalized = np.array([0, 0, thrust_normalized_scalar])
