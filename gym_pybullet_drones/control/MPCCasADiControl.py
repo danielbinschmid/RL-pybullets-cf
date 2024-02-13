@@ -450,26 +450,122 @@ class MPCCasADiControl(BaseControl):
 
         u = reshape(sol['x'][Nx * (Nhoriz + 1):], Nu, Nhoriz)
 
-        thrust_step_0 = u[0, 0]  # Thrust
-        tau_phi_step_0 = u[1, 0]  # Tau_phi
-        tau_theta_step_0 = u[2, 0]  # Tau_theta
-        tau_psi_step_0 = u[3, 0]  # Tau_psi
+        thrust_step_0 = float(u[0, 0])  # Thrust
+        tau_phi_step_0 = float(u[1, 0])  # Tau_phi
+        tau_theta_step_0 = float(u[2, 0])  # Tau_theta
+        tau_psi_step_0 = float(u[3, 0])  # Tau_psi
         u_step_0 = u[:,0]
+
+        torques = np.array([
+            tau_phi_step_0,
+            tau_theta_step_0,
+            tau_psi_step_0,
+        ])
+
+        #####
+
+        ## Rotation information
+        target_rotation = np.array([float(tau_phi_step_0), float(tau_theta_step_0), float(tau_psi_step_0)])
+        computed_target_rpy = target_rotation
+        cur_rpy = p.getEulerFromQuaternion(cur_quat)
+        cur_rotation = np.array(p.getMatrixFromQuaternion(cur_quat)).reshape(3, 3)
+
+
+        ## Inverse Mixer Matrix Approach
+        '''M_matrix = np.array([
+            [-.5, -.5, -1],
+            [-.5, .5, 1],
+            [.5, .5, -1],
+            [.5, -.5, 1]
+        ])
 
         x_step_0 = self.f(self.state_init, u_step_0)
 
-        phi = x_step_0[3]  # phi-angle, Euler angles
+        if M_matrix.shape[0] != M_matrix.shape[1]:
+            print("The matrix must be square to be invertible.")
+        else:
+            # Compute the inverse
+            M_matrix_inv = np.linalg.inv(M_matrix)
+            print("Inverse of the matrix:")
+
+        M_matrix_inv
+
+        RPMs_squared = M_matrix_inv @ torques
+        RPMs = np.sqrt(RPMs_squared)'''
+
+        ## Model predictive angles approach
+        '''phi = x_step_0[3]  # phi-angle, Euler angles
         theta = x_step_0[4]  # theta-angle, Euler angles
         psi = x_step_0[5]  # psi-angle, Euler angles
+        #target_rotation = np.array([float(phi), float(theta), float(psi)])'''
 
-        print("phi: " + str(float(phi)))
+        ## Just map it to the range approach
 
-        '''u_np = np.array(u.full())
-        np.set_printoptions(precision=4, suppress=True)
-        # print(u_np)'''
+        #target_torques = np.array([float(tau_phi_step_0) * 3200 / 1.257, float(tau_theta_step_0) * 3200 / 1.257, float(tau_psi_step_0) * 3200 / 0.2145])
 
-        # print("Control Inputs (u) at this iteration:")
-        # print(tabulate(u_np, tablefmt="fancy_grid", showindex="always", headers=[f"Step {i}" for i in range(Nhoriz)]))
+        ## ETH system identification functions approach
+
+        # Torque tau_i -> Thrust f_i
+
+        tau_i = np.array([
+            tau_phi_step_0,
+            tau_theta_step_0,
+            tau_psi_step_0,
+        ])
+        f_i = 1676.57185318 * tau_i
+
+        # Thrust f_i -> Input Command pwm_i
+
+        pwm_i_torques = np.zeros_like(f_i, dtype=float)
+
+        # ETH Zurich sysID : f(x)=2.130295*10^-11*x² + 1.032633*10^-6*x+5.484560*10^-4
+        # Wolfram Alpha: find the inverse function of f(x)=2.130295*10^-11*x² + 1.032633*10^-6*x+5.484560*10^-4
+        # We have to make a distinction of two cases here, where f_i is positive or negative, because of the root function
+        mask_pos = f_i >= 0
+        mask_neg = f_i < 0
+
+        pwm_i_torques[mask_pos] = -24236.9 + 1.57508e-11 * np.sqrt(1.89215e32 * f_i[mask_pos] + 2.26404e30)
+
+        # Treat the negative f_i like the f_i. We effectively mirror the root function on the y-axis
+        # Then we mirror it on the x-axis to get a point-mirrored function continuation for the negative range
+        pwm_i_torques[mask_neg] = (-1)*(-24236.9 + 1.57508e-11 * np.sqrt(1.89215e32 * -f_i[mask_neg] + 2.26404e30))
+
+
+        # Thrust calculation
+
+        # Original scalar thrust normalized
+        thrust_normalized_scalar = thrust_step_0 * 1.2
+
+        # Convert to a 3D vector with the thrust applied along the z-axis
+        thrust_normalized = np.array([0, 0, thrust_normalized_scalar])
+
+        #thrust = thrust_normalized * (self.MAX_PWM - self.MIN_PWM ) + self.MIN_PWM
+        scalar_thrust = max(0., np.dot(thrust_normalized, cur_rotation[:, 2]))
+        thrust = (math.sqrt(scalar_thrust / (4 * self.KF)) - self.PWM2RPM_CONST) / self.PWM2RPM_SCALE
+
+        ## PWM -> RPM
+
+        '''# Insert a 0 at the beginning to make it 4D
+        pwm_i_torques = np.insert(pwm_i_torques, 0, 0)
+        pwm_i_torques = np.clip(pwm_i_torques, -3200, 3200)'''
+
+        target_pwm = np.clip(pwm_i_torques, -3200, 3200)
+        pwm = thrust + np.dot(self.MIXER_MATRIX, target_pwm)
+        pwm = np.clip(pwm, self.MIN_PWM, self.MAX_PWM)
+        rpm = self.PWM2RPM_SCALE * pwm + self.PWM2RPM_CONST
+
+
+        '''
+        Strictly speaking these are not torques anymore, but pwms:
+        
+        target_torques = np.clip(target_torques, -3200, 3200)
+        
+        pwm = thrust + np.dot(self.MIXER_MATRIX, target_torques)
+        pwm = np.clip(pwm, self.MIN_PWM, self.MAX_PWM)
+        rpm =  self.PWM2RPM_SCALE * pwm + self.PWM2RPM_CONST
+        '''
+
+        ####
 
         self.X0 = reshape(sol['x'][: Nx * (Nhoriz + 1)], Nx, Nhoriz + 1)
 
@@ -483,70 +579,14 @@ class MPCCasADiControl(BaseControl):
             DM2Arr(u[:, 0])
         ))
 
-        '''t = np.vstack((
-            t,
-            t0
-        ))
-
-        t0, state_init, u0 = shift_timestep(h, t0, state_init, u, f)'''
-
-        # print(X0)
         self.X0 = horzcat(
             self.X0[:, 1:],
             reshape(self.X0[:, -1], -1, 1)
         )
 
         self.control_counter += 1
-        '''thrust, computed_target_rpy, pos_e = self._dslPIDPositionControl(control_timestep,
-                                                                         cur_pos,
-                                                                         cur_quat,
-                                                                         cur_vel,
-                                                                         target_pos,
-                                                                         target_rpy,
-                                                                         target_vel
-                                                                         )'''
 
 
-        cur_rotation = np.array(p.getMatrixFromQuaternion(cur_quat)).reshape(3, 3)
-
-        # Original scalar thrust normalized
-        thrust_normalized_scalar = float(thrust_step_0) * 1.2
-
-        # Convert to a 3D vector with the thrust applied along the z-axis
-        thrust_normalized = np.array([0, 0, thrust_normalized_scalar])
-
-        #thrust = thrust_normalized * (self.MAX_PWM - self.MIN_PWM ) + self.MIN_PWM
-        scalar_thrust = max(0., np.dot(thrust_normalized, cur_rotation[:, 2]))
-        thrust = (math.sqrt(scalar_thrust / (4 * self.KF)) - self.PWM2RPM_CONST) / self.PWM2RPM_SCALE
-
-
-
-
-
-        target_rotation = np.array([float(phi), float(theta), float(psi)])
-        #computed_target_rpy = (Rotation.from_matrix(target_rotation)).as_euler('XYZ', degrees=False)
-        computed_target_rpy = target_rotation
-
-        cur_rpy = p.getEulerFromQuaternion(cur_quat)
-        if target_thrust is None:
-            rpm = self._dslPIDAttitudeControl(control_timestep,
-                                              thrust,
-                                              cur_quat,
-                                              computed_target_rpy,
-                                              target_rpy_rates
-                                              )
-        else:
-            # attitude control
-            target_thrust = (target_thrust - self.PWM2RPM_CONST) / self.PWM2RPM_SCALE
-            rpm = self._dslPIDAttitudeControl(
-                control_timestep=control_timestep,
-                thrust=target_thrust,
-                cur_quat=cur_quat,
-                target_euler=np.array(cur_rpy),
-                target_rpy_rates=target_rpy_rates
-            )
-
-        #return rpm, pos_e, computed_target_rpy[2] - cur_rpy[2]
         return rpm, None, None
 
     ################################################################################

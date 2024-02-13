@@ -112,7 +112,8 @@ def run(
 
         #### Step the simulation ###################################
         obs, reward, terminated, truncated, info = env.step(action)
-        target_position = TARGET_TRAJECTORY.get_waypoint(current_step).coordinate
+        #target_position = TARGET_TRAJECTORY.get_waypoint(current_step).coordinate
+        target_position = np.array([0.1, 0.1, 0.1])
         #### Compute control for the current way point #############
         action, _, _ = ctrl.computeControlFromState(control_timestep=env.CTRL_TIMESTEP,
             state=obs[0],
