@@ -169,10 +169,19 @@ class MPCCasADiControl(BaseControl):
         J = 0  # Objective function
         g = []  # constraints vector
 
-        # Q=diag(MX([100, 100, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
+        '''# Q=diag(MX([100, 100, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
         Q = diagcat(100, 100, 100, 1, 1, 1, 1, 1, 1, 1, 1, 1)
         # R=diag(MX([10.0, 10.0, 10.0, 10.0]))
-        R = diagcat(10.0, 10.0, 10.0, 10.0)
+        R = diagcat(10.0, 10.0, 10.0, 10.0)'''
+
+        '''
+        Paper: Non-Linear Model Predictive Control Using CasADi Package for Trajectory Tracking of Quadrotor
+        The weighting matrix Q = Diag[1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0],
+        while the control input weighting matrix R = Diag[0.3, 0.3, 0.3, 0.8]
+        '''
+
+        Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
+        R = diagcat(0.3, 0.3, 0.3, 0.8)
 
         x_init = P[0:Nx]
         g = X[:, 0] - P[0:Nx]  # initial condition constraints
