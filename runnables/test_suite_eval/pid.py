@@ -49,7 +49,7 @@ DEFAULT_CONTROL_FREQ_HZ = 48
 DEFAULT_DURATION_SEC = 50
 DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_COLAB = False
-DEFAULT_DISCR_LEVEL = 10
+DEFAULT_DISCR_LEVEL = 20
 DEFAULT_EVAL_SET = "./eval-v0_n-ctrl-points-3_n-tracks-20_2024-02-11_22:18:28_46929077-0248-4c6e-b2b1-da2afb13b2e2"
 
 from runnables.test_suite_eval.utils import compute_metrics_single
@@ -78,7 +78,7 @@ def run(
     #### Initialize the simulation #############################
 
     #### Initialize a circular trajectory ######################
-    use_gui = False
+    use_gui = True
     n_discr_level=discr_level
 
     eval_set_folder = eval_set
@@ -154,11 +154,11 @@ def run(
             velocity = np.linalg.norm(obs[0][10:13])
 
 
-            '''sphere_visual = p.createVisualShape(
+            sphere_visual = p.createVisualShape(
                 shapeType=p.GEOM_SPHERE,
                 radius=0.03,
                 rgbaColor=[0, 1, 0, 0.6],
-                physicsClientId=PYB_CLIENT
+                physicsClientId=env.CLIENT
             )
             target = p.createMultiBody(
                 baseMass=0.0,
@@ -166,17 +166,17 @@ def run(
                 baseVisualShapeIndex=sphere_visual,
                 basePosition=target_position,
                 useMaximalCoordinates=False,
-                physicsClientId=PYB_CLIENT
+                physicsClientId=env.CLIENT
             )
             p.changeVisualShape(
                 target,
                 -1,
                 rgbaColor=[0.9, 0.3, 0.3, 0.6],
-                physicsClientId=PYB_CLIENT
-            )'''
+                physicsClientId=env.CLIENT
+            )
 
-            if distance < 0.2 and velocity < 0.2:
-            #if distance < 0.1:
+            #if distance < 0.2 and velocity < 0.2:
+            if distance < 0.1:
                 if current_step == len(TARGET_TRAJECTORY) -1 and velocity < 0.2:
                     # env.render()
                     all_pos = env.pos_logger.load_all() 
