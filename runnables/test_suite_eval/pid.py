@@ -27,9 +27,11 @@ from trajectories import TrajectoryFactory, DiscretizedTrajectory
 from gym_pybullet_drones.utils.enums import DroneModel, Physics
 from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
 from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
+from gym_pybullet_drones.control.MPCCasADiControl import MPCCasADiControl
 from gym_pybullet_drones.utils.Logger import Logger
 from gym_pybullet_drones.utils.utils import sync, str2bool
-from runnables.test_suite_eval.eval_tracks import load_eval_tracks 
+from runnables.test_suite_eval.eval_tracks import load_eval_tracks
+import pybullet as p
 from typing import List, Dict 
 import json
 from tqdm import tqdm
@@ -120,7 +122,8 @@ def run(
 
         #### Initialize the controller
         drone = DroneModel.CF2X
-        ctrl = DSLPIDControl(drone_model=drone)
+        #ctrl = DSLPIDControl(drone_model=drone)
+        ctrl = MPCCasADiControl(drone_model=drone)
 
         #### Run the simulation
         action = np.zeros((num_drones,4))
@@ -149,8 +152,32 @@ def run(
             
             distance = np.linalg.norm(target_position - position)
             velocity = np.linalg.norm(obs[0][10:13])
-            if distance < 0.2 and velocity < 0.05:
-                if current_step == len(TARGET_TRAJECTORY) -1 and velocity < 0.05:
+
+
+            '''sphere_visual = p.createVisualShape(
+                shapeType=p.GEOM_SPHERE,
+                radius=0.03,
+                rgbaColor=[0, 1, 0, 0.6],
+                physicsClientId=PYB_CLIENT
+            )
+            target = p.createMultiBody(
+                baseMass=0.0,
+                baseCollisionShapeIndex=-1,
+                baseVisualShapeIndex=sphere_visual,
+                basePosition=target_position,
+                useMaximalCoordinates=False,
+                physicsClientId=PYB_CLIENT
+            )
+            p.changeVisualShape(
+                target,
+                -1,
+                rgbaColor=[0.9, 0.3, 0.3, 0.6],
+                physicsClientId=PYB_CLIENT
+            )'''
+
+            if distance < 0.2 and velocity < 0.2:
+            #if distance < 0.1:
+                if current_step == len(TARGET_TRAJECTORY) -1 and velocity < 0.2:
                     # env.render()
                     all_pos = env.pos_logger.load_all() 
                     t = env.step_counter*env.PYB_TIMESTEP
