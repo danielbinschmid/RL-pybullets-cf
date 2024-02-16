@@ -512,7 +512,7 @@ class MPCCasADiControl(BaseControl):
         psi = x_step_0[5]  # psi-angle, Euler angles
         #target_rotation = np.array([float(phi), float(theta), float(psi)])'''
 
-        ## Just map it to the range approach
+        ## Just map it to the range approach -> This seems to not work
 
         #target_torques = np.array([float(tau_phi_step_0) * 3200 / 1.257, float(tau_theta_step_0) * 3200 / 1.257, float(tau_psi_step_0) * 3200 / 0.2145])
 
