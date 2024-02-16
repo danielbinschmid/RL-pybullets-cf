@@ -206,6 +206,8 @@ class MPCCasADiControl(BaseControl):
         # N DISCR LEVEL: 30
         # -> misses the second track
 
+        ################################################################################################################
+
         '''# My own designed matrices partially inspired from TinyMPC
         #Q = diagcat(100, 100, 100, 1, 1, 1, 1, 1, 1, 1, 1, 1)
         #R = diagcat(10.0, 10.0, 10.0, 10.0)
@@ -226,7 +228,7 @@ class MPCCasADiControl(BaseControl):
         # DEFAULT_DISCR_LEVEL = 50 -> Completely goes off rails at the beginning'''
 
 
-        # Paper: Non-Linear Model Predictive Control Using CasADi Package for Trajectory Tracking of Quadrotor
+        '''# Paper: Non-Linear Model Predictive Control Using CasADi Package for Trajectory Tracking of Quadrotor
         # The weighting matrix Q = Diag[1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0],
         # while the control input weighting matrix R = Diag[0.3, 0.3, 0.3, 0.8]
         
@@ -280,16 +282,7 @@ class MPCCasADiControl(BaseControl):
             # 5%|▌         | 1/20 [02:16<43:10, 136.33s/it]
             # 10%|█         | 2/20 [04:10<37:04, 123.58s/it]
             # 15%|█▌        | 3/20 [06:32<37:19, 131.74s/it]
-            # 20%|██        | 4/20 [09:32<40:12, 150.75s/it]
-
-        #####################if distance < 0.2 and velocity < 1.0:
-        #    if current_step == len(TARGET_TRAJECTORY) - 1 and velocity < 1.0: #####################
-
-        # N DISCR LEVEL: 10
-        # COMPLETION TIME MEAN: 4.672916666666667
-        # SUCCESS RATE: 1.0
-        # AVERAGE DEVIATION:  0.10109089137096094
-        # MAXIMUM DEVIATION: 0.22336670663036812
+            # 20%|██        | 4/20 [09:32<40:12, 150.75s/it]'''
 
 
         '''# Only care greedily about the position 
@@ -369,6 +362,46 @@ class MPCCasADiControl(BaseControl):
         # DEFAULT_DISCR_LEVEL = 100 ->  Quite slow
         # 5%|▌         | 1/20 [04:23<1:23:31, 263.79s/it]
         # 10%|█         | 2/20 [07:45<1:08:12, 227.35s/it]'''
+
+        ################################################################################################################
+
+        #####################if distance < 0.2 and velocity < 1.0:
+        #    if current_step == len(TARGET_TRAJECTORY) - 1 and velocity < 1.0: #####################
+
+        '''# Paper: Non-Linear Model Predictive Control Using CasADi Package for Trajectory Tracking of Quadrotor
+        # The weighting matrix Q = Diag[1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0],
+        # while the control input weighting matrix R = Diag[0.3, 0.3, 0.3, 0.8]
+
+        Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
+        R = diagcat(0.3, 0.3, 0.3, 0.8)
+        
+        # N DISCR LEVEL: 10
+        # COMPLETION TIME MEAN: 4.672916666666667
+        # SUCCESS RATE: 1.0
+        # AVERAGE DEVIATION:  0.10109089137096094
+        # MAXIMUM DEVIATION: 0.22336670663036812'''
+
+        '''# Only care greedily about the position
+        Q = diagcat(1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        R = diagcat(0, 0, 0, 0)
+        # -> Test result: Drone completely goes off the rails and crazyflie flies crazily and fails'''
+
+        # Care 2x less about and velocities and reference input of the drone
+                    # Reference Weighting matrices from the paper
+                    # Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
+                    # R = diagcat(0.3, 0.3, 0.3, 0.8)
+
+        Q = diagcat(1, 1, 1, 0.3, 0.3, 0.2, 0, 0, 0, 0, 0, 0)
+        R = diagcat(0.15, 0.15, 0.15, 0.4)
+
+        ###             if distance < 0.2:
+                # if current_step == len(TARGET_TRAJECTORY) - 1:
+
+        # N DISCR LEVEL: 10
+        # COMPLETION TIME MEAN: 4.119791666666666
+        # SUCCESS RATE: 1.0
+        # AVERAGE DEVIATION:  0.09995147199727226
+        # MAXIMUM DEVIATION: 0.2386860064898518
 
         x_init = P[0:Nx]
         g = X[:, 0] - P[0:Nx]  # initial condition constraints

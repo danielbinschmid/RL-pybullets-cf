@@ -197,8 +197,8 @@ def run(
             #PID distance if statements
             #if distance < 0.2 and velocity < 0.05: # Original Stop-And-GO
             # if distance < 0.2: # this creates a final position bug somehow
-            if distance < 0.2 and velocity < 1.0:
-                if current_step == len(TARGET_TRAJECTORY) - 1 and velocity < 1.0:
+            if distance < 0.2:
+                if current_step == len(TARGET_TRAJECTORY) - 1:
                     # env.render()
                     all_pos = env.pos_logger.load_all()
                     t = env.step_counter * env.PYB_TIMESTEP
@@ -207,6 +207,14 @@ def run(
                     max_devs.append(max_dev)
                     times.append(t)
                     successes.append(True)
+
+                    ## Already print after each track
+                    print(f'N DISCR LEVEL: {n_discr_level}')
+                    print("COMPLETION TIME MEAN:", np.mean(times))
+                    print("SUCCESS RATE:", np.mean(successes))
+                    print("AVERAGE DEVIATION: ", np.mean(mean_devs))
+                    print("MAXIMUM DEVIATION:", np.mean(max_devs))
+
                     break
                 current_step = (current_step + 1) % len(TARGET_TRAJECTORY)
 
