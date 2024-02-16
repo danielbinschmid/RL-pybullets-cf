@@ -386,7 +386,7 @@ class MPCCasADiControl(BaseControl):
         R = diagcat(0, 0, 0, 0)
         # -> Test result: Drone completely goes off the rails and crazyflie flies crazily and fails'''
 
-        '''# Care 2x less about and velocities and reference input of the drone
+        '''# Care 2x less (or only 50%) about and velocities and reference input of the drone
                     # Reference Weighting matrices from the paper
                     # Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
                     # R = diagcat(0.3, 0.3, 0.3, 0.8)
@@ -403,17 +403,33 @@ class MPCCasADiControl(BaseControl):
         # AVERAGE DEVIATION:  0.09995147199727226
         # MAXIMUM DEVIATION: 0.2386860064898518'''
 
+        # Care (or only  42.5%) about and velocities and reference input of the drone
+                            # Reference Weighting matrices from the paper
+                            # Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
+                            # R = diagcat(0.3, 0.3, 0.3, 0.8)
 
-        '''# Care 3x less about and velocities and reference input of the drone
+        Q = diagcat(1, 1, 1, 0.255, 0.255, 0.425, 0, 0, 0, 0, 0, 0)
+        R = diagcat(0.1275, 0.1275, 0.1275, 0.34)
+
+                ###             if distance < 0.2:
+                        # if current_step == len(TARGET_TRAJECTORY) - 1:
+
+                # N DISCR LEVEL: 10 -> performs a bit slower than 50%
+
+
+
+        '''# Care 3x less about (or only 33%) and velocities and reference input of the drone
         Q = diagcat(1, 1, 1, 0.2, 0.2, 0.1666, 0, 0, 0, 0, 0, 0)
         R = diagcat(0.1, 0.1, 0.1, 0.2666)
         
         # DEFAULT_DISCR_LEVEL = 10 -> causes it to fail on at least two tracks midways'''
 
-        # Don't care about the velocity of the drone
+
+
+        '''# Don't care about the velocity of the drone
         Q = diagcat(1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
         R = diagcat(0.3, 0.3, 0.3, 0.8)
-        # -> Test result: Drone completely goes off the rails and crazyflie flies crazily and fails
+        # -> Test result: Drone completely goes off the rails and crazyflie flies crazily and fails'''
 
         x_init = P[0:Nx]
         g = X[:, 0] - P[0:Nx]  # initial condition constraints
