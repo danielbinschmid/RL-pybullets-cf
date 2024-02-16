@@ -171,14 +171,15 @@ class MPCCasADiControl(BaseControl):
 
 
         # My own designed matrices partially inspired from TinyMPC
-        Q = diagcat(100, 100, 100, 1, 1, 1, 1, 1, 1, 1, 1, 1)
-        R = diagcat(10.0, 10.0, 10.0, 10.0)
+        #Q = diagcat(100, 100, 100, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+        #R = diagcat(10.0, 10.0, 10.0, 10.0)
         # DEFAULT_DISCR_LEVEL = 50 -> It seems to work, but looks too rigid and too slow
 
 
         # Matrices taken from somewhere, maybe TinyMPC, can't remember
-        # Q=diag(MX([100, 100, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
-        # R=diag(MX([10.0, 10.0, 10.0, 10.0]))
+        Q=diag(MX([100, 100, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
+        R=diag(MX([10.0, 10.0, 10.0, 10.0]))
+        # DEFAULT_DISCR_LEVEL = 50 -> Completely goes off rails at the beginning
 
         '''
         Paper: Non-Linear Model Predictive Control Using CasADi Package for Trajectory Tracking of Quadrotor
