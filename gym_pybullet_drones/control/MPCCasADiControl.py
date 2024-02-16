@@ -178,10 +178,15 @@ class MPCCasADiControl(BaseControl):
         Paper: Non-Linear Model Predictive Control Using CasADi Package for Trajectory Tracking of Quadrotor
         The weighting matrix Q = Diag[1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0],
         while the control input weighting matrix R = Diag[0.3, 0.3, 0.3, 0.8]
-        '''
-
+        
         Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
         R = diagcat(0.3, 0.3, 0.3, 0.8)
+
+        '''
+
+        # Only care greedily about the position
+        Q = diagcat(1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        R = diagcat(0, 0, 0, 0)
 
         x_init = P[0:Nx]
         g = X[:, 0] - P[0:Nx]  # initial condition constraints
@@ -202,7 +207,9 @@ class MPCCasADiControl(BaseControl):
             st = X[:, k]
             cont = U[:, k]
             cont_ref = u_ref
-            J += (st - st_ref).T @ Q @ (st - st_ref) + (cont - cont_ref).T @ R @ (cont - cont_ref)
+            #J += (st - st_ref).T @ Q @ (st - st_ref) + (cont - cont_ref).T @ R @ (cont - cont_ref)
+            # Only care greedily about the position
+            J += (st - st_ref).T @ Q @ (st - st_ref)
             st_next = X[:, k + 1]
             k1 = f(st, cont)
             k2 = f(st + h / 2 * k1, cont)
