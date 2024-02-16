@@ -169,17 +169,19 @@ class MPCCasADiControl(BaseControl):
         J = 0  # Objective function
         g = []  # constraints vector
 
+        ### Weighting Matrices Q and R for objective function
+        ### Test suite experiments and test results with varying trajectory discretization levels
 
-        # My own designed matrices partially inspired from TinyMPC
+        '''# My own designed matrices partially inspired from TinyMPC
         #Q = diagcat(100, 100, 100, 1, 1, 1, 1, 1, 1, 1, 1, 1)
         #R = diagcat(10.0, 10.0, 10.0, 10.0)
-        # DEFAULT_DISCR_LEVEL = 50 -> It seems to work, but looks too rigid and too slow
+        # DEFAULT_DISCR_LEVEL = 50 -> It seems to work, but looks too rigid and too slow'''
 
 
-        # Matrices taken from somewhere, maybe TinyMPC, can't remember
+        '''# Matrices taken from somewhere, maybe TinyMPC, can't remember
         Q=diag(MX([100, 100, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
         R=diag(MX([10.0, 10.0, 10.0, 10.0]))
-        # DEFAULT_DISCR_LEVEL = 50 -> Completely goes off rails at the beginning
+        # DEFAULT_DISCR_LEVEL = 50 -> Completely goes off rails at the beginning'''
 
         '''
         Paper: Non-Linear Model Predictive Control Using CasADi Package for Trajectory Tracking of Quadrotor
@@ -239,6 +241,19 @@ class MPCCasADiControl(BaseControl):
         # DEFAULT_DISCR_LEVEL = 100 -> Performs actually quite well, but goes off track midway
         # DEFAULT_DISCR_LEVEL = 200 -> Performs actually quite well with minor mistakes. A little slower. Misses
         # the last goal position (0,0,0) though'''
+
+
+        # Care 2x less about and velocities and reference input of the drone
+            # Reference Weighting matrices from the paper
+            # Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
+            # R = diagcat(0.3, 0.3, 0.3, 0.8)
+
+        Q = diagcat(1, 1, 1, 0.3, 0.3, 0.2, 0, 0, 0, 0, 0, 0)
+        R = diagcat(0.15, 0.15, 0.15, 0.4)
+
+        # DEFAULT_DISCR_LEVEL = 50 -> Performs actually well and finishes tracks, but is less accurate at some situations
+        # and misses points and has to go back
+        # DEFAULT_DISCR_LEVEL = 100 -> Quite slow 5%|▌         | 1/20 [03:38<1:09:19, 218.93s/it]
 
         x_init = P[0:Nx]
         g = X[:, 0] - P[0:Nx]  # initial condition constraints
