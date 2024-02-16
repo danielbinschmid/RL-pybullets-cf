@@ -410,6 +410,11 @@ class MPCCasADiControl(BaseControl):
         
         # DEFAULT_DISCR_LEVEL = 10 -> causes it to fail on at least two tracks midways'''
 
+        # Don't care about the velocity of the drone
+        Q = diagcat(1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        R = diagcat(0.3, 0.3, 0.3, 0.8)
+        # -> Test result: Drone completely goes off the rails and crazyflie flies crazily and fails
+
         x_init = P[0:Nx]
         g = X[:, 0] - P[0:Nx]  # initial condition constraints
         h = 0.15
