@@ -190,6 +190,13 @@ class MPCCasADiControl(BaseControl):
         
         Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
         R = diagcat(0.3, 0.3, 0.3, 0.8)
+        
+        # DEFAULT_DISCR_LEVEL = 30 -> 
+        # First track: 5%|▌         | 1/20 [02:09<40:56, 129.26s/it]
+        #COMPLETION TIME MEAN: 15.638157894736842
+        #SUCCESS RATE: 0.95
+        #AVERAGE DEVIATION:  0.029817046088798104
+        #MAXIMUM DEVIATION: 0.06448328287707432
 
         '''
 
@@ -243,7 +250,7 @@ class MPCCasADiControl(BaseControl):
         # the last goal position (0,0,0) though'''
 
 
-        # Care 2x less about and velocities and reference input of the drone
+        '''# Care 2x less about and velocities and reference input of the drone
             # Reference Weighting matrices from the paper
             # Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
             # R = diagcat(0.3, 0.3, 0.3, 0.8)
@@ -253,7 +260,23 @@ class MPCCasADiControl(BaseControl):
 
         # DEFAULT_DISCR_LEVEL = 50 -> Performs actually well and finishes tracks, but is less accurate at some situations
         # and misses points and has to go back
-        # DEFAULT_DISCR_LEVEL = 100 -> Quite slow 5%|▌         | 1/20 [03:38<1:09:19, 218.93s/it]
+        # DEFAULT_DISCR_LEVEL = 100 -> Quite slow 5%|▌         | 1/20 [03:38<1:09:19, 218.93s/it]'''
+
+        # Care only 75% less about and velocities and reference input of the drone
+            # Reference Weighting matrices from the paper
+            # Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
+            # R = diagcat(0.3, 0.3, 0.3, 0.8)
+
+        Q = diagcat(1, 1, 1, 0.45, 0.45, 0.75, 0, 0, 0, 0, 0, 0)
+        R = diagcat(0.225, 0.225, 0.225, 0.6)
+
+        # DEFAULT_DISCR_LEVEL = 30 -> Good, but still worse than Paper weights
+        # 5%|▌         | 1/20 [02:10<41:15, 130.31s/it]
+        # 10%|█         | 2/20 [04:11<37:31, 125.09s/it]
+        # 15%|█▌        | 3/20 [06:41<38:39, 136.46s/it]
+        # DEFAULT_DISCR_LEVEL = 100 ->  Quite slow
+        # 5%|▌         | 1/20 [04:23<1:23:31, 263.79s/it]
+        # 10%|█         | 2/20 [07:45<1:08:12, 227.35s/it]
 
         x_init = P[0:Nx]
         g = X[:, 0] - P[0:Nx]  # initial condition constraints
