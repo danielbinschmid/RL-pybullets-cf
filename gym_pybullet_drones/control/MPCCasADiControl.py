@@ -386,15 +386,13 @@ class MPCCasADiControl(BaseControl):
         R = diagcat(0, 0, 0, 0)
         # -> Test result: Drone completely goes off the rails and crazyflie flies crazily and fails'''
 
-        # Care only 75% less about and velocities and reference input of the drone
+        # Care only 62.5% less about and velocities and reference input of the drone
                     # Reference Weighting matrices from the paper
                     # Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
                     # R = diagcat(0.3, 0.3, 0.3, 0.8)
 
-        Q = diagcat(1, 1, 1, 0.45, 0.45, 0.75, 0, 0, 0, 0, 0, 0)
-        R = diagcat(0.225, 0.225, 0.225, 0.6)
-
-
+        Q = diagcat(1, 1, 1, 0.375, 0.375, 0.625, 0, 0, 0, 0, 0, 0)
+        R = diagcat(0.1875, 0.1875, 0.1875, 0.5)
 
 
 
