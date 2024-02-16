@@ -170,35 +170,89 @@ class MPCCasADiControl(BaseControl):
         g = []  # constraints vector
 
         ### Weighting Matrices Q and R for objective function
-        ### Test suite experiments and test results with varying trajectory discretization levels
+        ### 20 tracks test suite experiments and test results with varying trajectory discretization levels
+
+        ##### PID reference performance on the 20 tracks test suite
+        # N DISCR LEVEL: 10
+        # COMPLETION TIME MEAN: 8.832291666666666
+        # SUCCESS RATE: 1.0
+        # AVERAGE DEVIATION:  0.05192337496578584
+        # MAXIMUM DEVIATION: 0.14372815993134694
 
         '''# My own designed matrices partially inspired from TinyMPC
         #Q = diagcat(100, 100, 100, 1, 1, 1, 1, 1, 1, 1, 1, 1)
         #R = diagcat(10.0, 10.0, 10.0, 10.0)
+        
+        # Normalized (Does this make a difference?) - Position set to 1
+        #Q = diagcat(1, 1, 1, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01)
+        #R = diagcat(0.1, 0.1, 0.1, 0.1)
         # DEFAULT_DISCR_LEVEL = 50 -> It seems to work, but looks too rigid and too slow'''
 
 
         '''# Matrices taken from somewhere, maybe TinyMPC, can't remember
         Q=diag(MX([100, 100, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
         R=diag(MX([10.0, 10.0, 10.0, 10.0]))
+        
+        # Normalized (Does this make a difference?) - Position set to 1
+        #Q = diagcat(1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        #R = diagcat(0.1, 0.1, 0.1, 0.1)
         # DEFAULT_DISCR_LEVEL = 50 -> Completely goes off rails at the beginning'''
 
-        '''
-        Paper: Non-Linear Model Predictive Control Using CasADi Package for Trajectory Tracking of Quadrotor
-        The weighting matrix Q = Diag[1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0],
-        while the control input weighting matrix R = Diag[0.3, 0.3, 0.3, 0.8]
+
+        # Paper: Non-Linear Model Predictive Control Using CasADi Package for Trajectory Tracking of Quadrotor
+        # The weighting matrix Q = Diag[1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0],
+        # while the control input weighting matrix R = Diag[0.3, 0.3, 0.3, 0.8]
         
         Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
         R = diagcat(0.3, 0.3, 0.3, 0.8)
-        
-        # DEFAULT_DISCR_LEVEL = 30 -> 
-        # First track: 5%|▌         | 1/20 [02:09<40:56, 129.26s/it]
-        #COMPLETION TIME MEAN: 15.638157894736842
-        #SUCCESS RATE: 0.95
-        #AVERAGE DEVIATION:  0.029817046088798104
-        #MAXIMUM DEVIATION: 0.06448328287707432
 
-        '''
+        # DEFAULT_DISCR_LEVEL = 10 ->
+        # 5%|▌         | 1/20 [01:04<20:33, 64.94s/it]
+        # 10%|█         | 2/20 [02:14<20:16, 67.61s/it]
+        # 3rd track: Misses the last point by a bit
+
+        # DEFAULT_DISCR_LEVEL = 15 ->
+        # First try
+            # 5%|▌         | 1/20 [01:23<26:24, 83.38s/it]
+            # 10%|█         | 2/20 [03:08<28:20, 94.49s/it]
+        #Second try
+            # 5%|▌         | 1/20 [01:19<25:17, 79.86s/it]
+            # 10%|█         | 2/20 [02:43<24:39, 82.20s/it]
+            # 3rd track: Misses the last point by quite a bit
+
+        # DEFAULT_DISCR_LEVEL = 20 ->
+        # First try
+            # 5%|▌         | 1/20 [01:47<33:59, 107.33s/it]
+        # Second try
+            # 5%|▌         | 1/20 [01:45<33:24, 105.48s/it]
+            # 10%|█         | 2/20 [03:12<28:22, 94.56s/it]
+            # 15%|█▌        | 3/20 [05:44<34:10, 120.63s/it]
+            # 20%|██        | 4/20 [07:55<33:15, 124.71s/it]
+            # N DISCR LEVEL: 20
+            # COMPLETION TIME MEAN: 13.834375
+            # SUCCESS RATE: 1.0
+            # AVERAGE DEVIATION:  0.040151234220999796
+            # MAXIMUM DEVIATION: 0.10004746548338775
+
+        
+        # DEFAULT_DISCR_LEVEL = 30 ->
+        # First try
+            # First track: 5%|▌         | 1/20 [02:09<40:56, 129.26s/it]
+            # 10%|█         | 2/20 [03:58<35:11, 117.32s/it]finished
+            # 15%|█▌        | 3/20 [05:57<33:30, 118.25s/it]finished
+            #COMPLETION TIME MEAN: 15.638157894736842
+            #SUCCESS RATE: 0.95
+            #AVERAGE DEVIATION:  0.029817046088798104
+            #MAXIMUM DEVIATION: 0.06448328287707432
+
+            # DEFAULT_DISCR_LEVEL = 50 ->
+            # First track: 5%|▌         | 1/20 [03:49<1:12:48, 229.91s/it]
+        # Second try
+            # 5%|▌         | 1/20 [02:16<43:10, 136.33s/it]
+            # 10%|█         | 2/20 [04:10<37:04, 123.58s/it]
+            # 15%|█▌        | 3/20 [06:32<37:19, 131.74s/it]
+            # 20%|██        | 4/20 [09:32<40:12, 150.75s/it]
+
 
         '''# Only care greedily about the position 
         Q = diagcat(1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
@@ -262,7 +316,7 @@ class MPCCasADiControl(BaseControl):
         # and misses points and has to go back
         # DEFAULT_DISCR_LEVEL = 100 -> Quite slow 5%|▌         | 1/20 [03:38<1:09:19, 218.93s/it]'''
 
-        # Care only 75% less about and velocities and reference input of the drone
+        '''# Care only 75% less about and velocities and reference input of the drone
             # Reference Weighting matrices from the paper
             # Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
             # R = diagcat(0.3, 0.3, 0.3, 0.8)
@@ -276,7 +330,7 @@ class MPCCasADiControl(BaseControl):
         # 15%|█▌        | 3/20 [06:41<38:39, 136.46s/it]
         # DEFAULT_DISCR_LEVEL = 100 ->  Quite slow
         # 5%|▌         | 1/20 [04:23<1:23:31, 263.79s/it]
-        # 10%|█         | 2/20 [07:45<1:08:12, 227.35s/it]
+        # 10%|█         | 2/20 [07:45<1:08:12, 227.35s/it]'''
 
         x_init = P[0:Nx]
         g = X[:, 0] - P[0:Nx]  # initial condition constraints
