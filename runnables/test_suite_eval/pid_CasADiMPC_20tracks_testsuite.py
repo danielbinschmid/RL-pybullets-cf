@@ -49,7 +49,7 @@ DEFAULT_CONTROL_FREQ_HZ = 48
 DEFAULT_DURATION_SEC = 50
 DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_COLAB = False
-DEFAULT_DISCR_LEVEL = 20
+DEFAULT_DISCR_LEVEL = 10
 DEFAULT_EVAL_SET = "./eval-v0_n-ctrl-points-3_n-tracks-20_2024-02-11_22:18:28_46929077-0248-4c6e-b2b1-da2afb13b2e2"
 
 from runnables.test_suite_eval.utils import compute_metrics_single
@@ -122,8 +122,8 @@ def run(
 
         #### Initialize the controller
         drone = DroneModel.CF2X
-        #ctrl = DSLPIDControl(drone_model=drone)
-        ctrl = MPCCasADiControl(drone_model=drone)
+        ctrl = DSLPIDControl(drone_model=drone)
+        #ctrl = MPCCasADiControl(drone_model=drone)
 
         #### Run the simulation
         action = np.zeros((num_drones,4))
@@ -175,9 +175,12 @@ def run(
                 physicsClientId=env.CLIENT
             )
 
+
+            '''# MPC distance if statements
             #if distance < 0.05 or ((current_step == len(TARGET_TRAJECTORY) - 2 or current_step == len(TARGET_TRAJECTORY) - 3) and distance < 0.3):
             if distance < 0.05:
                 #if current_step == len(TARGET_TRAJECTORY) -1 and velocity < 0.2:
+                #if current_step == len(TARGET_TRAJECTORY) - 1 and distance < 0.1:
                 if current_step == len(TARGET_TRAJECTORY) - 1:
                     # env.render()
                     all_pos = env.pos_logger.load_all() 
@@ -188,8 +191,23 @@ def run(
                     times.append(t)
                     successes.append(True)
                     break
+                current_step = (current_step + 1) % len(TARGET_TRAJECTORY)'''
+
+            #PID distance if statements
+            if distance < 0.2 and velocity < 0.05: # Original Stop-And-GO
+            # if distance < 0.2: # this creates a final position bug somehow
+            #if distance < 0.2 and velocity < 1.0:
+                if current_step == len(TARGET_TRAJECTORY) - 1 and velocity < 1.0:
+                    # env.render()
+                    all_pos = env.pos_logger.load_all()
+                    t = env.step_counter * env.PYB_TIMESTEP
+                    mean_dev, max_dev = compute_metrics_single(all_pos, track)
+                    mean_devs.append(mean_dev)
+                    max_devs.append(max_dev)
+                    times.append(t)
+                    successes.append(True)
+                    break
                 current_step = (current_step + 1) % len(TARGET_TRAJECTORY)
-                
 
             ##### Log the simulation ####################################
 

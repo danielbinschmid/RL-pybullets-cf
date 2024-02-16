@@ -173,11 +173,32 @@ class MPCCasADiControl(BaseControl):
         ### 20 tracks test suite experiments and test results with varying trajectory discretization levels
 
         ##### PID reference performance on the 20 tracks test suite
+        #####################             if distance < 0.2 and velocity < 0.05: # Original Stop-And-GO
+            # if current_step == len(TARGET_TRAJECTORY) - 1 and velocity < 1.0: #####################
         # N DISCR LEVEL: 10
         # COMPLETION TIME MEAN: 8.832291666666666
         # SUCCESS RATE: 1.0
         # AVERAGE DEVIATION:  0.05192337496578584
         # MAXIMUM DEVIATION: 0.14372815993134694
+
+        ##################### distance < 0.1 #####################
+        # DEFAULT_DISCR_LEVEL = 10
+        # -> misses the end goal at one track
+
+        # Generally with this distance it does get out of the loop
+
+        ##################### if distance < 0.2 and velocity < 1.0:
+        #    if current_step == len(TARGET_TRAJECTORY) - 1 and velocity < 1.0: #####################
+
+        # DEFAULT_DISCR_LEVEL = 10 -> It actually fails in the ninth track
+
+        ##################### distance < 0.05 #####################
+
+        # DEFAULT_DISCR_LEVEL = 20
+        # Hangs up itself because of small distance
+
+        # N DISCR LEVEL: 30
+        # -> misses the second track
 
         '''# My own designed matrices partially inspired from TinyMPC
         #Q = diagcat(100, 100, 100, 1, 1, 1, 1, 1, 1, 1, 1, 1)
