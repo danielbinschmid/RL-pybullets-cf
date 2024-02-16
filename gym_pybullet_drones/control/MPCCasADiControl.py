@@ -169,10 +169,16 @@ class MPCCasADiControl(BaseControl):
         J = 0  # Objective function
         g = []  # constraints vector
 
-        '''# Q=diag(MX([100, 100, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
+
+        # My own designed matrices partially inspired from TinyMPC
         Q = diagcat(100, 100, 100, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+        R = diagcat(10.0, 10.0, 10.0, 10.0)
+        # DEFAULT_DISCR_LEVEL = 50 -> It seems to work, but looks too rigid and too slow
+
+
+        # Matrices taken from somewhere, maybe TinyMPC, can't remember
+        # Q=diag(MX([100, 100, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
         # R=diag(MX([10.0, 10.0, 10.0, 10.0]))
-        R = diagcat(10.0, 10.0, 10.0, 10.0)'''
 
         '''
         Paper: Non-Linear Model Predictive Control Using CasADi Package for Trajectory Tracking of Quadrotor
@@ -210,11 +216,10 @@ class MPCCasADiControl(BaseControl):
         # DEFAULT_DISCR_LEVEL = 40 -> goes off track after 4 points
         # DEFAULT_DISCR_LEVEL = 50 -> goes off track after 4 points'''
 
-        # Care 3x less about and velocities and reference input of the drone
-        # Reference Weighting matrices from the paper
-        #Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
-        #R = diagcat(0.3, 0.3, 0.3, 0.8)
-
+        '''# Care 3x less about and velocities and reference input of the drone
+            # Reference Weighting matrices from the paper
+            #Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
+            #R = diagcat(0.3, 0.3, 0.3, 0.8)
 
         Q = diagcat(1, 1, 1, 0.1, 0.1, 0.1666, 0, 0, 0, 0, 0, 0) #!! Correction this is imbalanced weighting! This is 6x less
         # It should be Q = diagcat(1, 1, 1, 0.2, 0.2, 0.1666, 0, 0, 0, 0, 0, 0)
@@ -223,6 +228,7 @@ class MPCCasADiControl(BaseControl):
         # DEFAULT_DISCR_LEVEL = 30 -> goes off track after 10 points
         # DEFAULT_DISCR_LEVEL = 50 -> goes off track after 4 points
 
+        # ---> The correction:
         # Care 3x less about and velocities and reference input of the drone
         Q = diagcat(1, 1, 1, 0.2, 0.2, 0.1666, 0, 0, 0, 0, 0, 0)
         R = diagcat(0.1, 0.1, 0.1, 0.2666)
@@ -231,7 +237,7 @@ class MPCCasADiControl(BaseControl):
         # DEFAULT_DISCR_LEVEL = 50 -> Performs actually quite well with minor mistakes
         # DEFAULT_DISCR_LEVEL = 100 -> Performs actually quite well, but goes off track midway
         # DEFAULT_DISCR_LEVEL = 200 -> Performs actually quite well with minor mistakes. A little slower. Misses
-        # the last goal position (0,0,0) though
+        # the last goal position (0,0,0) though'''
 
         x_init = P[0:Nx]
         g = X[:, 0] - P[0:Nx]  # initial condition constraints

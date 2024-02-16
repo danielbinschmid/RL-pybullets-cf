@@ -49,7 +49,7 @@ DEFAULT_CONTROL_FREQ_HZ = 48
 DEFAULT_DURATION_SEC = 50
 DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_COLAB = False
-DEFAULT_DISCR_LEVEL = 100
+DEFAULT_DISCR_LEVEL = 50
 DEFAULT_EVAL_SET = "./eval-v0_n-ctrl-points-3_n-tracks-20_2024-02-11_22:18:28_46929077-0248-4c6e-b2b1-da2afb13b2e2"
 
 from runnables.test_suite_eval.utils import compute_metrics_single
