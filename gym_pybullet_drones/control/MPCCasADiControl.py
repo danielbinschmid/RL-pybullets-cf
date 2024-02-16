@@ -189,10 +189,16 @@ class MPCCasADiControl(BaseControl):
         R = diagcat(0, 0, 0, 0)
         # -> Test result: Drone completely goes off the rails and crazyflie flies crazily and fails'''
 
-        # Don't care about the velocity of the drone
+
+        '''# Don't care about the velocity of the drone
         Q = diagcat(1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
         R = diagcat(0.3, 0.3, 0.3, 0.8)
-        # -> Test result: Drone completely goes off the rails and crazyflie flies crazily and fails
+        # -> Test result: Drone completely goes off the rails and crazyflie flies crazily and fails'''
+
+        # Don't care about the reference input of the drone
+        Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
+        R = diagcat(0, 0, 0, 0)
+        # -> Test result: Drone circles around a reference point indefinitely and doesn't reach it
 
         x_init = P[0:Nx]
         g = X[:, 0] - P[0:Nx]  # initial condition constraints
@@ -213,7 +219,9 @@ class MPCCasADiControl(BaseControl):
             st = X[:, k]
             cont = U[:, k]
             cont_ref = u_ref
-            J += (st - st_ref).T @ Q @ (st - st_ref) + (cont - cont_ref).T @ R @ (cont - cont_ref)
+            # Don't care about the reference input of the drone
+            #J += (st - st_ref).T @ Q @ (st - st_ref) + (cont - cont_ref).T @ R @ (cont - cont_ref)
+            J += (st - st_ref).T @ Q @ (st - st_ref)
             st_next = X[:, k + 1]
             k1 = f(st, cont)
             k2 = f(st + h / 2 * k1, cont)
