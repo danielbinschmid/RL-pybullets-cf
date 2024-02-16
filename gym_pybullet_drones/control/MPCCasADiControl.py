@@ -386,6 +386,18 @@ class MPCCasADiControl(BaseControl):
         R = diagcat(0, 0, 0, 0)
         # -> Test result: Drone completely goes off the rails and crazyflie flies crazily and fails'''
 
+        # Care only 75% less about and velocities and reference input of the drone
+                    # Reference Weighting matrices from the paper
+                    # Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
+                    # R = diagcat(0.3, 0.3, 0.3, 0.8)
+
+        Q = diagcat(1, 1, 1, 0.45, 0.45, 0.75, 0, 0, 0, 0, 0, 0)
+        R = diagcat(0.225, 0.225, 0.225, 0.6)
+
+
+
+
+
         '''# Care 2x less (or only 50%) about and velocities and reference input of the drone
                     # Reference Weighting matrices from the paper
                     # Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
@@ -403,7 +415,7 @@ class MPCCasADiControl(BaseControl):
         # AVERAGE DEVIATION:  0.09995147199727226
         # MAXIMUM DEVIATION: 0.2386860064898518'''
 
-        # Care (or only  42.5%) about and velocities and reference input of the drone
+        '''# Care (or only  42.5%) about and velocities and reference input of the drone
                             # Reference Weighting matrices from the paper
                             # Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
                             # R = diagcat(0.3, 0.3, 0.3, 0.8)
@@ -414,7 +426,7 @@ class MPCCasADiControl(BaseControl):
                 ###             if distance < 0.2:
                         # if current_step == len(TARGET_TRAJECTORY) - 1:
 
-                # N DISCR LEVEL: 10 -> performs a bit slower than 50%
+                # N DISCR LEVEL: 10 -> performs a bit slower than 50%'''
 
 
 
