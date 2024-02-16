@@ -195,10 +195,23 @@ class MPCCasADiControl(BaseControl):
         R = diagcat(0.3, 0.3, 0.3, 0.8)
         # -> Test result: Drone completely goes off the rails and crazyflie flies crazily and fails'''
 
-        # Don't care about the reference input of the drone
+        '''# Don't care about the reference input of the drone
         Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
         R = diagcat(0, 0, 0, 0)
-        # -> Test result: Drone circles around a reference point indefinitely and doesn't reach it
+        # -> Test result: Drone circles around a reference point indefinitely and doesn't reach it'''
+
+        # Care 3x less about  and velocities and do not care about the reference input of the drone
+        Q = diagcat(1, 1, 1, 0.1, 0.1, 0.1666, 0, 0, 0, 0, 0, 0)
+        R = diagcat(0, 0, 0, 0)
+        # -> Test result:
+        # DEFAULT_DISCR_LEVEL = 10 -> goes off track after 1 point
+        # DEFAULT_DISCR_LEVEL = 20 -> goes off track after 2 points
+        # DEFAULT_DISCR_LEVEL = 30 -> goes off track after 7-8 points
+        # DEFAULT_DISCR_LEVEL = 40 -> goes off track after 4 points
+        # DEFAULT_DISCR_LEVEL = 50 -> goes off track after 4 points
+
+
+        #R = diagcat(0.1, 0.1, 0.1, 0.2666)
 
         x_init = P[0:Nx]
         g = X[:, 0] - P[0:Nx]  # initial condition constraints
@@ -219,9 +232,7 @@ class MPCCasADiControl(BaseControl):
             st = X[:, k]
             cont = U[:, k]
             cont_ref = u_ref
-            # Don't care about the reference input of the drone
-            #J += (st - st_ref).T @ Q @ (st - st_ref) + (cont - cont_ref).T @ R @ (cont - cont_ref)
-            J += (st - st_ref).T @ Q @ (st - st_ref)
+            J += (st - st_ref).T @ Q @ (st - st_ref) + (cont - cont_ref).T @ R @ (cont - cont_ref)
             st_next = X[:, k + 1]
             k1 = f(st, cont)
             k2 = f(st + h / 2 * k1, cont)
