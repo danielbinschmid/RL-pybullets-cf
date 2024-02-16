@@ -46,7 +46,8 @@ DEFAULT_USER_DEBUG_GUI = False
 DEFAULT_OBSTACLES = True
 DEFAULT_SIMULATION_FREQ_HZ = 240
 DEFAULT_CONTROL_FREQ_HZ = 48
-DEFAULT_DURATION_SEC = 50
+# DEFAULT_DURATION_SEC = 50
+DEFAULT_DURATION_SEC = 30
 DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_COLAB = False
 DEFAULT_DISCR_LEVEL = 10
@@ -122,8 +123,8 @@ def run(
 
         #### Initialize the controller
         drone = DroneModel.CF2X
-        ctrl = DSLPIDControl(drone_model=drone)
-        #ctrl = MPCCasADiControl(drone_model=drone)
+        #ctrl = DSLPIDControl(drone_model=drone)
+        ctrl = MPCCasADiControl(drone_model=drone)
 
         #### Run the simulation
         action = np.zeros((num_drones,4))
@@ -194,9 +195,9 @@ def run(
                 current_step = (current_step + 1) % len(TARGET_TRAJECTORY)'''
 
             #PID distance if statements
-            if distance < 0.2 and velocity < 0.05: # Original Stop-And-GO
+            #if distance < 0.2 and velocity < 0.05: # Original Stop-And-GO
             # if distance < 0.2: # this creates a final position bug somehow
-            #if distance < 0.2 and velocity < 1.0:
+            if distance < 0.2 and velocity < 1.0:
                 if current_step == len(TARGET_TRAJECTORY) - 1 and velocity < 1.0:
                     # env.render()
                     all_pos = env.pos_logger.load_all()

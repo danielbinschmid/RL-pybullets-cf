@@ -173,6 +173,8 @@ class MPCCasADiControl(BaseControl):
         ### 20 tracks test suite experiments and test results with varying trajectory discretization levels
 
         ##### PID reference performance on the 20 tracks test suite
+
+        ### Stop and Go
         #####################             if distance < 0.2 and velocity < 0.05: # Original Stop-And-GO
             # if current_step == len(TARGET_TRAJECTORY) - 1 and velocity < 1.0: #####################
         # N DISCR LEVEL: 10
@@ -190,7 +192,11 @@ class MPCCasADiControl(BaseControl):
         ##################### if distance < 0.2 and velocity < 1.0:
         #    if current_step == len(TARGET_TRAJECTORY) - 1 and velocity < 1.0: #####################
 
-        # DEFAULT_DISCR_LEVEL = 10 -> It actually fails in the ninth track
+        # DEFAULT_DISCR_LEVEL = 10
+        # COMPLETION TIME MEAN: 4.537280701754386 (+ 1 Second and minus some accuracy, because it terminates quite early)
+        # SUCCESS RATE: 0.95 -> It actually fails in the ninth track
+        # AVERAGE DEVIATION:  0.06635711385416021
+        # MAXIMUM DEVIATION: 0.1806313058800846
 
         ##################### distance < 0.05 #####################
 
@@ -226,6 +232,8 @@ class MPCCasADiControl(BaseControl):
         
         Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
         R = diagcat(0.3, 0.3, 0.3, 0.8)
+
+        ##################### distance < 0.05 #####################
 
         # DEFAULT_DISCR_LEVEL = 10 ->
         # 5%|▌         | 1/20 [01:04<20:33, 64.94s/it]
@@ -273,6 +281,15 @@ class MPCCasADiControl(BaseControl):
             # 10%|█         | 2/20 [04:10<37:04, 123.58s/it]
             # 15%|█▌        | 3/20 [06:32<37:19, 131.74s/it]
             # 20%|██        | 4/20 [09:32<40:12, 150.75s/it]
+
+        #####################if distance < 0.2 and velocity < 1.0:
+        #    if current_step == len(TARGET_TRAJECTORY) - 1 and velocity < 1.0: #####################
+
+        # N DISCR LEVEL: 10
+        # COMPLETION TIME MEAN: 4.672916666666667
+        # SUCCESS RATE: 1.0
+        # AVERAGE DEVIATION:  0.10109089137096094
+        # MAXIMUM DEVIATION: 0.22336670663036812
 
 
         '''# Only care greedily about the position 
