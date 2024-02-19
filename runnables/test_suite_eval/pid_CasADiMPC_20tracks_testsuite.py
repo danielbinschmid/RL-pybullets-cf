@@ -50,8 +50,16 @@ DEFAULT_CONTROL_FREQ_HZ = 48
 DEFAULT_DURATION_SEC = 10
 DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_COLAB = False
-DEFAULT_DISCR_LEVEL = 10
+DEFAULT_DISCR_LEVEL = 25
+# Original folder
 DEFAULT_EVAL_SET = "./eval-v0_n-ctrl-points-3_n-tracks-20_2024-02-11_22:18:28_46929077-0248-4c6e-b2b1-da2afb13b2e2"
+
+# Folder used for RL and the video
+#DEFAULT_EVAL_SET = "./eval-v0_n-ctrl-points-3_n-tracks-200_2024-02-12_12:21:14_3115f5a9-bd48-4b63-9194-5eda43e1329d"
+
+# Last track of this was used for the video
+#DEFAULT_EVAL_SET = "./eval-v0_n-ctrl-points-10_n-tracks-200_2024-02-12_15:01:53_bdee17ed-07ad-4e26-8e68-fa0a5ca1318c"
+
 
 from runnables.test_suite_eval.utils import compute_metrics_single
 
