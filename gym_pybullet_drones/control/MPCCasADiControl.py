@@ -419,6 +419,52 @@ class MPCCasADiControl(BaseControl):
         # AVERAGE DEVIATION:  0.09995147199727226
         # MAXIMUM DEVIATION: 0.2386860064898518
 
+        # First track performance
+        # N DISCR LEVEL: 10
+        # COMPLETION TIME MEAN: 3.6875
+        # SUCCESS RATE: 1.0
+        # AVERAGE DEVIATION:  0.08253830255256683
+        # MAXIMUM DEVIATION: 0.1627968474411629
+
+
+        ### Usage of Intermediary position
+
+        # NEXT_TARGET_WEIGHTING = 0.05
+        # First track performance
+        # N DISCR LEVEL: 10
+        # COMPLETION TIME MEAN: 3.2083333333333335
+        # SUCCESS RATE: 1.0
+        # AVERAGE DEVIATION:  0.08938545527353497
+        # MAXIMUM DEVIATION: 0.13600094796004633
+
+        # NEXT_TARGET_WEIGHTING = 0.1
+        # First track performance
+        # N DISCR LEVEL: 10
+        # COMPLETION TIME MEAN: 2.7916666666666665
+        # SUCCESS RATE: 1.0
+        # AVERAGE DEVIATION:  0.07589474097833902
+        # MAXIMUM DEVIATION: 0.1358326740671975
+        # Misses the goal significantly in the fourth track or so
+
+        # NEXT_TARGET_WEIGHTING = 0.15
+        # First track performance
+        # N DISCR LEVEL: 10
+        # COMPLETION TIME MEAN: 2.6458333333333335
+        # SUCCESS RATE: 1.0
+        # AVERAGE DEVIATION:  0.06783051249599097
+        # MAXIMUM DEVIATION: 0.14791415079374462
+
+        # NEXT_TARGET_WEIGHTING = 0.2
+        # First track performance
+        # N DISCR LEVEL: 10
+        # COMPLETION TIME MEAN: 2.4791666666666665
+        # SUCCESS RATE: 1.0
+        # AVERAGE DEVIATION:  0.07267128234973419
+        # MAXIMUM DEVIATION: 0.1564386918440997
+        # ! fails one the second track though
+
+
+
         '''# Care (or only  42.5%) about and velocities and reference input of the drone
                             # Reference Weighting matrices from the paper
                             # Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
