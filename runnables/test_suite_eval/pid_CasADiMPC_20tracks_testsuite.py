@@ -27,7 +27,8 @@ from trajectories import TrajectoryFactory, DiscretizedTrajectory
 from gym_pybullet_drones.utils.enums import DroneModel, Physics
 from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
 from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
-from gym_pybullet_drones.control.MPCCasADiControl import MPCCasADiControl
+#from gym_pybullet_drones.control.MPCCasADiControl import MPCCasADiControl
+from gym_pybullet_drones.control.MPCCasADiControl2States import MPCCasADiControl
 from gym_pybullet_drones.utils.Logger import Logger
 from gym_pybullet_drones.utils.utils import sync, str2bool
 from runnables.test_suite_eval.eval_tracks import load_eval_tracks
@@ -99,9 +100,12 @@ def run(
     times = []
     for track in tqdm(tracks):
         current_step = 0
+
         INIT_RPYS = np.array([[0., 0., 0.]])
 
         TARGET_TRAJECTORY, init_wp = track, np.array([track[0].coordinate])
+
+        next_step = min(current_step + 1, len(TARGET_TRAJECTORY) - 1)
 
         #### Create the environment ################################
         env = CtrlAviary(drone_model=drone,
@@ -146,13 +150,27 @@ def run(
             #### Step the simulation ###################################
             obs, reward, terminated, truncated, info = env.step(action)
             target_position = TARGET_TRAJECTORY[current_step].coordinate
-            #### Compute control for the current way point #############
+            target_position_next = TARGET_TRAJECTORY[next_step].coordinate
+
+            two_target_position = np.hstack([target_position, target_position_next])
+
+            '''#### Compute control for the current way point #############
             action, _, _ = ctrl.computeControlFromState(control_timestep=env.CTRL_TIMESTEP,
                 state=obs[0],
                 target_pos=np.hstack([target_position]),
                 # target_pos=INIT_XYZS[j, :] + TARGET_POS[wp_counters[j], :],
                 target_rpy=INIT_RPYS[0]
-            )
+            )'''
+
+            #### Compute control for the current and next way point #############
+            action, _, _ = ctrl.computeControlfrom2States(control_timestep=env.CTRL_TIMESTEP,
+                                                          cur_pos=obs[0][:3],
+                                                          # Extract current position from observation
+                                                          cur_quat=obs[0][3:7],  # Extract current quaternion
+                                                          cur_vel=obs[0][7:10],  # Current velocity
+                                                          cur_ang_vel=obs[0][10:13],  # Current angular velocity
+                                                          target_pos=two_target_position,
+                                                          target_rpy=INIT_RPYS[0])
 
             action = np.array([action])
 
