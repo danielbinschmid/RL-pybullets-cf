@@ -44,7 +44,6 @@ class Rewards:
         self.k_wp = k_wp
         self.k_s = k_s 
         self.k_w = k_w
-        print(f'k_p: {k_p}; k_wp: {k_wp}; k_s: {k_s}; k_w: {k_w}')
 
         self.wp_rewards = np.zeros(len(self.trajectory))
         self.max_reward_distance = max_reward_distance
@@ -57,6 +56,13 @@ class Rewards:
         self.cur_reward = RewardDict()
         self.trajectory = trajectory
         self.wp_rewards = np.zeros(len(self.trajectory))
+        self.p1 = self.trajectory[:-1]
+        self.p2 = self.trajectory[1:]
+        self.diffs = self.p2 - self.p1
+        self.distances = np.linalg.norm(self.p1 - self.p2, axis=1)
+        self.reached_distance = 0
+        self.current_projection_distance = 0
+        self.current_projection = self.trajectory[0]
 
     def get_projections(self, position: np.ndarray):
         """
@@ -135,7 +141,7 @@ class Rewards:
         velocity = drone_state[10:13] 
         velocity_norm = np.linalg.norm(velocity)
         min_vel = 0.2
-        max_vel = 1.0
+        max_vel = 1.5
         s_vmax = (5**(max_vel - velocity_norm)) if velocity_norm > max_vel else 1
         s_min = (5**(velocity_norm - min_vel)) if velocity_norm < min_vel else 1
         s_gd = np.exp(2*(self.max_reward_distance - projection_distance)) if projection_distance > self.max_reward_distance else 1

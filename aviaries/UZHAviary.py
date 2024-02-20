@@ -59,6 +59,11 @@ class UZHAviary(BaseRLAviary):
         self.NUM_DRONES = 1
         self.INIT_XYZS = initial_xyzs
 
+        self.k_p = k_p
+        self.k_s = k_s
+        self.k_wp = k_wp
+        self.max_reward_distance = max_reward_distance
+        self.waypoint_dist_tol = waypoint_dist_tol
 
         # FOR DEVELOPMENT 
         self.one_traj = one_traj
@@ -112,7 +117,14 @@ class UZHAviary(BaseRLAviary):
         self.rewards.reached_distance = 0
         self.current_projection = self.trajectory[0]
         self.self_trajectory = self.set_trajectory()
-        self.rewards.reset(self.self_trajectory)
+        self.rewards = Rewards(
+            trajectory=self.trajectory,
+            k_p=self.k_p,
+            k_wp=self.k_wp,
+            k_s=self.k_s,
+            max_reward_distance=self.max_reward_distance,
+            dist_tol=self.waypoint_dist_tol
+        )
 
     def set_trajectory(self):
         if self.one_traj:
