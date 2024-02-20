@@ -144,7 +144,7 @@ class Rewards:
         max_vel = 1.5
         s_vmax = (5**(max_vel - velocity_norm)) if velocity_norm > max_vel else 1
         s_min = (5**(velocity_norm - min_vel)) if velocity_norm < min_vel else 1
-        s_gd = np.exp(2*(self.max_reward_distance - projection_distance)) if projection_distance > self.max_reward_distance else 1
+        s_gd = np.exp(2.5*(self.max_reward_distance - projection_distance)) if projection_distance > self.max_reward_distance else 1
         scale = s_vmax * s_min * s_gd
         r = self.weight_rewards(r_t, scale*r_p, r_wp, scale*r_s)
         self.current_projection_distance = projection_distance

@@ -33,8 +33,8 @@ TEST = True
 ####################################
 
 ###### ENVIRONMENT PARAMS ##########
-TIMESTEPS = 2.5e6
-N_ENVS = 20
+TIMESTEPS = 3.3e6
+N_ENVS = 40
 EPISODE_LEN_SEC = 14
 ####################################
 
@@ -44,7 +44,7 @@ K_P = 5
 K_WP = 8
 K_S = 0.01
 MAX_REWARD_DISTANCE = 0.0
-WAYPOINT_DIST_TOL = 0.05
+WAYPOINT_DIST_TOL = 0.042
 ####################################
 
 
