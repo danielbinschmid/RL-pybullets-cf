@@ -493,6 +493,7 @@ class MPCCasADiControl(BaseControl):
         R = diagcat(0.3, 0.3, 0.3, 0.8)
         # -> Test result: Drone completely goes off the rails and crazyflie flies crazily and fails'''
 
+
         x_init = P[0:Nx]
         g = X[:, 0] - P[0:Nx]  # initial condition constraints
         h = 0.15
@@ -508,11 +509,9 @@ class MPCCasADiControl(BaseControl):
         u_ref = DM([hovering_thrust, tau_phi_ref, tau_theta_ref, tau_psi_ref])
 
         for k in range(Nhoriz - 1):
-
             ##Adaptive k-Weighting matrices approach
-            Q = (1 - (k * 1.0 / Nhoriz)) * Q
-            R = (1 - (k * 1.0 / Nhoriz)) * R
-
+            #Q = (1 - (k * 1.0 / Nhoriz)) * Q
+            #R = (1 - (k * 1.0 / Nhoriz)) * R
             st_ref = P[Nx:2 * Nx]
             st = X[:, k]
             cont = U[:, k]

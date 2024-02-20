@@ -85,7 +85,9 @@ def run_test(config: Configuration, env_factory: BaseFactory, eval_mode=False):
     if not eval_mode:
         test_env = env_factory.get_test_env_gui()
     else:
-        test_env = env_factory.get_test_env_no_gui()
+        #test_env = env_factory.get_test_env_no_gui()
+        # Changed to GUI on
+        test_env = env_factory.get_test_env_gui()
     test_env_nogui = env_factory.get_test_env_no_gui()
 
     eval_res = test_simple_follower(

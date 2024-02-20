@@ -21,7 +21,11 @@ GUI = True
 RECORD_VIDEO = False
 OUTPUT_FOLDER = 'checkpointed_models'
 COLAB = False
-DEFAULT_EVAL_SET_FOLDER = "/shared/d/master/ws23/UAV-lab/git_repos/RL-pybullets-cf/runnables/test_suite_eval/eval-v0_n-ctrl-points-3_n-tracks-20_2024-02-11_22:18:28_46929077-0248-4c6e-b2b1-da2afb13b2e2"
+#DEFAULT_EVAL_SET_FOLDER = "/shared/d/master/ws23/UAV-lab/git_repos/RL-pybullets-cf/runnables/test_suite_eval/eval-v0_n-ctrl-points-3_n-tracks-20_2024-02-11_22:18:28_46929077-0248-4c6e-b2b1-da2afb13b2e2"
+
+## aligned this to my computer (Daniel He)
+DEFAULT_EVAL_SET_FOLDER = "/home/dan/Projects/RL-pybullets-cf/runnables/test_suite_eval/eval-v0_n-ctrl-points-3_n-tracks-20_2024-02-11_22:18:28_46929077-0248-4c6e-b2b1-da2afb13b2e2"
+
 ####################################
 
 ###### USUALLY NOT CHANGED #########
@@ -44,7 +48,7 @@ N_ENVS = 20
 EPISODE_LEN_SEC = 50
 ####################################
 
-###### HYPERPARAMS #################
+'''###### Original HYPERPARAMS #################
 WAYPOINT_BUFFER_SIZE = 2
 K_P = 5
 K_WP = 8
@@ -52,6 +56,44 @@ K_S = 0.05
 MAX_REWARD_DISTANCE = 0.0
 WAYPOINT_DIST_TOL = 0.05
 DEFAULT_DISCR_LEVEL = 10
+
+# Result 20 tracks
+# SUCCESS RATE:  1.0
+# AVERAGE MEAN DEVIATION:  0.07290511259032172
+# AVERAGE MAX DEVIATION:  0.15248093381751945
+# AVERAGE TIME UNTIL LANDING:  7.826666666666666
+'''
+
+
+'''###### HYPERPARAMS #################
+WAYPOINT_BUFFER_SIZE = 2
+K_P = 5
+K_WP = 8
+K_S = 0.05
+MAX_REWARD_DISTANCE = 0.0001
+WAYPOINT_DIST_TOL = 0.04
+DEFAULT_DISCR_LEVEL = 10
+
+# Result 20 tracks
+# SUCCESS RATE:  0.3
+# AVERAGE MEAN DEVIATION:  0.27309728400409955
+# AVERAGE MAX DEVIATION:  0.5015007941869536
+# AVERAGE TIME UNTIL LANDING:  24.61111111111111'''
+
+###### HYPERPARAMS #################
+WAYPOINT_BUFFER_SIZE = 3
+K_P = 5
+K_WP = 5
+K_S = 0.05
+MAX_REWARD_DISTANCE = 0.03
+WAYPOINT_DIST_TOL = 0.031
+DEFAULT_DISCR_LEVEL = 10
+
+# Result 20 tracks
+# SUCCESS RATE:  0.9
+# AVERAGE MEAN DEVIATION:  0.117966844891097
+# AVERAGE MAX DEVIATION:  0.22631146890221565
+# AVERAGE TIME UNTIL LANDING:  11.844444444444443
 ####################################
 
 def save_benchmark(benchmarks: Dict[str, float], file_path: str):
