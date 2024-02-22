@@ -125,21 +125,25 @@ class UZHAviary(BaseRLAviary):
             max_reward_distance=self.max_reward_distance,
             dist_tol=self.waypoint_dist_tol
         )
+        self.INIT_XYZS = self.trajectory[0]
 
     def set_trajectory(self):
         if self.one_traj:
             trajectory = np.array([x.coordinate for x in self.single_traj])
         else:
             ctrl_wps = TrajectoryFactory.gen_random_trajectory(
-                start=np.array([0, 0, 1]),
+                start=np.array([0, 0, 0]),
                 n_discr_level=20,
                 n_ctrl_points=10,
-                std_dev_deg=50,
+                std_dev_deg=40,
                 distance_between_ctrl_points=1.3,
                 init_dir=None,
                 return_ctrl_points=False
             )
             trajectory = [x.coordinate for x in ctrl_wps]
+        
+        # reverse trajectory 
+        trajectory = np.flip(trajectory, axis=0)
 
         return np.vstack([
             trajectory,
