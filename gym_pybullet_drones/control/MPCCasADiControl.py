@@ -368,7 +368,7 @@ class MPCCasADiControl(BaseControl):
         #####################if distance < 0.2 and velocity < 1.0:
         #    if current_step == len(TARGET_TRAJECTORY) - 1 and velocity < 1.0: #####################
 
-        '''# Paper: Non-Linear Model Predictive Control Using CasADi Package for Trajectory Tracking of Quadrotor
+        # Paper: Non-Linear Model Predictive Control Using CasADi Package for Trajectory Tracking of Quadrotor
         # The weighting matrix Q = Diag[1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0],
         # while the control input weighting matrix R = Diag[0.3, 0.3, 0.3, 0.8]
 
@@ -379,7 +379,7 @@ class MPCCasADiControl(BaseControl):
         # COMPLETION TIME MEAN: 4.672916666666667
         # SUCCESS RATE: 1.0
         # AVERAGE DEVIATION:  0.10109089137096094
-        # MAXIMUM DEVIATION: 0.22336670663036812'''
+        # MAXIMUM DEVIATION: 0.22336670663036812
 
         '''# Only care greedily about the position
         Q = diagcat(1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
@@ -407,8 +407,8 @@ class MPCCasADiControl(BaseControl):
                     # Q = diagcat(1, 1, 1, 0.6, 0.6, 1, 0, 0, 0, 0, 0, 0)
                     # R = diagcat(0.3, 0.3, 0.3, 0.8)
 
-        Q = diagcat(1, 1, 1, 0.3, 0.3, 0.2, 0, 0, 0, 0, 0, 0)
-        R = diagcat(0.15, 0.15, 0.15, 0.4)
+        #Q = diagcat(1, 1, 1, 0.3, 0.3, 0.2, 0, 0, 0, 0, 0, 0)
+        #R = diagcat(0.15, 0.15, 0.15, 0.4)
 
         ###             if distance < 0.2:
                 # if current_step == len(TARGET_TRAJECTORY) - 1:
@@ -510,13 +510,13 @@ class MPCCasADiControl(BaseControl):
 
         for k in range(Nhoriz - 1):
             ##Adaptive k-Weighting matrices approach
-            #Q = (1 - (k * 1.0 / Nhoriz)) * Q
-            #R = (1 - (k * 1.0 / Nhoriz)) * R
+            Q_k = (1 - (k * 1.0 / Nhoriz)) * Q
+            R_k = (1 - (k * 1.0 / Nhoriz)) * R
             st_ref = P[Nx:2 * Nx]
             st = X[:, k]
             cont = U[:, k]
             cont_ref = u_ref
-            J += (st - st_ref).T @ Q @ (st - st_ref) + (cont - cont_ref).T @ R @ (cont - cont_ref)
+            J += (st - st_ref).T @ Q_k @ (st - st_ref) + (cont - cont_ref).T @ R_k @ (cont - cont_ref)
             st_next = X[:, k + 1]
             k1 = f(st, cont)
             k2 = f(st + h / 2 * k1, cont)
