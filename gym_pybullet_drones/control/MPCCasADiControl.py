@@ -510,8 +510,21 @@ class MPCCasADiControl(BaseControl):
 
         for k in range(Nhoriz - 1):
             ##Adaptive k-Weighting matrices approach
-            Q_k = (1 - (k * 1.0 / Nhoriz)) * Q
-            R_k = (1 - (k * 1.0 / Nhoriz)) * R
+            #Q_k = (1 - (k * 1.0 / Nhoriz)) * Q
+            #R_k = (1 - (k * 1.0 / Nhoriz)) * R
+            #The observed results were mixed. While this approach occasionally enhanced performance on certain tracks,
+            #it also occasionally led to less precise control, causing the drone to deviate from its intended trajectory.
+
+            Q_k = (k * 1.0 / Nhoriz) * Q
+            R_k = (k * 1.0 / Nhoriz) * R
+            # The first track was finished a little bit slower than the optimal: 3.98 secs
+            # The second track was not finished. The drone became unstable
+
+            #Q_k = min((k * 2.0 / Nhoriz), 1) * Q
+            #R_k = min((k * 2.0 / Nhoriz), 1) * R
+
+
+
             st_ref = P[Nx:2 * Nx]
             st = X[:, k]
             cont = U[:, k]
