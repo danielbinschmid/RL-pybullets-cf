@@ -9,10 +9,12 @@ from aviaries.factories.uzh_trajectory_follower_factory import TrajectoryFollowe
 from agents.test_policy import run_test
 from agents.train_policy import run_train
 
+from torch import nn
+
 ###### INFRASTRUCTURE PARAMS #######
 GUI = True
 RECORD_VIDEO = False
-OUTPUT_FOLDER = 'results'
+OUTPUT_FOLDER = 'checkpointed_models'
 COLAB = False
 ####################################
 
@@ -21,28 +23,34 @@ OBS = ObservationType('kin') # 'kin' or 'rgb'
 ACT = ActionType.ATTITUDE_PID
 AGENTS = 1
 NUM_DRONES = 1
-CTRL_FREQ = 30
+CTRL_FREQ = 10
 MA = False
 ####################################
 
 ###### TEST TRAIN FLAGS ############
-TRAIN = True
+TRAIN = False
 TEST = True
 ####################################
 
 ###### ENVIRONMENT PARAMS ##########
+<<<<<<< HEAD
 TIMESTEPS = 1e6
 N_ENVS = 5
 EPISODE_LEN_SEC = 6
+=======
+TIMESTEPS = 2.5e6
+N_ENVS = 20
+EPISODE_LEN_SEC = 20
+>>>>>>> test_suite
 ####################################
 
 ###### HYPERPARAMS #################
-WAYPOINT_BUFFER_SIZE = 3
-K_P = 1
-K_WP = 3.5
-K_S = 0.12
-MAX_REWARD_DISTANCE = 0.2 
-WAYPOINT_DIST_TOL = 0.12
+WAYPOINT_BUFFER_SIZE = 2
+K_P = 5
+K_WP = 8
+K_S = 0.05
+MAX_REWARD_DISTANCE = 0.0
+WAYPOINT_DIST_TOL = 0.05
 ####################################
 
 
@@ -83,8 +91,14 @@ def run(output_folder=OUTPUT_FOLDER,
     # CONFIG ##################################################
     t_traj, init_wp = init_targets()
 
+<<<<<<< HEAD
     # output_folder = f"{output_folder}/k_p={k_p}_k_wp={k_wp}_k_s={k_s}_max_reward_distance={max_reward_distance}_waypoint_dist_tol={waypoint_dist_tol}"
     # print(f"Output folder: {output_folder}")
+=======
+    # random number in range 10-99
+    output_folder = f"{output_folder}/wp_b={waypoint_buffer_size}_k_p={k_p}_k_wp={k_wp}_k_s={k_s}_max_reward_distance={max_reward_distance}_waypoint_dist_tol={waypoint_dist_tol}"
+    print(f"Output folder: {output_folder}")
+>>>>>>> test_suite
 
     config = Configuration(
         action_type=ACT,
@@ -115,7 +129,11 @@ def run(output_folder=OUTPUT_FOLDER,
                   env_factory=env_factory)
 
     if test:
+<<<<<<< HEAD
         for _ in range(5):
+=======
+        for _ in range(10):
+>>>>>>> test_suite
             run_test(config=config,
                     env_factory=env_factory)
 

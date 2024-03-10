@@ -1,8 +1,13 @@
 import numpy as np
-from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
 from agents.utils.configuration import Configuration
 from aviaries.factories.base_factory import BaseFactory
+
+from stable_baselines3 import PPO
+from stable_baselines3.common.policies import ActorCriticPolicy
+import torch.nn as nn
+
+
 
 def run_train(config: Configuration, env_factory: BaseFactory):
 
@@ -16,10 +21,14 @@ def run_train(config: Configuration, env_factory: BaseFactory):
     # SETUP ###################################################
 
     # model
-    model = PPO('MlpPolicy',    
+    policy_kwargs = dict(activation_fn=nn.ReLU, net_arch=[256])
+    model = PPO("MlpPolicy",
                 train_env,
+                batch_size=512,
+                learning_rate=0.0003,
                 tensorboard_log=config.output_path_location+'/tb/',
                 verbose=1,
+                policy_kwargs=policy_kwargs,
                 device="cpu")
 
     # callbacks

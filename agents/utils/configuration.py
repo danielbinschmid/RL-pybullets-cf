@@ -28,7 +28,7 @@ class Configuration:
                  output_path_location: str,
                  n_timesteps: int,
                  local: bool,
-                 episode_len_sec : int,
+                 episode_len_sec : int = 10,
                  waypoint_buffer_size : int=2,
                  k_p : float=1,
                  k_wp : float=1,

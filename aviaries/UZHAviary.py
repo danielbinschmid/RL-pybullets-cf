@@ -39,7 +39,7 @@ class UZHAviary(BaseRLAviary):
                  initial_xyzs: np.ndarray = np.array([[0.,     0.,     0.1125]]),
                  initial_rpys=None,
                  physics: Physics=Physics.PYB,
-                 pyb_freq: int = 240,
+                 pyb_freq: int = 120,
                  ctrl_freq: int = 30,
                  gui=False,
                  record=False,
@@ -51,7 +51,9 @@ class UZHAviary(BaseRLAviary):
                  k_wp: float = 1.0,
                  k_s: float = 0.0,
                  max_reward_distance: float = 0.2,
-                 waypoint_dist_tol: float = 0.12
+                 waypoint_dist_tol: float = 0.12,
+                 one_traj=False,
+                 eval_mode=False
                  ):
         
         self.EPISODE_LEN_SEC = episode_len_sec
@@ -60,16 +62,22 @@ class UZHAviary(BaseRLAviary):
 
 
         # FOR DEVELOPMENT 
-        self.one_traj = False
+        self.one_traj = one_traj
         self.single_traj = target_trajectory
+
+        # FOR EVAL
+        self.eval_mode = eval_mode
+        if self.eval_mode: 
+            assert(self.one_traj)
+        self.reached_last_point = False
 
         # TRAJECTORY
         self.WAYPOINT_BUFFER_SIZE = waypoint_buffer_size # how many steps into future to interpolate
         self.trajectory = self.set_trajectory()
         assert self.WAYPOINT_BUFFER_SIZE < len(self.trajectory), "Buffer size should be smaller than the number of waypoints"
         self.current_waypoint_idx = 0
-        self.current_projection_idx = 0
-        self.future_waypoints_relative = self.trajectory[self.current_projection_idx: self.current_projection_idx+self.WAYPOINT_BUFFER_SIZE] - self.trajectory[self.current_projection_idx]
+        self.furthest_reached_waypoint_idx = 0
+        self.future_waypoints_relative = self.trajectory[self.current_waypoint_idx: self.current_waypoint_idx+self.WAYPOINT_BUFFER_SIZE] - self.trajectory[self.current_waypoint_idx]
         self.rewards = Rewards(
             trajectory=self.trajectory,
             k_p=k_p,
@@ -78,7 +86,7 @@ class UZHAviary(BaseRLAviary):
             max_reward_distance=max_reward_distance,
             dist_tol=waypoint_dist_tol
         )
-
+        self.current_action = None
         self.INIT_XYZS = self.trajectory[0]
 
         super().__init__(
@@ -110,9 +118,8 @@ class UZHAviary(BaseRLAviary):
         self.current_waypoint_idx = 0
         self.rewards.reached_distance = 0
         self.current_projection = self.trajectory[0]
-        self.current_projection_idx = 0
         self.self_trajectory = self.set_trajectory()
-        self.rewards.reset()
+        self.rewards.reset(self.self_trajectory)
 
     def set_trajectory(self):
         if self.one_traj:
@@ -120,10 +127,10 @@ class UZHAviary(BaseRLAviary):
         else:
             ctrl_wps = TrajectoryFactory.gen_random_trajectory(
                 start=np.array([0, 0, 1]),
-                n_discr_level=12,
-                n_ctrl_points=3,
-                std_dev_deg=60,
-                distance_between_ctrl_points=0.75,
+                n_discr_level=20,
+                n_ctrl_points=10,
+                std_dev_deg=50,
+                distance_between_ctrl_points=1.3,
                 init_dir=None,
                 return_ctrl_points=False
             )
@@ -140,20 +147,49 @@ class UZHAviary(BaseRLAviary):
 
         self.current_projection, self.current_projection_idx, reached_distance = self.rewards.get_travelled_distance(drone_pos)
 
+        self.furthest_reached_waypoint_idx = self.current_projection_idx
+
         r = self.rewards.compute_reward(
             drone_state=drone_state,
-            reached_distance=reached_distance
+            reached_distance=reached_distance,
+            bodyrates=self.current_action[0, 1:4]
         )
+        self.current_waypoint_idx = self.rewards.cur_wp_idx
+
         return r
 
     def _computeTerminated(self):
-        return False
+        if self.eval_mode:
+            drone_state = self._getDroneStateVector(0)
+            drone_pos = drone_state[:3]
+
+            velocity = drone_state[10:13] 
+            velocity_norm = np.linalg.norm(velocity)
+
+            is_close = (np.linalg.norm(drone_pos - self.trajectory[-1]) < 0.2) and (velocity_norm < 0.05)
+            if is_close:
+                self.reset_vars()
+                self.reached_last_point = True
+            return is_close
+        else:
+            return False
+        
         
     def _computeTruncated(self):
         state = self._getDroneStateVector(0)
-        if (abs(state[0]) > 1.5 or abs(state[1]) > 1.5 or state[2] > 2.0 # Truncate when the drone is too far away
-             or abs(state[7]) > .4 or abs(state[8]) > .4 # Truncate when the drone is too tilted
-        ):
+
+        if self.eval_mode:
+            drone_state = self._getDroneStateVector(0)
+            drone_pos = drone_state[:3]
+
+            velocity = drone_state[10:13] 
+            velocity_norm = np.linalg.norm(velocity)
+
+            is_close = (np.linalg.norm(drone_pos - self.trajectory[-1]) < 0.2) and (velocity_norm < 0.05)
+            if is_close:
+                self.reset_vars()
+            return is_close
+        if (abs(state[7]) > .4 or abs(state[8]) > .4):
             self.reset_vars()
             return True
         if self.step_counter/self.PYB_FREQ > self.EPISODE_LEN_SEC:
@@ -175,18 +211,19 @@ class UZHAviary(BaseRLAviary):
         # Angular Velocity [13:16]
         lo = -np.inf
         hi = np.inf
-        obs_lower_bound = np.array([[lo,lo,0, lo,lo,lo,lo,lo,lo,lo,lo,lo]])
-        obs_upper_bound = np.array([[hi,hi,hi,hi,hi,hi,hi,hi,hi,hi,hi,hi]])
+        obs_lower_bound = np.array([[0, lo,lo,lo,lo,lo,lo,lo,lo,lo]])
+        obs_upper_bound = np.array([[hi,hi,hi,hi,hi,hi,hi,hi,hi,hi]])
 
         # Add future waypoints to observation space
-        obs_lower_bound = np.hstack([obs_lower_bound, np.array([[lo,lo,lo] for i in range(self.WAYPOINT_BUFFER_SIZE)]).reshape(1, -1)])
-        obs_upper_bound = np.hstack([obs_upper_bound, np.array([[hi,hi,hi] for i in range(self.WAYPOINT_BUFFER_SIZE)]).reshape(1, -1)])
+        obs_lower_bound = np.hstack([obs_lower_bound, np.array([[lo,lo,lo] for i in range(self.WAYPOINT_BUFFER_SIZE+1)]).reshape(1, -1)])
+        obs_upper_bound = np.hstack([obs_upper_bound, np.array([[hi,hi,hi] for i in range(self.WAYPOINT_BUFFER_SIZE+1)]).reshape(1, -1)])
 
         return spaces.Box(low=obs_lower_bound, high=obs_upper_bound, dtype=np.float32)
     
     ################################################################################
 
-    def step(self,action):
+    def step(self,action):    
+        self.current_action = action
         # # visualise trajectory - this is cheating, but it works
         if self.GUI and not self.visualised:
             drone = self._getDroneStateVector(0)[:3]
@@ -231,9 +268,9 @@ class UZHAviary(BaseRLAviary):
 
     def _computeObs(self):
         obs = self._getDroneStateVector(0)
-        ret = np.hstack([obs[0:3], obs[7:10], obs[10:13], obs[13:16]]).reshape(1, -1).astype('float32')
-        self.future_waypoints_relative = self.trajectory[self.current_projection_idx:self.current_projection_idx+self.WAYPOINT_BUFFER_SIZE]
+        ret = np.hstack([obs[2], obs[7:10], obs[10:13], obs[13:16]]).reshape(1, -1).astype('float32')
+        self.future_waypoints_relative = self.trajectory[self.furthest_reached_waypoint_idx:self.furthest_reached_waypoint_idx+self.WAYPOINT_BUFFER_SIZE]
 
         #### Add relative positions of future waypoints to observation
-        ret = np.hstack([ret, (self.future_waypoints_relative - obs[:3]).reshape(1, -1).astype('float32')])
+        ret = np.hstack([ret, self.current_projection - obs[:3].reshape(1, -1).astype('float32'), (self.future_waypoints_relative - obs[:3]).reshape(1, -1).astype('float32')])
         return ret

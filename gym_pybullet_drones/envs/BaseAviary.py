@@ -13,6 +13,9 @@ import pybullet as p
 import pybullet_data
 import gymnasium as gym
 from gym_pybullet_drones.utils.enums import DroneModel, Physics, ImageType
+from typing import Optional
+from gym_pybullet_drones.utils.pos_logger import PositionLogger, PosLoggerConfig
+
 
 
 class BaseAviary(gym.Env):
@@ -36,7 +39,8 @@ class BaseAviary(gym.Env):
                  obstacles=False,
                  user_debug_gui=True,
                  vision_attributes=False,
-                 output_folder='results'
+                 output_folder='results',
+                 log_positions=True
                  ):
         """Initialization of a generic aviary environment.
 
@@ -93,6 +97,18 @@ class BaseAviary(gym.Env):
         self.USER_DEBUG = user_debug_gui
         self.URDF = self.DRONE_MODEL.value + ".urdf"
         self.OUTPUT_FOLDER = output_folder
+        self.LOG_POSITIONS = log_positions
+        if not log_positions:
+            self.pos_logger = None
+        else:
+            self.LOG_POSITIONS = True
+            config = PosLoggerConfig(
+                max_len=self.PYB_FREQ / self.CTRL_FREQ,
+                log_folder="./pos_logs"
+            )
+            self.pos_logger = PositionLogger(
+                config
+            )
         #### Load the drone properties from the .urdf file #########
         self.M, \
         self.L, \
@@ -111,8 +127,8 @@ class BaseAviary(gym.Env):
         self.DW_COEFF_1, \
         self.DW_COEFF_2, \
         self.DW_COEFF_3 = self._parseURDFParameters()
-        print("[INFO] BaseAviary.__init__() loaded parameters from the drone's .urdf:\n[INFO] m {:f}, L {:f},\n[INFO] ixx {:f}, iyy {:f}, izz {:f},\n[INFO] kf {:f}, km {:f},\n[INFO] t2w {:f}, max_speed_kmh {:f},\n[INFO] gnd_eff_coeff {:f}, prop_radius {:f},\n[INFO] drag_xy_coeff {:f}, drag_z_coeff {:f},\n[INFO] dw_coeff_1 {:f}, dw_coeff_2 {:f}, dw_coeff_3 {:f}".format(
-            self.M, self.L, self.J[0,0], self.J[1,1], self.J[2,2], self.KF, self.KM, self.THRUST2WEIGHT_RATIO, self.MAX_SPEED_KMH, self.GND_EFF_COEFF, self.PROP_RADIUS, self.DRAG_COEFF[0], self.DRAG_COEFF[2], self.DW_COEFF_1, self.DW_COEFF_2, self.DW_COEFF_3))
+        # print("[INFO] BaseAviary.__init__() loaded parameters from the drone's .urdf:\n[INFO] m {:f}, L {:f},\n[INFO] ixx {:f}, iyy {:f}, izz {:f},\n[INFO] kf {:f}, km {:f},\n[INFO] t2w {:f}, max_speed_kmh {:f},\n[INFO] gnd_eff_coeff {:f}, prop_radius {:f},\n[INFO] drag_xy_coeff {:f}, drag_z_coeff {:f},\n[INFO] dw_coeff_1 {:f}, dw_coeff_2 {:f}, dw_coeff_3 {:f}".format(
+        #     self.M, self.L, self.J[0,0], self.J[1,1], self.J[2,2], self.KF, self.KM, self.THRUST2WEIGHT_RATIO, self.MAX_SPEED_KMH, self.GND_EFF_COEFF, self.PROP_RADIUS, self.DRAG_COEFF[0], self.DRAG_COEFF[2], self.DW_COEFF_1, self.DW_COEFF_2, self.DW_COEFF_3))
         #### Compute constants #####################################
         self.GRAVITY = self.G*self.M
         self.HOVER_RPM = np.sqrt(self.GRAVITY / (4*self.KF))
@@ -345,6 +361,10 @@ class BaseAviary(gym.Env):
             #### Between aggregate steps for certain types of update ###
             if self.PYB_STEPS_PER_CTRL > 1 and self.PHYSICS in [Physics.DYN, Physics.PYB_GND, Physics.PYB_DRAG, Physics.PYB_DW, Physics.PYB_GND_DRAG_DW]:
                 self._updateAndStoreKinematicInformation()
+            if self.LOG_POSITIONS:
+                cur_pos = p.getBasePositionAndOrientation(self.DRONE_IDS[0], physicsClientId=self.CLIENT)[0]
+                cur_vel, cur_angular_vel = p.getBaseVelocity(self.DRONE_IDS[0], physicsClientId=self.CLIENT)
+                self.pos_logger.log_position(cur_pos, cur_vel)
             #### Step the simulation using the desired physics update ##
             for i in range (self.NUM_DRONES):
                 if self.PHYSICS == Physics.PYB:
