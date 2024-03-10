@@ -18,7 +18,7 @@ in the X-Y plane, around point (0, -.3).
 import sys 
 sys.path.append("../..")
 
-
+import pybullet as p
 import time
 import argparse
 import numpy as np
@@ -76,12 +76,11 @@ def run(
     #### Initialize the simulation #############################
 
     #### Initialize a circular trajectory ######################
-    use_gui = False
+    use_gui = True
     n_discr_level=discr_level
 
     eval_set_folder = eval_set
     tracks = load_eval_tracks(eval_set_folder, discr_level=n_discr_level)
-    
     mean_devs = []
     max_devs = []
     successes = []
@@ -126,7 +125,27 @@ def run(
         action = np.zeros((num_drones,4))
         START = time.time()
 
-
+        for point in TARGET_TRAJECTORY:
+            sphere_visual = p.createVisualShape(
+                shapeType=p.GEOM_SPHERE,
+                radius=0.03,
+                rgbaColor=[0, 1, 0, 0.6],
+                physicsClientId=env.CLIENT
+            )
+            target = p.createMultiBody(
+                baseMass=0.0,
+                baseCollisionShapeIndex=-1,
+                baseVisualShapeIndex=sphere_visual,
+                basePosition=point.coordinate,
+                useMaximalCoordinates=False,
+                physicsClientId=env.CLIENT
+            )
+            p.changeVisualShape(
+                target,
+                -1,
+                rgbaColor=[0.9, 0.3, 0.3, 0.6],
+                physicsClientId=env.CLIENT
+            )
         for i in range(0, int(duration_sec*env.CTRL_FREQ)):
             #### Make it rain rubber ducks #############################
             # if i/env.SIM_FREQ>5 and i%10==0 and i/env.SIM_FREQ<10: p.loadURDF("duck_vhacd.urdf", [0+random.gauss(0, 0.3),-0.5+random.gauss(0, 0.3),3], p.getQuaternionFromEuler([random.randint(0,360),random.randint(0,360),random.randint(0,360)]), physicsClientId=PYB_CLIENT)
@@ -162,7 +181,6 @@ def run(
                     break
                 current_step = (current_step + 1) % len(TARGET_TRAJECTORY)
                 
-
             ##### Log the simulation ####################################
 
             #### Printout
