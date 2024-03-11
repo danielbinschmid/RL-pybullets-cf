@@ -8,14 +8,18 @@ from aviaries.factories.uzh_trajectory_follower_factory import TrajectoryFollowe
 
 from agents.test_policy import run_test
 from agents.train_policy import run_train
-
-from torch import nn
+from runnables.test_suite_eval.eval_tracks import load_eval_tracks 
+from typing import Dict
+from tqdm import tqdm
+import json 
+from runnables.test_suite_eval.utils import compute_metrics_single
 
 ###### INFRASTRUCTURE PARAMS #######
 GUI = True
 RECORD_VIDEO = False
 OUTPUT_FOLDER = 'checkpointed_models'
 COLAB = False
+DEFAULT_EVAL_SET_FOLDER = "./test_tracks/eval-v0_n-ctrl-points-3_n-tracks-20_2024-02-11_22:18:28_46929077-0248-4c6e-b2b1-da2afb13b2e2"
 ####################################
 
 ###### USUALLY NOT CHANGED #########
@@ -29,6 +33,7 @@ MA = False
 
 ###### TEST TRAIN FLAGS ############
 TRAIN = True
+VIS = True
 TEST = True
 ####################################
 
@@ -45,8 +50,11 @@ K_WP = 8
 K_S = 0.05
 MAX_REWARD_DISTANCE = 0.0
 WAYPOINT_DIST_TOL = 0.05
+DEFAULT_DISCR_LEVEL = 10
 ####################################
-
+def save_benchmark(benchmarks: Dict[str, float], file_path: str):
+    with open(file_path, 'w') as file:
+        json.dump(benchmarks, file)
 
 def init_targets():
     points_per_segment = 4
@@ -72,6 +80,7 @@ def run(output_folder=OUTPUT_FOLDER,
         timesteps=TIMESTEPS,
         train: bool = TRAIN,
         test: bool = TEST,
+        vis: bool = VIS,
         n_envs: int = N_ENVS,
         episode_len_sec: int = EPISODE_LEN_SEC,
         waypoint_buffer_size: int = WAYPOINT_BUFFER_SIZE,
@@ -80,14 +89,14 @@ def run(output_folder=OUTPUT_FOLDER,
         k_s: float = K_S,
         max_reward_distance: float = MAX_REWARD_DISTANCE,
         waypoint_dist_tol: float = WAYPOINT_DIST_TOL,
+        discr_level: float=DEFAULT_DISCR_LEVEL,
+        eval_set: set = DEFAULT_EVAL_SET_FOLDER
     ):
 
-    # CONFIG ##################################################
-    t_traj, init_wp = init_targets()
-
-    # random number in range 10-99
     output_folder = f"{output_folder}/wp_b={waypoint_buffer_size}_k_p={k_p}_k_wp={k_wp}_k_s={k_s}_max_reward_distance={max_reward_distance}_waypoint_dist_tol={waypoint_dist_tol}"
     print(f"Output folder: {output_folder}")
+
+    t_traj, init_wp = init_targets()
 
     config = Configuration(
         action_type=ACT,
@@ -112,15 +121,50 @@ def run(output_folder=OUTPUT_FOLDER,
         n_env_training=n_envs,
         seed=0
     )
-
+    
     if train:
         run_train(config=config,
                   env_factory=env_factory)
 
-    if test:
-        for _ in range(10):
+    if vis:
+        for _ in range(5):
             run_test(config=config,
                     env_factory=env_factory)
+
+    if test:
+        env_factory.single_traj = True 
+        env_factory.eval_mode = True
+        tracks = load_eval_tracks(eval_set, discr_level=discr_level)
+        all_visited_positions = []
+        mean_devs = []
+        max_devs = []
+        successes = []
+        times = []
+        for track in tqdm(tracks):
+            t_traj, init_wp = track, np.array([track[0].coordinate])
+            config.update_trajectory(t_traj, init_wp)
+            env_factory.set_config(config)
+            visited_positions, success, time = run_test(config=config,
+                        env_factory=env_factory, eval_mode=True)
+            successes.append(success)
+            if success:
+                mean_dev, max_dev = compute_metrics_single(visited_positions, track)
+                mean_devs.append(mean_dev)
+                max_devs.append(max_dev)
+                all_visited_positions.append(visited_positions)
+                times.append(time)
+        print("SUCCESS RATE: ", np.mean(np.array(successes)))
+        print("AVERAGE MEAN DEVIATION: ", np.mean(mean_devs))
+        print("AVERAGE MAX DEVIATION: ", np.mean(max_devs))
+        print("AVERAGE TIME UNTIL LANDING: ", np.mean(times))
+
+        save_benchmark({
+            "success_rate": np.mean(successes),
+            "avg mean dev": np.mean(mean_devs),
+            "avg max dev": np.mean(max_devs),
+            "avt time": np.mean(times)
+        }, 
+        f'rl_{discr_level}.json')
 
 
     
@@ -133,6 +177,7 @@ if __name__ == '__main__':
     parser.add_argument('--timesteps',              default=TIMESTEPS,              type=int,           help='number of train timesteps before stopping', metavar='')
     parser.add_argument('--train',                  default=TRAIN,                  type=str2bool,      help='Whether to train (default: True)', metavar='')
     parser.add_argument('--test',                   default=TEST,                   type=str2bool,      help='Whether to test (default: True)', metavar='')
+    parser.add_argument('--vis',                   default=VIS,                   type=str2bool,      help='Whether to visualise learned policy (default: True)', metavar='')
     parser.add_argument('--n_envs',                 default=N_ENVS,                 type=int,           help='number of parallel environments', metavar='')
     parser.add_argument('--episode_len_sec',        default=EPISODE_LEN_SEC,        type=int,           help='number of parallel environments', metavar='')
     parser.add_argument('--waypoint_buffer_size',   default=WAYPOINT_BUFFER_SIZE,   type=int,           help='number of parallel environments', metavar='')
