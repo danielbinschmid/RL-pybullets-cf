@@ -36,17 +36,20 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
         ) -> None:
         super().__init__()
         self.eval_mode = eval_mode
-        initial_xyzs = config.initial_xyzs
-        action_type = config.action_type
-        t_traj = config.t_traj
         self.single_traj = single_traj
-        self.initial_xyzs = initial_xyzs
         self.observation_type = observation_type
-        self.action_type = action_type
-        self.t_traj = t_traj
         self.n_env_training = n_env_training
         self.seed = seed
         self.use_gui_for_test_env = use_gui_for_test_env
+        self.set_config(config)
+        
+    def set_config(self, config: Configuration):
+        initial_xyzs = config.initial_xyzs
+        action_type = config.action_type
+        t_traj = config.t_traj
+        self.initial_xyzs = initial_xyzs
+        self.action_type = action_type
+        self.t_traj = t_traj
         self.episode_len_sec = config.episode_len_sec
         self.waypoint_buffer_size = config.waypoint_buffer_size
         self.k_p = config.k_p

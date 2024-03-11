@@ -57,4 +57,6 @@ class Configuration:
         self.max_reward_distance = max_reward_distance
         self.waypoint_dist_tol = waypoint_dist_tol
 
-
+    def update_trajectory(self, t_traj: DiscretizedTrajectory, initial_xyz):
+        self.t_traj = t_traj
+        self.initial_xyzs = initial_xyz
