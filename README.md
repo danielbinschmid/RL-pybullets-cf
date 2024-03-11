@@ -8,7 +8,7 @@ This repository is a fork of [gym-pybullet-drones](https://github.com/utiasDSL/g
 
 - The drone can follow arbitrary trajectories. 
 - It is given two next target waypoints as observation. If the two target waypoints are close, it will reach the target slower. 
-- The learned policy is well-suited to smoothly follow arbitrary trajectories and corresponds to the obtained result after _slow-phase training_ in [Penicka et al. [1]](https://rpg.ifi.uzh.ch/docs/RAL_IROS22_Penicka.pdf).
+- The learned policy corresponds to the obtained result after _slow-phase training_ in [Penicka et al. [1]](https://rpg.ifi.uzh.ch/docs/RAL_IROS22_Penicka.pdf).
 
 ## Implemented New Features
 
@@ -19,8 +19,47 @@ This repository is a fork of [gym-pybullet-drones](https://github.com/utiasDSL/g
 
 ## Setup
 
+Tested on ArchLinux and Ubuntu. Note that Eigen must be installed on the system. On linux, install via your package manager. E.g. on Ubuntu:
+
+```s
+$ sudo apt-get install libeigen3-dev
+```
+
+It is strongly recommended to use a python virtual environment, such as _conda_ or _pyvenv_.
+
+1. Initialise repository. Repository must be pulled recursively
+
+```s
+$ git clone git@github.com:danielbinschmid/RL-pybullets-cf.git
+$ git submodule --init --recursive
+```
+
+2. Initialise virtual environment. Tested with python version 3.10.13. E.g.:
+
+```s
+$ pyenv install 3.10.13
+$ pyenv local 3.10.13
+$ python3 -m venv ./venv
+$ source ./venv/bin/activate
+$ pip3 install --upgrade pip
+```
+
+3. Install dependencies and build
+
+```s
+$ pip3 install -e . # if needed, `sudo apt install build-essential` to install `gcc` and build `pybullet`
+```
+
+## Usage
 
 ## Implementation Overview
+
+## Dev
+
+
+## Common Issues
+
+- *Existing and mismatching CMakeCache.txt in [trajectories/trajectories_generation](./trajectories/trajectories_generation).* Solution: Remove CMakeCache.txt in build folder of [trajectories/trajectories_generation](./trajectories/trajectories_generation).
 
 ## References 
 

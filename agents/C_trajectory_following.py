@@ -28,20 +28,14 @@ MA = False
 ####################################
 
 ###### TEST TRAIN FLAGS ############
-TRAIN = False
+TRAIN = True
 TEST = True
 ####################################
 
 ###### ENVIRONMENT PARAMS ##########
-<<<<<<< HEAD
-TIMESTEPS = 1e6
-N_ENVS = 5
-EPISODE_LEN_SEC = 6
-=======
 TIMESTEPS = 2.5e6
 N_ENVS = 20
 EPISODE_LEN_SEC = 20
->>>>>>> test_suite
 ####################################
 
 ###### HYPERPARAMS #################
@@ -91,14 +85,9 @@ def run(output_folder=OUTPUT_FOLDER,
     # CONFIG ##################################################
     t_traj, init_wp = init_targets()
 
-<<<<<<< HEAD
-    # output_folder = f"{output_folder}/k_p={k_p}_k_wp={k_wp}_k_s={k_s}_max_reward_distance={max_reward_distance}_waypoint_dist_tol={waypoint_dist_tol}"
-    # print(f"Output folder: {output_folder}")
-=======
     # random number in range 10-99
     output_folder = f"{output_folder}/wp_b={waypoint_buffer_size}_k_p={k_p}_k_wp={k_wp}_k_s={k_s}_max_reward_distance={max_reward_distance}_waypoint_dist_tol={waypoint_dist_tol}"
     print(f"Output folder: {output_folder}")
->>>>>>> test_suite
 
     config = Configuration(
         action_type=ACT,
@@ -129,11 +118,7 @@ def run(output_folder=OUTPUT_FOLDER,
                   env_factory=env_factory)
 
     if test:
-<<<<<<< HEAD
-        for _ in range(5):
-=======
         for _ in range(10):
->>>>>>> test_suite
             run_test(config=config,
                     env_factory=env_factory)
 
