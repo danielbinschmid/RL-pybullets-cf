@@ -1,6 +1,6 @@
 # Reinforcement Learning for Quadcopter Control
 
-This repository is a fork of [gym-pybullet-drones](https://github.com/utiasDSL/gym-pybullet-drones) and implements a reinforcement learning based control policy inspired by [Penicka et al. [1]](https://rpg.ifi.uzh.ch/docs/RAL_IROS22_Penicka.pdf). 
+This repository is a fork of [gym-pybullet-drones](https://github.com/utiasDSL/gym-pybullet-drones) and implements a reinforcement learning based control policy inspired by [Penicka et al. [1]](https://rpg.ifi.uzh.ch/docs/RAL_IROS22_Penicka.pdf). For documenation and a summary of the results, see our 4-pages [whitepaper](./media/pybullet_drones_whitepaper.pdf).
 
 ## Result
 
