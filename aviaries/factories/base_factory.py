@@ -8,7 +8,6 @@ from aviaries.configuration import Configuration
 from gym_pybullet_drones.envs.BaseRLAviary import BaseRLAviary
 
 
-
 class BaseFactory:
 
     def __init__(self) -> None:
@@ -17,12 +16,11 @@ class BaseFactory:
     def get_train_env(self) -> VecEnv:
         raise NotImplementedError("Must be overwritten by child class.")
 
-    def get_eval_env(self) ->BaseRLAviary:
+    def get_eval_env(self) -> BaseRLAviary:
         raise NotImplementedError("Must be overwritten by child class.")
 
     def get_test_env_gui(self) -> BaseRLAviary:
         raise NotImplementedError("Must be overwritten by child class.")
-
 
     def get_test_env_no_gui(self) -> BaseRLAviary:
         raise NotImplementedError("Must be overwritten by child class.")

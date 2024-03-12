@@ -1,4 +1,3 @@
-
 import numpy as np
 from stable_baselines3.common.env_util import make_vec_env
 from aviaries.SimpleFollowerAviary import SimpleFollowerAviary
@@ -16,18 +15,19 @@ class EnvFactorySimpleFollowerAviary(BaseFactory):
     t_traj: DiscretizedTrajectory
     n_env_training: int
     initial_xyzs: np.ndarray
-    seed: int 
+    seed: int
     use_gui_for_test_env: bool
     output_path_location: str
 
-    def __init__(self, 
-                 config: Configuration,
-                 observation_type: ObservationType,
-                 output_folder: str,
-                 use_gui_for_test_env: bool = True,
-                 n_env_training: int=20,
-                 seed: int = 0,
-        ) -> None:
+    def __init__(
+        self,
+        config: Configuration,
+        observation_type: ObservationType,
+        output_folder: str,
+        use_gui_for_test_env: bool = True,
+        n_env_training: int = 20,
+        seed: int = 0,
+    ) -> None:
         super().__init__()
         initial_xyzs = config.initial_xyzs
         action_type = config.action_type
@@ -38,21 +38,20 @@ class EnvFactorySimpleFollowerAviary(BaseFactory):
         self.action_type = action_type
         self.t_traj = t_traj
         self.n_env_training = n_env_training
-        self.seed = seed 
+        self.seed = seed
         self.use_gui_for_test_env = use_gui_for_test_env
 
-        
     def get_train_env(self) -> VecEnv:
         train_env = make_vec_env(
             SimpleFollowerAviary,
             env_kwargs=dict(
                 target_trajectory=self.t_traj,
                 initial_xyzs=self.initial_xyzs,
-                obs=self.observation_type, 
-                act=self.action_type
+                obs=self.observation_type,
+                act=self.action_type,
             ),
             n_envs=self.n_env_training,
-            seed=self.seed
+            seed=self.seed,
         )
         return train_env
 
@@ -60,19 +59,19 @@ class EnvFactorySimpleFollowerAviary(BaseFactory):
         eval_env = SimpleFollowerAviary(
             target_trajectory=self.t_traj,
             initial_xyzs=self.initial_xyzs,
-            obs=self.observation_type, 
-            act=self.action_type
+            obs=self.observation_type,
+            act=self.action_type,
         )
         return eval_env
 
-    def get_test_env_gui(self) -> BaseRLAviary: 
+    def get_test_env_gui(self) -> BaseRLAviary:
         test_env = SimpleFollowerAviary(
             target_trajectory=self.t_traj,
             initial_xyzs=self.initial_xyzs,
             gui=self.use_gui_for_test_env,
             obs=self.observation_type,
             act=self.action_type,
-            record=False
+            record=False,
         )
         return test_env
 
@@ -80,7 +79,7 @@ class EnvFactorySimpleFollowerAviary(BaseFactory):
         test_env_nogui = SimpleFollowerAviary(
             target_trajectory=self.t_traj,
             initial_xyzs=self.initial_xyzs,
-            obs=self.observation_type, 
-            act=self.action_type
+            obs=self.observation_type,
+            act=self.action_type,
         )
         return test_env_nogui

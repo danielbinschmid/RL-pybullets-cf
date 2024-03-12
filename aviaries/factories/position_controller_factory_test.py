@@ -14,18 +14,19 @@ class PositionControllerFactoryTest(BaseFactory):
     t_traj: DiscretizedTrajectory
     n_env_training: int
     initial_xyzs: np.ndarray
-    seed: int 
+    seed: int
     use_gui_for_test_env: bool
     output_path_location: str
 
-    def __init__(self,
-                 config: Configuration,
-                 observation_type: ObservationType,
-                 output_folder: str,
-                 use_gui_for_test_env: bool = True,
-                 n_env_training: int=20,
-                 seed: int = 0,
-        ) -> None:
+    def __init__(
+        self,
+        config: Configuration,
+        observation_type: ObservationType,
+        output_folder: str,
+        use_gui_for_test_env: bool = True,
+        n_env_training: int = 20,
+        seed: int = 0,
+    ) -> None:
         super().__init__()
         initial_xyzs = config.initial_xyzs
         action_type = config.action_type
@@ -46,10 +47,10 @@ class PositionControllerFactoryTest(BaseFactory):
                 target_trajectory=self.t_traj,
                 initial_xyzs=self.initial_xyzs,
                 obs=self.observation_type,
-                act=self.action_type
+                act=self.action_type,
             ),
             n_envs=self.n_env_training,
-            seed=self.seed
+            seed=self.seed,
         )
         return train_env
 
@@ -58,7 +59,7 @@ class PositionControllerFactoryTest(BaseFactory):
             target_trajectory=self.t_traj,
             initial_xyzs=self.initial_xyzs,
             obs=self.observation_type,
-            act=self.action_type
+            act=self.action_type,
         )
         return eval_env
 
@@ -69,7 +70,7 @@ class PositionControllerFactoryTest(BaseFactory):
             gui=self.use_gui_for_test_env,
             obs=self.observation_type,
             act=self.action_type,
-            record=False
+            record=False,
         )
         return test_env
 
@@ -78,6 +79,6 @@ class PositionControllerFactoryTest(BaseFactory):
             target_trajectory=self.t_traj,
             initial_xyzs=self.initial_xyzs,
             obs=self.observation_type,
-            act=self.action_type
+            act=self.action_type,
         )
         return test_env_nogui

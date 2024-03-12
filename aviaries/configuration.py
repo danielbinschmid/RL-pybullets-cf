@@ -5,7 +5,6 @@ import numpy as np
 from typing import List
 
 
-
 class Configuration:
     action_type: ActionType
     initial_xyzs: np.ndarray
@@ -13,7 +12,7 @@ class Configuration:
     target_reward: float
     output_path_location: str
     n_timesteps: int
-    local: bool 
+    local: bool
     episode_len_sec: float
     waypoint_buffer_size: int
     k_p: float
@@ -22,28 +21,29 @@ class Configuration:
     max_reward_distance: float
     waypoint_dist_tol: float
 
-    def __init__(self, 
-                 action_type: ActionType, 
-                 initial_xyzs: np.ndarray,
-                 output_path_location: str,
-                 n_timesteps: int,
-                 local: bool,
-                 episode_len_sec : int = 10,
-                 waypoint_buffer_size : int=2,
-                 k_p : float=1,
-                 k_wp : float=1,
-                 k_s : float=1,
-                 max_reward_distance : float=1,
-                 waypoint_dist_tol : float=1,
-                 t_traj=None,
-                 t_reward = None,
-                 ) -> None:
+    def __init__(
+        self,
+        action_type: ActionType,
+        initial_xyzs: np.ndarray,
+        output_path_location: str,
+        n_timesteps: int,
+        local: bool,
+        episode_len_sec: int = 10,
+        waypoint_buffer_size: int = 2,
+        k_p: float = 1,
+        k_wp: float = 1,
+        k_s: float = 1,
+        max_reward_distance: float = 1,
+        waypoint_dist_tol: float = 1,
+        t_traj=None,
+        t_reward=None,
+    ) -> None:
         self.action_type = action_type
         self.initial_xyzs = initial_xyzs
         self.t_traj = t_traj
 
         if t_reward is None:
-            self.target_reward = float('inf')
+            self.target_reward = float("inf")
         else:
             t_reward = t_reward
         self.output_path_location = output_path_location

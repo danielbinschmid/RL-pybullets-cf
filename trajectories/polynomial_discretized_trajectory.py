@@ -5,10 +5,11 @@ from .traj_gen_cpp_wrapper import calculate_trajectory
 from typing import List
 import numpy as np
 
+
 def calc_target_durations(waypoints: List[Waypoint]) -> np.ndarray:
     wps = iter(waypoints)
     cur_time = next(wps).timestamp
-    assert(cur_time == 0)
+    assert cur_time == 0
     durations = []
     for wp in wps:
         durations.append(wp.timestamp - cur_time)
@@ -16,43 +17,42 @@ def calc_target_durations(waypoints: List[Waypoint]) -> np.ndarray:
 
     return np.array(durations)
 
+
 def convert_to_np_waypoints(waypoints: List[Waypoint]) -> np.ndarray:
     t_waypoints_np = np.zeros((3, len(waypoints)), dtype=np.float64)
 
     for idx, wp in enumerate(waypoints):
-        t_waypoints_np[:,idx] = wp.coordinate
-    
+        t_waypoints_np[:, idx] = wp.coordinate
+
     return t_waypoints_np
+
 
 class PolynomialDiscretizedTrajectory(DiscretizedTrajectory):
     waypoints: np.ndarray
     timestamps: np.ndarray
 
-    def __init__(self, t_waypoints: List[Waypoint], n_points_discretization_level: int) -> None:
-        
+    def __init__(
+        self, t_waypoints: List[Waypoint], n_points_discretization_level: int
+    ) -> None:
+
         # target waypoints with durations
         t_waypoints_np = convert_to_np_waypoints(t_waypoints)
         t_durations_np = calc_target_durations(t_waypoints)
 
         # call cpp backbone
         self.waypoints, self.timestamps = calculate_trajectory(
-            t_waypoints_np,
-            t_durations_np,
-            n_points_discretization_level
+            t_waypoints_np, t_durations_np, n_points_discretization_level
         )
-                
+
         # assert n_points
-        assert(self.waypoints.shape[1] == n_points_discretization_level) 
-        assert(self.waypoints.shape[1] == len(self.timestamps))
+        assert self.waypoints.shape[1] == n_points_discretization_level
+        assert self.waypoints.shape[1] == len(self.timestamps)
 
     def __len__(self) -> int:
-        return len(self.timestamps)        
+        return len(self.timestamps)
 
     def __getitem__(self, idx: int) -> Waypoint:
-        wp = Waypoint(
-            self.waypoints[:, idx],
-            self.timestamps[idx]
-        )
+        wp = Waypoint(self.waypoints[:, idx], self.timestamps[idx])
         return wp
 
     def _reverse_timestamps(self):

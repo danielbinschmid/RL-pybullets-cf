@@ -1,11 +1,12 @@
 import numpy as np
 from enum import Enum, auto
 
+
 class Waypoint:
     """
     3D coordinate with a timestamp.
     """
-    
+
     coordinate: np.ndarray
     """R^3 coordinate"""
     timestamp: float

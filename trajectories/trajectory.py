@@ -1,5 +1,6 @@
 from .waypoint import Waypoint
 
+
 class Trajectory:
 
     def __init__(self) -> None:
@@ -10,6 +11,3 @@ class Trajectory:
         Needs to be implemented by subclass. time \in [0,1]
         """
         raise NotImplementedError()
-
-
-    

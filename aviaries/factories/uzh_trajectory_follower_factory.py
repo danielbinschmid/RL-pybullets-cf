@@ -14,7 +14,7 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
     t_traj: DiscretizedTrajectory
     n_env_training: int
     initial_xyzs: np.ndarray
-    seed: int 
+    seed: int
     use_gui_for_test_env: bool
     output_path_location: str
     episode_len_sec: int
@@ -25,15 +25,16 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
     max_reward_distance: float
     waypoint_dist_tol: float
 
-    def __init__(self,
-                 config: Configuration,
-                 observation_type: ObservationType,
-                 use_gui_for_test_env: bool = True,
-                 n_env_training: int=20,
-                 seed: int = 0,
-                 single_traj=False,
-                 eval_mode=False
-        ) -> None:
+    def __init__(
+        self,
+        config: Configuration,
+        observation_type: ObservationType,
+        use_gui_for_test_env: bool = True,
+        n_env_training: int = 20,
+        seed: int = 0,
+        single_traj=False,
+        eval_mode=False,
+    ) -> None:
         super().__init__()
         self.eval_mode = eval_mode
         self.single_traj = single_traj
@@ -42,7 +43,7 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
         self.seed = seed
         self.use_gui_for_test_env = use_gui_for_test_env
         self.set_config(config)
-        
+
     def set_config(self, config: Configuration):
         initial_xyzs = config.initial_xyzs
         action_type = config.action_type
@@ -64,7 +65,7 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
             env_kwargs=dict(
                 target_trajectory=self.t_traj,
                 initial_xyzs=self.initial_xyzs,
-                obs=self.observation_type, 
+                obs=self.observation_type,
                 act=self.action_type,
                 episode_len_sec=self.episode_len_sec,
                 waypoint_buffer_size=self.waypoint_buffer_size,
@@ -73,10 +74,10 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
                 k_s=self.k_s,
                 max_reward_distance=self.max_reward_distance,
                 waypoint_dist_tol=self.waypoint_dist_tol,
-                one_traj=self.single_traj
+                one_traj=self.single_traj,
             ),
             n_envs=self.n_env_training,
-            seed=self.seed
+            seed=self.seed,
         )
         return train_env
 
@@ -84,7 +85,7 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
         eval_env = UZHAviary(
             target_trajectory=self.t_traj,
             initial_xyzs=self.initial_xyzs,
-            obs=self.observation_type, 
+            obs=self.observation_type,
             act=self.action_type,
             episode_len_sec=self.episode_len_sec,
             waypoint_buffer_size=self.waypoint_buffer_size,
@@ -95,7 +96,7 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
             waypoint_dist_tol=self.waypoint_dist_tol,
             one_traj=self.single_traj,
             eval_mode=self.eval_mode,
-            log_positions=True if self.eval_mode else False
+            log_positions=True if self.eval_mode else False,
         )
         return eval_env
 
@@ -116,7 +117,7 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
             waypoint_dist_tol=self.waypoint_dist_tol,
             one_traj=self.single_traj,
             eval_mode=self.eval_mode,
-            log_positions=True if self.eval_mode else False
+            log_positions=True if self.eval_mode else False,
         )
         return test_env
 
@@ -124,7 +125,7 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
         test_env_nogui = UZHAviary(
             target_trajectory=self.t_traj,
             initial_xyzs=self.initial_xyzs,
-            obs=self.observation_type, 
+            obs=self.observation_type,
             act=self.action_type,
             episode_len_sec=self.episode_len_sec,
             waypoint_buffer_size=self.waypoint_buffer_size,
@@ -135,6 +136,6 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
             waypoint_dist_tol=self.waypoint_dist_tol,
             one_traj=self.single_traj,
             eval_mode=self.eval_mode,
-            log_positions=True if self.eval_mode else False
+            log_positions=True if self.eval_mode else False,
         )
         return test_env_nogui
