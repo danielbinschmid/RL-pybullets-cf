@@ -29,7 +29,7 @@ from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
 from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
 from gym_pybullet_drones.utils.Logger import Logger
 from gym_pybullet_drones.utils.utils import sync, str2bool
-from runnables.test_suite_eval.eval_tracks import load_eval_tracks 
+from runnables.gen_eval_tracks import load_eval_tracks 
 from typing import List, Dict 
 import json
 from tqdm import tqdm

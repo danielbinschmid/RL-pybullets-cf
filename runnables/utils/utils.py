@@ -8,7 +8,7 @@ from aviaries.factories.uzh_trajectory_follower_factory import TrajectoryFollowe
 
 from agents.test_policy import run_test
 from agents.train_policy import run_train
-from runnables.test_suite_eval.eval_tracks import load_eval_tracks 
+from runnables.evaluation.gen_eval_tracks import load_eval_tracks 
 from torch import nn
 from typing import List, Dict
 from tqdm import tqdm

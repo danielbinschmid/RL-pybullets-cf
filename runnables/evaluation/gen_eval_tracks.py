@@ -8,6 +8,9 @@ import shutil
 from datetime import datetime
 from typing import List 
 from tqdm import tqdm 
+
+SAVE_FOLDER_NAME = "eval-v0"
+
 def gen_eval_tracks(target_folder: str, n_tracks: int, n_ctrl_points: int=3):
     
     # target folder
@@ -53,13 +56,16 @@ def load_eval_tracks(folder: str, discr_level: int=10) -> List[DiscretizedTrajec
     print("Loading test tracks done.")
     return trajs
 
-if __name__ == "__main__":
-    gen = True
-    load = False
-    load_folder = "./eval-v0_n-ctrl-points-5_n-tracks-10000_2024-02-11_20:15:45_151aebc7-4bca-422f-a63c-44c55d53bda5"
-
+def main(gen: bool = True, 
+         load: bool = False,
+         base_folder: str = "./test_tracks",
+         load_name: str = "./test_tracks/eval-v0_n-ctrl-points-3_n-tracks-20_2024-02-11_22:18:28_46929077-0248-4c6e-b2b1-da2afb13b2e2", 
+         n_tracks: int = 200
+    ):
+    load_folder = os.path.join(base_folder, load_name)
+    
     if gen:
-        t_folder = "./eval-v0"
+        t_folder = os.path.join(base_folder, SAVE_FOLDER_NAME)
         n_tracks = 200
         gen_eval_tracks(t_folder, n_tracks=n_tracks, n_ctrl_points=10)
     if load: 
@@ -67,5 +73,5 @@ if __name__ == "__main__":
         for track in tracks:
             print(track)
 
-
-    
+if __name__ == "__main__":
+    main()

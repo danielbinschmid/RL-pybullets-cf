@@ -20,65 +20,55 @@ def test_simple_follower(local: bool, filename: str, test_env_nogui: BaseRLAviar
         print("[ERROR]: no model under the specified path", filename)
     model = PPO.load(path)
 
-    #if not eval_mode:
-    #    # evaluate in test environment
-    #    mean_reward, std_reward = evaluate_policy(model,
-    #                                            test_env_nogui,
-    #                                            n_eval_episodes=10
-    #                                            )
-    #    print("\n\n\nMean reward ", mean_reward, " +- ", std_reward, "\n\n")
-        
+    # visualise in test environment
+    logger = Logger(logging_freq_hz=int(test_env.CTRL_FREQ),
+                num_drones=1,
+                output_folder=output_folder,
+                colab=False
+                )
     
-    if eval_mode:
-        # visualise in test environment
-        logger = Logger(logging_freq_hz=int(test_env.CTRL_FREQ),
-                    num_drones=1,
-                    output_folder=output_folder,
-                    colab=False
+    obs, info = test_env.reset(seed=42, options={})
+    start = time.time()
+    for i in range((test_env.EPISODE_LEN_SEC)*test_env.CTRL_FREQ):
+        action, _states = model.predict(obs,
+                                        deterministic=True
+                                        )
+        obs, reward, terminated, truncated, info = test_env.step(action)
+        obs2 = obs.squeeze()
+        act2 = action.squeeze()
+        # print("Obs:", obs, "\tAction", action, "\tReward:", reward, "\tTerminated:", terminated, "\tTruncated:", truncated)
+        logger.log(drone=0,
+                    timestamp=i/test_env.CTRL_FREQ,
+                    state=np.hstack([obs2[0:3],
+                                        np.zeros(4),
+                                        obs2[3:15],
+                                        act2
+                                        ]),
+                    control=np.zeros(12)
                     )
-        
-        obs, info = test_env.reset(seed=42, options={})
-        start = time.time()
-        for i in range((test_env.EPISODE_LEN_SEC)*test_env.CTRL_FREQ):
-            action, _states = model.predict(obs,
-                                            deterministic=True
-                                            )
-            obs, reward, terminated, truncated, info = test_env.step(action)
-            obs2 = obs.squeeze()
-            act2 = action.squeeze()
-            # print("Obs:", obs, "\tAction", action, "\tReward:", reward, "\tTerminated:", terminated, "\tTruncated:", truncated)
-            logger.log(drone=0,
-                        timestamp=i/test_env.CTRL_FREQ,
-                        state=np.hstack([obs2[0:3],
-                                            np.zeros(4),
-                                            obs2[3:15],
-                                            act2
-                                            ]),
-                        control=np.zeros(12)
-                        )
 
-            # test_env.render()
-            # print(terminated)
-            if not eval_mode:
-                sync(i, start, test_env.CTRL_TIMESTEP)
-            if terminated:
-                
-                if eval_mode:
-                    test_env.close()
-                    test_env_nogui.pos_logger.flush()
-                    all_pos = test_env_nogui.pos_logger.load_all() 
-                    t = test_env.step_counter*test_env.PYB_TIMESTEP
-                    if type(test_env_nogui) == UZHAviary:
-                        success = test_env.reached_last_point
-                    else:
-                        success = None
-                    return all_pos, success, t
-                obs = test_env.reset(seed=42, options={})  
-                break
-        test_env.close()
+        # test_env.render()
+        # print(terminated)
+        if not eval_mode:
+            sync(i, start, test_env.CTRL_TIMESTEP)
+        if terminated:
+            
+            if eval_mode:
+                test_env.close()
+                test_env_nogui.pos_logger.flush()
+                all_pos = test_env_nogui.pos_logger.load_all() 
+                t = test_env.step_counter*test_env.PYB_TIMESTEP
+                if type(test_env_nogui) == UZHAviary:
+                    success = test_env.reached_last_point
+                else:
+                    success = None
+                return all_pos, success, t
+            obs = test_env.reset(seed=42, options={})  
+            break
+    test_env.close()
 
-        logger.plot()
-        return None, False, None
+    logger.plot()
+    return None, False, None
 
 def run_test(config: Configuration, env_factory: BaseFactory, eval_mode=False):
 

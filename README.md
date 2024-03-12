@@ -52,10 +52,22 @@ $ pip3 install -e . # if needed, `sudo apt install build-essential` to install `
 
 ## Usage
 
+Scripts for training, testing and visualization are provided. 
+
+### Training
+
 ## Implementation Overview
 
 ## Dev
 
+
+### Testing
+
+Run all tests from the top folder with
+
+```sh
+pytest tests/
+```
 
 ## Common Issues
 
