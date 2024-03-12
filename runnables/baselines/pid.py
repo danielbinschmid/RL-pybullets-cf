@@ -29,7 +29,7 @@ from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
 from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
 from gym_pybullet_drones.utils.Logger import Logger
 from gym_pybullet_drones.utils.utils import sync, str2bool
-from runnables.gen_eval_tracks import load_eval_tracks 
+from runnables.evaluation.gen_eval_tracks import load_eval_tracks 
 from typing import List, Dict 
 import json
 from tqdm import tqdm
@@ -50,7 +50,7 @@ DEFAULT_COLAB = False
 DEFAULT_DISCR_LEVEL = 10
 DEFAULT_EVAL_SET = "./eval-v0_n-ctrl-points-3_n-tracks-20_2024-02-11_22:18:28_46929077-0248-4c6e-b2b1-da2afb13b2e2"
 
-from runnables.test_suite_eval.utils import compute_metrics_single
+from runnables.utils.utils import compute_metrics_single
 
 def save_benchmark(benchmarks: Dict[str, float], file_path: str):
     with open(file_path, 'w') as file:

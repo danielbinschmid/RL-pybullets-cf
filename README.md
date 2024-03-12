@@ -25,7 +25,7 @@ Tested on ArchLinux and Ubuntu. Note that Eigen must be installed on the system.
 $ sudo apt-get install libeigen3-dev
 ```
 
-It is strongly recommended to use a python virtual environment, such as _conda_ or _pyvenv_.
+It is strongly recommended to use a python virtual environment such as _conda_ or _pyvenv_.
 
 1. Initialise repository. Repository must be pulled recursively
 
