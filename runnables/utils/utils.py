@@ -3,12 +3,12 @@ import numpy as np
 from gym_pybullet_drones.utils.utils import str2bool
 from gym_pybullet_drones.utils.enums import ObservationType, ActionType
 from trajectories import TrajectoryFactory, DiscretizedTrajectory
-from agents.utils.configuration import Configuration
+from aviaries.configuration import Configuration
 from aviaries.factories.uzh_trajectory_follower_factory import TrajectoryFollowerAviaryFactory
 
 from agents.test_policy import run_test
 from agents.train_policy import run_train
-from runnables.evaluation.gen_eval_tracks import load_eval_tracks 
+from runnables.utils.gen_eval_tracks import load_eval_tracks 
 from torch import nn
 from typing import List, Dict
 from tqdm import tqdm

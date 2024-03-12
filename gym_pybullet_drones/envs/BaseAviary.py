@@ -40,7 +40,7 @@ class BaseAviary(gym.Env):
                  user_debug_gui=True,
                  vision_attributes=False,
                  output_folder='results',
-                 log_positions=True
+                 log_positions=False
                  ):
         """Initialization of a generic aviary environment.
 

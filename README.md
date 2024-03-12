@@ -56,12 +56,56 @@ Scripts for training, testing and visualization are provided.
 
 ### Training
 
-## Implementation Overview
+To train the RL policy from scratch with our implementation, run 
 
-## Dev
+```s
+$ cd runnables
+$ ./train_rl.sh
+```
 
+It will produce a folder with the weights. Later, this weights folder can be passed to the visualization and testing scripts.
 
 ### Testing
+
+To run our small benchmark suite, run
+
+```s
+$ cd runnables
+$ ./test_rl.sh
+$ ./test_pid.sh
+```
+
+Out of the box, it will use our pre-trained weights. Each bash script produces a .json file with the benchmarks.
+
+### Visualization
+
+To just visualize the control policy, run
+
+```s
+$ cd runnables
+$ ./vis_rl.sh
+```
+Out of the box, it will use our pre-trained weights and randomly generated trajectories. 
+
+### Evaluation track generation
+
+To generate a test set with random tracks, run
+
+```s
+$ cd runnables/utils
+$ python gen_eval_tracks.py
+```
+
+### Plot generation
+
+To generate the plots used in our whitepaper, run
+
+```s
+$ cd runnables
+$ ./generate_plots.sh
+```
+
+## Testing
 
 Run all tests from the top folder with
 
@@ -71,7 +115,7 @@ pytest tests/
 
 ## Common Issues
 
-- *Existing and mismatching CMakeCache.txt in [trajectories/trajectories_generation](./trajectories/trajectories_generation).* Solution: Remove CMakeCache.txt in build folder of [trajectories/trajectories_generation](./trajectories/trajectories_generation).
+- *Mismatching CMakeCache.txt in [trajectories/trajectories_generation](./trajectories/trajectories_generation).* Solution: Remove CMakeCache.txt in build folder of [trajectories/trajectories_generation](./trajectories/trajectories_generation).
 
 ## References 
 

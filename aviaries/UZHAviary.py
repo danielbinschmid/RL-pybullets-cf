@@ -53,7 +53,8 @@ class UZHAviary(BaseRLAviary):
                  max_reward_distance: float = 0.2,
                  waypoint_dist_tol: float = 0.12,
                  one_traj=False,
-                 eval_mode=False
+                 eval_mode=False,
+                 log_positions=False
                  ):
         
         self.EPISODE_LEN_SEC = episode_len_sec
@@ -100,9 +101,9 @@ class UZHAviary(BaseRLAviary):
             gui=gui,
             record=record,
             obs=obs,
-            act=act
+            act=act,
+            log_positions=log_positions
         )
-
         
         # Visualisation
         self.current_projection = np.array([0,0,0])

@@ -29,7 +29,7 @@ from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
 from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
 from gym_pybullet_drones.utils.Logger import Logger
 from gym_pybullet_drones.utils.utils import sync, str2bool
-from runnables.evaluation.gen_eval_tracks import load_eval_tracks 
+from runnables.utils.gen_eval_tracks import load_eval_tracks 
 from typing import List, Dict 
 import json
 from tqdm import tqdm
@@ -103,7 +103,8 @@ def run(
             gui=use_gui,
             record=record_video,
             obstacles=False,
-            user_debug_gui=user_debug_gui
+            user_debug_gui=user_debug_gui,
+            log_positions=True
         )
 
         #### Obtain the PyBullet Client ID from the environment ####

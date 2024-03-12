@@ -5,7 +5,7 @@ from aviaries.SimpleFollowerAviary import SimpleFollowerAviary
 from gym_pybullet_drones.utils.enums import ObservationType, ActionType
 from trajectories import DiscretizedTrajectory
 from stable_baselines3.common.vec_env import VecEnv
-from agents.utils.configuration import Configuration
+from aviaries.configuration import Configuration
 from gym_pybullet_drones.envs.BaseRLAviary import BaseRLAviary
 from .base_factory import BaseFactory
 

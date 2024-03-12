@@ -1,6 +1,6 @@
 import numpy as np
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
-from agents.utils.configuration import Configuration
+from aviaries.configuration import Configuration
 from aviaries.factories.base_factory import BaseFactory
 
 from stable_baselines3 import PPO

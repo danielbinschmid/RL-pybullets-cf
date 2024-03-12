@@ -3,7 +3,7 @@ from stable_baselines3.common.env_util import make_vec_env
 from gym_pybullet_drones.utils.enums import ObservationType, ActionType
 from trajectories import DiscretizedTrajectory
 from stable_baselines3.common.vec_env import VecEnv
-from agents.utils.configuration import Configuration
+from aviaries.configuration import Configuration
 from aviaries.UZHAviary import UZHAviary
 from .base_factory import BaseFactory
 
@@ -94,7 +94,8 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
             max_reward_distance=self.max_reward_distance,
             waypoint_dist_tol=self.waypoint_dist_tol,
             one_traj=self.single_traj,
-            eval_mode=self.eval_mode
+            eval_mode=self.eval_mode,
+            log_positions=True if self.eval_mode else False
         )
         return eval_env
 
@@ -114,7 +115,8 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
             max_reward_distance=self.max_reward_distance,
             waypoint_dist_tol=self.waypoint_dist_tol,
             one_traj=self.single_traj,
-            eval_mode=self.eval_mode
+            eval_mode=self.eval_mode,
+            log_positions=True if self.eval_mode else False
         )
         return test_env
 
@@ -132,6 +134,7 @@ class TrajectoryFollowerAviaryFactory(BaseFactory):
             max_reward_distance=self.max_reward_distance,
             waypoint_dist_tol=self.waypoint_dist_tol,
             one_traj=self.single_traj,
-            eval_mode=self.eval_mode
+            eval_mode=self.eval_mode,
+            log_positions=True if self.eval_mode else False
         )
         return test_env_nogui

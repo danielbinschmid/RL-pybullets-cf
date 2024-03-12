@@ -1,5 +1,5 @@
 from aviaries.factories.base_factory import BaseFactory
-from agents.utils.configuration import Configuration
+from aviaries.configuration import Configuration
 import os
 from stable_baselines3.common.evaluation import evaluate_policy
 from gym_pybullet_drones.envs.BaseRLAviary import BaseRLAviary

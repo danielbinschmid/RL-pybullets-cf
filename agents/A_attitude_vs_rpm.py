@@ -15,10 +15,10 @@ import argparse
 from gym_pybullet_drones.utils.utils import str2bool
 from gym_pybullet_drones.utils.enums import ObservationType
 from aviaries.factories.simple_follower_factory import EnvFactorySimpleFollowerAviary
-from agents.utils.configuration import Configuration
+from aviaries.configuration import Configuration
 from train_policy import run_train
 from test_policy import run_test
-from agents.utils.configuration import Configuration
+from aviaries.configuration import Configuration
 from gym_pybullet_drones.utils.enums import ActionType
 from typing import List
 from trajectories import TrajectoryFactory

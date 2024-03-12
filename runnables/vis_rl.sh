@@ -2,11 +2,11 @@
 
 python ../agents/C_trajectory_following.py \
     --gui "True" \
-    --output_folder "../checkpointed_models" \
+    --output_folder "../weights" \
     --timesteps 2500000 \
     --train "False" \
-    --test "True" \
-    --vis "False" \
+    --test "False" \
+    --vis "True" \
     --n_envs "5" \
     --episode_len_sec "20" \
     --waypoint_buffer_size "2" \

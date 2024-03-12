@@ -1,8 +1,8 @@
 import sys 
-sys.path.append("..")
+sys.path.append("../..")
 
 from trajectories import TrajectoryFactory
-from vis import vis_discr_traj
+from runnables.visualization.utils.vis_discr_traj import vis_discr_traj
 import numpy as np 
 
 traj, ctrl_wps = TrajectoryFactory.gen_random_trajectory(
@@ -17,4 +17,4 @@ traj, ctrl_wps = TrajectoryFactory.gen_random_trajectory(
 print(traj)
 print(ctrl_wps)
 
-vis_discr_traj(traj, ctrl_wps)
+vis_discr_traj(traj, ctrl_wps, plotname="random_trajectory.pdf")

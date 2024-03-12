@@ -1,7 +1,7 @@
 import sys 
 sys.path.append("../..")
 import numpy as np
-import vis.plotting as plotting
+import runnables.visualization.utils.plotting as plotting
 import matplotlib.pyplot as plt
 from trajectories import DiscretizedTrajectory, Waypoint, TrajectoryFactory
 from typing import List, Tuple
@@ -9,7 +9,7 @@ import numpy as np
 from gym_pybullet_drones.utils.pos_logger import load_positions
 import matplotlib.cm as cm
 import matplotlib.lines as mlines
-from runnables.test_suite_eval.eval_tracks import load_eval_tracks 
+from runnables.utils.gen_eval_tracks import load_eval_tracks 
 
 
 def wps_to_ndarray(wps: List[Waypoint]):
@@ -52,7 +52,10 @@ names = [
     "Trajectory RL"
 ]
 
-def vis_discr_traj(trajs_: List[Tuple[DiscretizedTrajectory, np.ndarray] ], wps: DiscretizedTrajectory=None, plotname: str="minimum_snap_poly_traj.pdf"):
+def vis_discr_traj(trajs_: List[Tuple[DiscretizedTrajectory, np.ndarray] ], 
+                   wps: DiscretizedTrajectory=None, 
+                   plotname: str="minimum_snap_poly_traj.pdf",
+                   label_: str = "PID"):
     plotting.prepare_for_latex()
 
     # print(trajs[0][1])
@@ -117,7 +120,7 @@ def vis_discr_traj(trajs_: List[Tuple[DiscretizedTrajectory, np.ndarray] ], wps:
     ax.set_ylabel("Y axis")
     ax.set_zlabel("Z axis")
     legend_handles = [
-        mlines.Line2D([], [], color=cmaps[0]([0.95]), marker='o', linestyle='None', markersize=5, label="PID"),
+        mlines.Line2D([], [], color=cmaps[0]([0.95]), marker='o', linestyle='None', markersize=5, label=label_),
         mlines.Line2D([], [], color="black", marker='x', linestyle='None', markersize=5, label="Target waypoints")
     ]
     ax.legend(handles=legend_handles)
@@ -142,25 +145,17 @@ def load_from_path(path:str):
     return traj, veloctities
 
 def vis():
-    traj_pid, velocities = load_from_path("/shared/d/master/ws23/UAV-lab/git_repos/RL-pybullets-cf/runnables/test_suite_vis/logs/landing_pid")
-    # traj_rl, velocities = load_from_path("/shared/d/master/ws23/UAV-lab/git_repos/RL-pybullets-cf/runnables/test_suite_vis/logs/landing_rl")
-    
-    
-    # traj_pid = load_from_path("/shared/d/master/ws23/UAV-lab/git_repos/RL-pybullets-cf/runnables/test_suite/logs/pos_logs_pid")
-    # traj_rl_traj = load_from_path("/shared/d/master/ws23/UAV-lab/git_repos/RL-pybullets-cf/runnables/test_suite/logs/pos_logs_rl_traj")
-
-    trajs = [(traj_pid, velocities)]# , traj_pid ]
-
-    t_traj = TrajectoryFactory.get_linear_square_traj_discretized(
-        n_discretization_level=4,
-    )
-    tracks = load_eval_tracks("/shared/d/master/ws23/UAV-lab/git_repos/RL-pybullets-cf/runnables/test_suite_eval/eval-v0_n-ctrl-points-3_n-tracks-200_2024-02-12_12:21:14_3115f5a9-bd48-4b63-9194-5eda43e1329d", 
+    tracks = load_eval_tracks("./test_tracks/eval-v0_n-ctrl-points-3_n-tracks-200_2024-02-12_12:21:14_3115f5a9-bd48-4b63-9194-5eda43e1329d", 
                               discr_level=9)
     track = tracks[0]
-    vis_discr_traj(trajs, track, plotname="wp_following.pdf")
 
+    traj_pid, velocities = load_from_path("./visualization/logs/landing_pid")    
+    trajs = [(traj_pid, velocities)]
+    vis_discr_traj(trajs, track, plotname="landing_pid.pdf", label_="PID")
 
-
+    traj_pid, velocities = load_from_path("./visualization/logs/landing_rl")    
+    trajs = [(traj_pid, velocities)]
+    vis_discr_traj(trajs, track, plotname="landing_rl.pdf", label_="RL")
 
 if __name__ == "__main__":
     vis()
