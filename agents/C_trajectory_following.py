@@ -1,3 +1,10 @@
+"""
+Script learns an agent for trajectory following. Policy strongly inspired by [1] 
+
+
+[1] Penicka, Robert, et al. [*Learning minimum-time flight in cluttered environments.*](https://rpg.ifi.uzh.ch/docs/RAL_IROS22_Penicka.pdf) IEEE Robotics and Automation Letters 7.3 (2022): 7209-7216.
+"""
+
 import argparse
 import numpy as np
 from gym_pybullet_drones.utils.utils import str2bool

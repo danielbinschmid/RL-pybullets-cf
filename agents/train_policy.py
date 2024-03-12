@@ -1,3 +1,7 @@
+"""
+Methods to learn a policy.
+"""
+
 import numpy as np
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
 from aviaries.configuration import Configuration

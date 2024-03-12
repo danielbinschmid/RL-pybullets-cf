@@ -1,15 +1,5 @@
 """
-RUNS EXPERIMENT A.
-
-3 MODES: 
-- DOWN (from [0,0,1] to [0,0,0.1])
-- UP (from [0,0,0.1] to [0,0,1])
-- SIDEWAYS (from [0,0,1] to [0,1,1])
-- DIAGONAL_UP (from [0,0,0.1] to [0,1,1])
-- DIAGONAL_DOWN (from [0,0,1] to [0,1,0.1])
-
-- every mode 10 times
-
+Experiments to test the attitude control action type (thrust, bodyrates). Evaluation on a simple waypoint hovering task.
 """
 import argparse
 from gym_pybullet_drones.utils.utils import str2bool
