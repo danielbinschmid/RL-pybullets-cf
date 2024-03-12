@@ -105,7 +105,11 @@ $ cd runnables
 $ ./generate_plots.sh
 ```
 
-## Testing
+## Dev
+
+- Autoformatting with _black_.
+
+### Test
 
 Run all tests from the top folder with
 
